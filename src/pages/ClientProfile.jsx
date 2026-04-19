@@ -7,7 +7,8 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload } from 'lucide-react';
+import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import EmptyState from '@/components/shared/EmptyState';
@@ -19,6 +20,40 @@ export default function ClientProfile() {
   const clientId = pathParts[pathParts.length - 1];
   const { user, isAdmin } = useCurrentUser();
   const [showUploadDoc, setShowUploadDoc] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const queryClient = useQueryClient();
+
+  const generateTokenMutation = useMutation({
+    mutationFn: async (clientObj) => {
+      const token = crypto.randomUUID().replace(/-/g, '').slice(0, 24);
+      await base44.entities.Client.update(clientObj.id, { portal_token: token });
+      return token;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clients'] }),
+  });
+
+  const getPortalUrl = (token) => {
+    const origin = window.location.origin;
+    return `${origin}/portal?token=${token}`;
+  };
+
+  const handleOpenPortal = async () => {
+    let token = client.portal_token;
+    if (!token) {
+      token = await generateTokenMutation.mutateAsync(client);
+    }
+    window.open(getPortalUrl(token), '_blank');
+  };
+
+  const handleCopyLink = async () => {
+    let token = client.portal_token;
+    if (!token) {
+      token = await generateTokenMutation.mutateAsync(client);
+    }
+    await navigator.clipboard.writeText(getPortalUrl(token));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
@@ -86,6 +121,16 @@ export default function ClientProfile() {
               ))}
             </div>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={handleCopyLink} className="gap-1">
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? 'הועתק!' : 'העתק קישור פורטל'}
+          </Button>
+          <Button size="sm" onClick={handleOpenPortal} className="gap-1">
+            <ExternalLink className="w-4 h-4" />
+            צפה בפורטל
+          </Button>
         </div>
       </div>
 
