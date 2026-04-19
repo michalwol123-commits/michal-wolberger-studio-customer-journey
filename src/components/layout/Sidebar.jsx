@@ -12,6 +12,7 @@ import {
   CheckSquare,
   FileText,
   Settings,
+  BookOpen,
   ChevronRight,
   X
 } from 'lucide-react';
@@ -28,6 +29,7 @@ const navItems = [
   { path: '/communications', label: 'תקשורת', icon: MessageSquare, adminOnly: false },
   { path: '/tasks', label: 'משימות', icon: CheckSquare, adminOnly: false },
   { path: '/settings', label: 'הגדרות', icon: Settings, adminOnly: true },
+  { path: '/user-guide', label: 'מדריך למשתמשת', icon: BookOpen, adminOnly: true },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {

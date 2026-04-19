@@ -19,6 +19,7 @@ import Meetings from '@/pages/Meetings';
 import Communications from '@/pages/Communications';
 import Tasks from '@/pages/Tasks';
 import SettingsPage from '@/pages/SettingsPage';
+import UserGuide from '@/pages/UserGuide';
 import Portal from '@/pages/Portal';
 
 const AuthGate = ({ children }) => {
@@ -70,6 +71,7 @@ function App() {
               <Route path="/communications" element={<Communications />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/user-guide" element={<UserGuide />} />
             </Route>
             <Route path="*" element={<PageNotFound />} />
           </Routes>
