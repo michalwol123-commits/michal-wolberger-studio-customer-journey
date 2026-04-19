@@ -1,11 +1,8 @@
 // Automation I — State Machine Enforcement
 // Trigger: record_updated on Client, Project, Quote, Task, Payment
-// Condition: Invalid status transition
-// Action: Rollback + Communication (system_error) + notification
-
+// Uses last_valid_status field to detect and break rollback loops
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// Valid transitions per entity
 const TRANSITIONS = {
   Client: {
     lead: ['qualified', 'archived'],
@@ -19,14 +16,14 @@ const TRANSITIONS = {
   Project: {
     active: ['on_hold', 'completed', 'cancelled'],
     on_hold: ['active', 'cancelled'],
-    completed: [], // terminal
+    completed: [],
     cancelled: ['active'],
   },
   Quote: {
     draft: ['sent'],
     sent: ['viewed', 'expired'],
     viewed: ['approved', 'rejected', 'expired'],
-    approved: [], // terminal
+    approved: [],
     rejected: ['draft'],
     expired: ['draft'],
   },
@@ -39,7 +36,7 @@ const TRANSITIONS = {
   Payment: {
     pending: ['partial', 'paid', 'overdue'],
     partial: ['paid', 'overdue'],
-    paid: [], // terminal
+    paid: [],
     overdue: ['partial', 'paid', 'pending'],
   },
 };
@@ -50,12 +47,20 @@ Deno.serve(async (req) => {
     const { data, old_data, event } = await req.json();
 
     if (!data || !old_data || !event) return Response.json({ skipped: true });
-    if (data.status === old_data.status) return Response.json({ skipped: true, reason: 'status unchanged' });
 
     const entityName = event.entity_name;
     const entityId = event.entity_id;
     const oldStatus = old_data.status;
     const newStatus = data.status;
+
+    // No status change — skip
+    if (oldStatus === newStatus) return Response.json({ skipped: true, reason: 'status unchanged' });
+
+    // ROLLBACK DETECTION: if the new status matches last_valid_status,
+    // this is our own rollback update — stop the loop
+    if (data.last_valid_status && newStatus === data.last_valid_status) {
+      return Response.json({ skipped: true, reason: 'rollback detected, breaking loop' });
+    }
 
     const entityTransitions = TRANSITIONS[entityName];
     if (!entityTransitions) return Response.json({ skipped: true, reason: 'no rules for entity' });
@@ -64,35 +69,39 @@ Deno.serve(async (req) => {
     if (!allowed) return Response.json({ skipped: true, reason: 'unknown old status' });
 
     if (allowed.includes(newStatus)) {
+      // VALID TRANSITION — update last_valid_status
+      const updatePayload = { last_valid_status: newStatus };
+
       // Auto-fill timestamp fields on valid Client transitions
       if (entityName === 'Client') {
         const timestampMap = {
           qualified: { qualified_at: new Date().toISOString() },
           proposal_sent: { proposal_sent_at: new Date().toISOString() },
-          active_client: {},
           completed_client: { completed_at: new Date().toISOString() },
         };
         const tsUpdate = timestampMap[newStatus];
-        if (tsUpdate && Object.keys(tsUpdate).length > 0) {
-          await base44.asServiceRole.entities.Client.update(entityId, tsUpdate);
-        }
+        if (tsUpdate) Object.assign(updatePayload, tsUpdate);
       }
 
       // Auto-fill end_date_actual on Project completion
       if (entityName === 'Project' && newStatus === 'completed') {
-        await base44.asServiceRole.entities.Project.update(entityId, {
-          end_date_actual: new Date().toISOString().split('T')[0],
-        });
+        updatePayload.end_date_actual = new Date().toISOString().split('T')[0];
       }
 
-      return Response.json({ valid: true, from: oldStatus, to: newStatus, timestamped: true });
+      const entityApi = base44.asServiceRole.entities[entityName];
+      await entityApi.update(entityId, updatePayload);
+
+      return Response.json({ valid: true, from: oldStatus, to: newStatus });
     }
 
-    // INVALID TRANSITION — rollback
+    // INVALID TRANSITION — rollback using last_valid_status (or oldStatus as fallback)
+    const rollbackTo = old_data.last_valid_status || oldStatus;
     const entityApi = base44.asServiceRole.entities[entityName];
-    if (!entityApi) return Response.json({ error: 'entity not found' }, { status: 400 });
 
-    await entityApi.update(entityId, { status: oldStatus });
+    await entityApi.update(entityId, {
+      status: rollbackTo,
+      last_valid_status: rollbackTo,
+    });
 
     // Log error
     const clientId = data.client_id || (entityName === 'Client' ? entityId : '');
@@ -100,19 +109,20 @@ Deno.serve(async (req) => {
       client_id: clientId,
       type: 'system_error',
       direction: 'outbound',
-      content: `🚫 מעבר סטטוס לא מורשה ב-${entityName}: "${oldStatus}" → "${newStatus}". בוצע rollback.`,
+      content: `🚫 מעבר סטטוס לא מורשה ב-${entityName}: "${oldStatus}" → "${newStatus}". בוצע rollback ל-"${rollbackTo}".`,
       sent_by: 'system',
       status: 'sent',
       channel: 'base44_native',
-      error_detail: `Invalid transition: ${entityName}#${entityId} ${oldStatus} → ${newStatus}`,
+      error_detail: `Invalid transition: ${entityName}#${entityId} ${oldStatus} → ${newStatus}. Rolled back to ${rollbackTo}.`,
     });
 
-    return Response.json({ 
-      valid: false, 
-      rolledBack: true, 
-      entity: entityName, 
-      from: oldStatus, 
-      to: newStatus 
+    return Response.json({
+      valid: false,
+      rolledBack: true,
+      entity: entityName,
+      from: oldStatus,
+      to: newStatus,
+      rolledBackTo: rollbackTo,
     });
   } catch (error) {
     try {

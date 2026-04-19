@@ -55,6 +55,10 @@
       "default": "open",
       "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05de\u05e9\u05d9\u05de\u05d4"
     },
+    "last_valid_status": {
+      "type": "string",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05ea\u05e7\u05d9\u05df \u05d0\u05d7\u05e8\u05d5\u05df (\u05dc\u05d6\u05d9\u05d4\u05d5\u05d9 rollback \u05e9\u05dc state machine)"
+    },
     "due_date": {
       "type": "string",
       "format": "date",

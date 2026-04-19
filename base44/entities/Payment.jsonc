@@ -45,6 +45,10 @@
       "default": "pending",
       "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05ea\u05e9\u05dc\u05d5\u05dd"
     },
+    "last_valid_status": {
+      "type": "string",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05ea\u05e7\u05d9\u05df \u05d0\u05d7\u05e8\u05d5\u05df (\u05dc\u05d6\u05d9\u05d4\u05d5\u05d9 rollback \u05e9\u05dc state machine)"
+    },
     "reminder_sent": {
       "type": "boolean",
       "default": false,
@@ -73,5 +77,27 @@
     "amount",
     "due_date",
     "status"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

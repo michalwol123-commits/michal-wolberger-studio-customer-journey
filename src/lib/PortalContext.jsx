@@ -23,9 +23,27 @@ export function PortalProvider({ children }) {
     const clients = await base44.entities.Client.filter({ portal_token: token });
     if (clients.length === 0) {
       setError(true);
-    } else {
-      setClient(clients[0]);
+      setLoading(false);
+      return;
     }
+
+    const c = clients[0];
+
+    // Check if token is revoked
+    if (c.portal_token_revoked === true) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+
+    // Check if token is expired
+    if (c.portal_token_expires_at && new Date(c.portal_token_expires_at) < new Date()) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+
+    setClient(c);
     setLoading(false);
   };
 

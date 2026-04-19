@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check } from 'lucide-react';
+import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -26,10 +26,23 @@ export default function ClientProfile() {
   const generateTokenMutation = useMutation({
     mutationFn: async (clientObj) => {
       const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 8);
-      await base44.entities.Client.update(clientObj.id, { portal_token: token });
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 90);
+      await base44.entities.Client.update(clientObj.id, {
+        portal_token: token,
+        portal_token_expires_at: expiresAt.toISOString(),
+        portal_token_revoked: false,
+      });
       return token;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clients'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['client', clientId] }),
+  });
+
+  const revokeTokenMutation = useMutation({
+    mutationFn: async (clientObj) => {
+      await base44.entities.Client.update(clientObj.id, { portal_token_revoked: true });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['client', clientId] }),
   });
 
   const getPortalUrl = (token) => {
@@ -39,7 +52,7 @@ export default function ClientProfile() {
 
   const handleOpenPortal = async () => {
     let token = client.portal_token;
-    if (!token) {
+    if (!token || client.portal_token_revoked) {
       token = await generateTokenMutation.mutateAsync(client);
     }
     window.open(getPortalUrl(token), '_blank');
@@ -47,7 +60,7 @@ export default function ClientProfile() {
 
   const handleCopyLink = async () => {
     let token = client.portal_token;
-    if (!token) {
+    if (!token || client.portal_token_revoked) {
       token = await generateTokenMutation.mutateAsync(client);
     }
     await navigator.clipboard.writeText(getPortalUrl(token));
@@ -55,45 +68,44 @@ export default function ClientProfile() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => base44.entities.Client.list('-created_date', 200),
+  const { data: clientArr = [] } = useQuery({
+    queryKey: ['client', clientId],
+    queryFn: () => base44.entities.Client.filter({ id: clientId }),
   });
-  const client = clients.find(c => c.id === clientId);
+  const client = clientArr[0];
 
-  const { data: projects = [] } = useQuery({
-    queryKey: ['projects'],
-    queryFn: () => base44.entities.Project.list('-created_date', 200),
+  const { data: clientProjects = [] } = useQuery({
+    queryKey: ['projects', clientId],
+    queryFn: () => base44.entities.Project.filter({ client_id: clientId }, '-created_date', 200),
   });
-  const clientProjects = projects.filter(p => p.client_id === clientId);
 
-  const { data: payments = [] } = useQuery({
-    queryKey: ['payments'],
+  const projectIds = clientProjects.map(p => p.id);
+
+  const { data: allPayments = [] } = useQuery({
+    queryKey: ['payments', clientId, projectIds],
     queryFn: () => base44.entities.Payment.list('-created_date', 200),
-    enabled: isAdmin,
+    enabled: isAdmin && projectIds.length > 0,
+  });
+  const projectPayments = isAdmin
+    ? allPayments.filter(p => projectIds.includes(p.project_id))
+    : [];
+
+  const { data: clientDocs = [] } = useQuery({
+    queryKey: ['documents', clientId],
+    queryFn: () => base44.entities.Document.filter({ client_id: clientId }, '-created_date', 200),
   });
 
-  const { data: documents = [] } = useQuery({
-    queryKey: ['documents'],
-    queryFn: () => base44.entities.Document.list('-created_date', 200),
+  const { data: allComms = [] } = useQuery({
+    queryKey: ['communications', clientId],
+    queryFn: () => base44.entities.Communication.filter({ client_id: clientId }, '-created_date', 200),
   });
-  const clientDocs = documents.filter(d => d.client_id === clientId || clientProjects.some(p => p.id === d.project_id));
-
-  const { data: communications = [] } = useQuery({
-    queryKey: ['communications'],
-    queryFn: () => base44.entities.Communication.list('-created_date', 200),
-  });
-  const clientComms = communications
-    .filter(c => c.client_id === clientId)
-    .filter(c => isAdmin || c.type !== 'system_error');
+  const clientComms = allComms.filter(c => isAdmin || c.type !== 'system_error');
 
   if (!client) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">טוען...</div>;
   }
 
-  const projectPayments = isAdmin 
-    ? payments.filter(p => clientProjects.some(proj => proj.id === p.project_id))
-    : [];
+
 
   const budgetLabels = { up_to_100k: 'עד ₪100K', '100_300k': '₪100K-300K', '300_500k': '₪300K-500K', above_500k: 'מעל ₪500K' };
   const propertyLabels = { apartment: 'דירה', house: 'בית', office: 'משרד', commercial: 'מסחרי' };
@@ -122,7 +134,7 @@ export default function ClientProfile() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button size="sm" variant="outline" onClick={handleCopyLink} className="gap-1">
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             {copied ? 'הועתק!' : 'העתק קישור פורטל'}
@@ -131,6 +143,16 @@ export default function ClientProfile() {
             <ExternalLink className="w-4 h-4" />
             צפה בפורטל
           </Button>
+          <Button size="sm" variant="outline" onClick={() => generateTokenMutation.mutate(client)} className="gap-1">
+            <RefreshCw className="w-4 h-4" />
+            חדש קישור
+          </Button>
+          {client.portal_token && !client.portal_token_revoked && (
+            <Button size="sm" variant="destructive" onClick={() => revokeTokenMutation.mutate(client)} className="gap-1">
+              <Ban className="w-4 h-4" />
+              בטל קישור
+            </Button>
+          )}
         </div>
       </div>
 
