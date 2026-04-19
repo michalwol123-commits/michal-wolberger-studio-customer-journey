@@ -25,7 +25,7 @@ export default function ClientProfile() {
 
   const generateTokenMutation = useMutation({
     mutationFn: async (clientObj) => {
-      const token = crypto.randomUUID().replace(/-/g, '').slice(0, 24);
+      const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 8);
       await base44.entities.Client.update(clientObj.id, { portal_token: token });
       return token;
     },
