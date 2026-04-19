@@ -21,7 +21,7 @@ import Tasks from '@/pages/Tasks';
 import SettingsPage from '@/pages/SettingsPage';
 import Portal from '@/pages/Portal';
 
-const AuthenticatedApp = () => {
+const AuthGate = ({ children }) => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -41,26 +41,14 @@ const AuthenticatedApp = () => {
     }
   }
 
-  return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/pipeline" element={<Pipeline />} />
-        <Route path="/leads" element={<Leads />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/clients/:id" element={<ClientProfile />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/projects/:id" element={<ProjectDetail />} />
-        <Route path="/payments" element={<Payments />} />
-        <Route path="/meetings" element={<Meetings />} />
-        <Route path="/communications" element={<Communications />} />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/settings" element={<SettingsPage />} />
-      </Route>
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
-  );
+  return children;
 };
+
+const AuthedLayout = () => (
+  <AuthGate>
+    <AppLayout />
+  </AuthGate>
+);
 
 function App() {
   return (
@@ -69,7 +57,21 @@ function App() {
         <Router>
           <Routes>
             <Route path="/portal" element={<Portal />} />
-            <Route path="/*" element={<AuthenticatedApp />} />
+            <Route element={<AuthedLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/pipeline" element={<Pipeline />} />
+              <Route path="/leads" element={<Leads />} />
+              <Route path="/clients" element={<Clients />} />
+              <Route path="/clients/:id" element={<ClientProfile />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectDetail />} />
+              <Route path="/payments" element={<Payments />} />
+              <Route path="/meetings" element={<Meetings />} />
+              <Route path="/communications" element={<Communications />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
+            <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>
         <Toaster />
