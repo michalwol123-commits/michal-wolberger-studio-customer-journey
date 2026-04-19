@@ -19,6 +19,7 @@ import Meetings from '@/pages/Meetings';
 import Communications from '@/pages/Communications';
 import Tasks from '@/pages/Tasks';
 import SettingsPage from '@/pages/SettingsPage';
+import Portal from '@/pages/Portal';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -66,7 +67,10 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
-          <AuthenticatedApp />
+          <Routes>
+            <Route path="/portal" element={<Portal />} />
+            <Route path="/*" element={<AuthenticatedApp />} />
+          </Routes>
         </Router>
         <Toaster />
       </QueryClientProvider>
