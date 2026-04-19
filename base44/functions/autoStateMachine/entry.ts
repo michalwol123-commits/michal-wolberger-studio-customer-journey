@@ -64,7 +64,28 @@ Deno.serve(async (req) => {
     if (!allowed) return Response.json({ skipped: true, reason: 'unknown old status' });
 
     if (allowed.includes(newStatus)) {
-      return Response.json({ valid: true, from: oldStatus, to: newStatus });
+      // Auto-fill timestamp fields on valid Client transitions
+      if (entityName === 'Client') {
+        const timestampMap = {
+          qualified: { qualified_at: new Date().toISOString() },
+          proposal_sent: { proposal_sent_at: new Date().toISOString() },
+          active_client: {},
+          completed_client: { completed_at: new Date().toISOString() },
+        };
+        const tsUpdate = timestampMap[newStatus];
+        if (tsUpdate && Object.keys(tsUpdate).length > 0) {
+          await base44.asServiceRole.entities.Client.update(entityId, tsUpdate);
+        }
+      }
+
+      // Auto-fill end_date_actual on Project completion
+      if (entityName === 'Project' && newStatus === 'completed') {
+        await base44.asServiceRole.entities.Project.update(entityId, {
+          end_date_actual: new Date().toISOString().split('T')[0],
+        });
+      }
+
+      return Response.json({ valid: true, from: oldStatus, to: newStatus, timestamped: true });
     }
 
     // INVALID TRANSITION — rollback

@@ -26,8 +26,22 @@ Deno.serve(async (req) => {
     }
 
     const projectId = event.entity_id;
+    const oldStage = old_data.stage_current;
     const newStage = data.stage_current;
     const stageName = STAGE_NAMES[newStage] || `שלב ${newStage}`;
+
+    // Update stage statuses: mark previous stage as completed, new stage as in_progress
+    const stageUpdates = {};
+    if (oldStage >= 1 && oldStage <= 9) {
+      stageUpdates[`s${oldStage}_status`] = 'completed';
+    }
+    if (newStage >= 1 && newStage <= 9) {
+      stageUpdates[`s${newStage}_status`] = 'in_progress';
+    }
+    // Calculate progress based on completed stages
+    stageUpdates.progress = Math.round(((newStage - 1) / 9) * 100);
+    
+    await base44.asServiceRole.entities.Project.update(projectId, stageUpdates);
 
     // Get client
     const clients = await base44.asServiceRole.entities.Client.filter({ id: data.client_id });
