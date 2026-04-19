@@ -1,0 +1,248 @@
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import PageHeader from '@/components/shared/PageHeader';
+import StatusBadge from '@/components/shared/StatusBadge';
+import useCurrentUser from '@/lib/useCurrentUser';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
+import EmptyState from '@/components/shared/EmptyState';
+
+export default function ClientProfile() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const pathParts = window.location.pathname.split('/');
+  const clientId = pathParts[pathParts.length - 1];
+  const { user, isAdmin } = useCurrentUser();
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => base44.entities.Client.list('-created_date', 200),
+  });
+  const client = clients.find(c => c.id === clientId);
+
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => base44.entities.Project.list('-created_date', 200),
+  });
+  const clientProjects = projects.filter(p => p.client_id === clientId);
+
+  const { data: payments = [] } = useQuery({
+    queryKey: ['payments'],
+    queryFn: () => base44.entities.Payment.list('-created_date', 200),
+    enabled: isAdmin,
+  });
+
+  const { data: documents = [] } = useQuery({
+    queryKey: ['documents'],
+    queryFn: () => base44.entities.Document.list('-created_date', 200),
+  });
+  const clientDocs = documents.filter(d => d.client_id === clientId || clientProjects.some(p => p.id === d.project_id));
+
+  const { data: communications = [] } = useQuery({
+    queryKey: ['communications'],
+    queryFn: () => base44.entities.Communication.list('-created_date', 200),
+  });
+  const clientComms = communications
+    .filter(c => c.client_id === clientId)
+    .filter(c => isAdmin || c.type !== 'system_error');
+
+  if (!client) {
+    return <div className="flex items-center justify-center h-64 text-muted-foreground">טוען...</div>;
+  }
+
+  const projectPayments = isAdmin 
+    ? payments.filter(p => clientProjects.some(proj => proj.id === p.project_id))
+    : [];
+
+  const budgetLabels = { up_to_100k: 'עד ₪100K', '100_300k': '₪100K-300K', '300_500k': '₪300K-500K', above_500k: 'מעל ₪500K' };
+  const propertyLabels = { apartment: 'דירה', house: 'בית', office: 'משרד', commercial: 'מסחרי' };
+
+  return (
+    <div>
+      <div className="mb-4">
+        <Link to="/clients" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+          <ArrowRight className="w-4 h-4" />
+          חזרה לרשימה
+        </Link>
+      </div>
+      
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold font-heading">
+            {client.name?.[0]}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold font-heading">{client.name}</h1>
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
+              <StatusBadge status={client.status} />
+              {client.tags?.map(t => (
+                <span key={t} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Info */}
+      <Card className="mb-6">
+        <CardContent className="p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-muted-foreground" />
+              <span dir="ltr">{client.phone}</span>
+            </div>
+            {client.email && (
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-muted-foreground" />
+                <span dir="ltr">{client.email}</span>
+              </div>
+            )}
+            {client.address && (
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <span>{client.address}</span>
+              </div>
+            )}
+            {client.budget_range && (
+              <div className="text-muted-foreground">תקציב: {budgetLabels[client.budget_range] || client.budget_range}</div>
+            )}
+            {client.property_type && (
+              <div className="text-muted-foreground">נכס: {propertyLabels[client.property_type] || client.property_type}</div>
+            )}
+            {client.source && (
+              <div className="text-muted-foreground">מקור: {client.source}</div>
+            )}
+          </div>
+          {client.notes && !isAdmin ? null : client.notes && (
+            <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm">
+              <span className="font-medium">הערות: </span>{client.notes}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Tabs */}
+      <Tabs defaultValue="projects" dir="rtl">
+        <TabsList className="mb-4">
+          <TabsTrigger value="projects" className="gap-1"><Briefcase className="w-4 h-4" />פרויקטים</TabsTrigger>
+          {isAdmin && <TabsTrigger value="payments" className="gap-1"><CreditCard className="w-4 h-4" />תשלומים</TabsTrigger>}
+          <TabsTrigger value="documents" className="gap-1"><FileText className="w-4 h-4" />מסמכים</TabsTrigger>
+          <TabsTrigger value="communications" className="gap-1"><MessageSquare className="w-4 h-4" />תקשורת</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="projects">
+          {clientProjects.length === 0 ? (
+            <EmptyState icon={Briefcase} title="אין פרויקטים" />
+          ) : (
+            <div className="space-y-3">
+              {clientProjects.map(p => (
+                <Link key={p.id} to={`/projects/${p.id}`} className="block">
+                  <Card className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{p.name}</p>
+                        <p className="text-xs text-muted-foreground">שלב {p.stage_current}/9 • {p.progress || 0}%</p>
+                      </div>
+                      <StatusBadge status={p.status} />
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {isAdmin && (
+          <TabsContent value="payments">
+            {projectPayments.length === 0 ? (
+              <EmptyState icon={CreditCard} title="אין תשלומים" />
+            ) : (
+              <div className="bg-card rounded-xl border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-right px-4 py-3 font-medium">אבן דרך</th>
+                      <th className="text-right px-4 py-3 font-medium">סכום</th>
+                      <th className="text-right px-4 py-3 font-medium">שולם</th>
+                      <th className="text-right px-4 py-3 font-medium">תאריך יעד</th>
+                      <th className="text-right px-4 py-3 font-medium">סטטוס</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {projectPayments.map(pay => (
+                      <tr key={pay.id} className="border-b last:border-0">
+                        <td className="px-4 py-3">{pay.milestone}</td>
+                        <td className="px-4 py-3">₪{pay.amount?.toLocaleString()}</td>
+                        <td className="px-4 py-3">₪{(pay.amount_paid || 0).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{pay.due_date ? format(new Date(pay.due_date), 'dd/MM/yyyy') : '—'}</td>
+                        <td className="px-4 py-3"><StatusBadge status={pay.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </TabsContent>
+        )}
+
+        <TabsContent value="documents">
+          {clientDocs.length === 0 ? (
+            <EmptyState icon={FileText} title="אין מסמכים" />
+          ) : (
+            <div className="space-y-2">
+              {clientDocs.filter(d => d.is_current !== false).map(doc => (
+                <Card key={doc.id}>
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{doc.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {doc.type} • גרסה {doc.version_number || 1}
+                        {doc.stage ? ` • שלב ${doc.stage}` : ''}
+                      </p>
+                    </div>
+                    {doc.file_url && (
+                      <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">
+                        צפה
+                      </a>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="communications">
+          {clientComms.length === 0 ? (
+            <EmptyState icon={MessageSquare} title="אין תקשורת" />
+          ) : (
+            <div className="space-y-2">
+              {clientComms.map(comm => (
+                <Card key={comm.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={comm.type} />
+                        <span className="text-xs text-muted-foreground">
+                          {comm.direction === 'inbound' ? 'נכנס' : 'יוצא'}
+                        </span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {comm.created_date ? format(new Date(comm.created_date), 'dd/MM/yyyy HH:mm') : ''}
+                      </span>
+                    </div>
+                    <p className="text-sm">{comm.content}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
