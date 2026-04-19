@@ -7,9 +7,11 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Check } from 'lucide-react';
+import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Check, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
+import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
+import { Button } from '@/components/ui/button';
 
 const stageNames = {
   1: 'שאלון מפורט', 2: 'פגישת תכנית + גאנט', 3: 'תכניות עבודה',
@@ -21,6 +23,7 @@ export default function ProjectDetail() {
   const pathParts = window.location.pathname.split('/');
   const projectId = pathParts[pathParts.length - 1];
   const { isAdmin } = useCurrentUser();
+  const [showUploadDoc, setShowUploadDoc] = React.useState(false);
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
@@ -176,7 +179,14 @@ export default function ProjectDetail() {
         )}
 
         <TabsContent value="documents">
-          {projectDocs.length === 0 ? <EmptyState icon={FileText} title="אין מסמכים" /> : (
+          <div className="flex justify-end mb-3">
+            <Button size="sm" onClick={() => setShowUploadDoc(true)} className="gap-1">
+              <Upload className="w-4 h-4" />
+              העלאת מסמך
+            </Button>
+          </div>
+          <UploadDocumentDialog open={showUploadDoc} onOpenChange={setShowUploadDoc} projectId={projectId} />
+          {projectDocs.length === 0 ? <EmptyState icon={FileText} title="אין מסמכים" description="העלה מסמך ראשון" /> : (
             <div className="space-y-2">
               {projectDocs.map(doc => (
                 <Card key={doc.id}>

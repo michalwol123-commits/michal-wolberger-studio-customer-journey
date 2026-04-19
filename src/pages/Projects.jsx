@@ -10,10 +10,17 @@ import { Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
 
-const stageNames = {
-  1: 'שאלון', 2: 'תכנית', 3: 'תכניות עבודה', 4: 'קונספט',
-  5: 'קניות', 6: 'תמחור קבלנים', 7: 'ביצוע', 8: 'התקנה', 9: 'מסירה'
-};
+const stageConfig = [
+  { num: 1, name: 'שאלון' },
+  { num: 2, name: 'תכנית' },
+  { num: 3, name: 'תכניות עבודה' },
+  { num: 4, name: 'קונספט' },
+  { num: 5, name: 'קניות' },
+  { num: 6, name: 'תמחור קבלנים' },
+  { num: 7, name: 'ביצוע' },
+  { num: 8, name: 'התקנה' },
+  { num: 9, name: 'מסירה' },
+];
 
 export default function Projects() {
   const { user, isAdmin } = useCurrentUser();
@@ -36,9 +43,21 @@ export default function Projects() {
     .filter(p => isAdmin || p.owner === user?.email)
     .filter(p => statusFilter === 'all' || p.status === statusFilter);
 
+  // Group by stage_current
+  const stageGroups = {};
+  stageConfig.forEach(s => { stageGroups[s.num] = []; });
+  filtered.forEach(p => {
+    const stage = p.stage_current || 1;
+    if (stageGroups[stage]) {
+      stageGroups[stage].push(p);
+    }
+  });
+
+  const totalCount = filtered.length;
+
   return (
     <div>
-      <PageHeader title="פרויקטים" subtitle={`${filtered.length} פרויקטים`}>
+      <PageHeader title="פרויקטים" subtitle={`${totalCount} פרויקטים`}>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -51,35 +70,58 @@ export default function Projects() {
         </Select>
       </PageHeader>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map(project => {
-          const client = clientMap[project.client_id];
-          return (
-            <Link key={project.id} to={`/projects/${project.id}`} className="block">
-              <div className="bg-card rounded-xl border border-border p-5 hover:shadow-md transition-shadow h-full">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-medium font-heading">{project.name}</p>
-                    <p className="text-xs text-muted-foreground">{client?.name || 'לקוח לא ידוע'}</p>
-                  </div>
-                  <StatusBadge status={project.status} />
+      {totalCount === 0 ? (
+        <EmptyState icon={Briefcase} title="אין פרויקטים" />
+      ) : (
+        <div className="flex gap-3 overflow-x-auto pb-4" dir="rtl">
+          {stageConfig.map(stage => (
+            <div key={stage.num} className="min-w-[220px] max-w-[260px] flex-shrink-0">
+              {/* Column header */}
+              <div className="flex items-center justify-between bg-muted/60 rounded-t-xl px-3 py-2.5 border border-border border-b-0">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center">
+                    {stage.num}
+                  </span>
+                  <span className="text-sm font-heading font-semibold">{stage.name}</span>
                 </div>
-                <div className="mb-3">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                    <span>שלב {project.stage_current}/9 — {stageNames[project.stage_current] || ''}</span>
-                    <span>{project.progress || 0}%</span>
-                  </div>
-                  <Progress value={project.progress || 0} className="h-2" />
-                </div>
-                {project.total_budget && (
-                  <p className="text-sm text-muted-foreground">תקציב: ₪{project.total_budget.toLocaleString()}</p>
+                <span className="text-xs text-muted-foreground bg-background px-1.5 py-0.5 rounded">
+                  {stageGroups[stage.num].length}
+                </span>
+              </div>
+
+              {/* Column body */}
+              <div className="bg-muted/30 border border-border border-t-0 rounded-b-xl p-2 space-y-2 min-h-[120px]">
+                {stageGroups[stage.num].length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-6">—</p>
+                ) : (
+                  stageGroups[stage.num].map(project => {
+                    const client = clientMap[project.client_id];
+                    return (
+                      <Link key={project.id} to={`/projects/${project.id}`} className="block">
+                        <div className="bg-card rounded-lg border border-border p-3 hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between gap-1 mb-2">
+                            <p className="text-sm font-medium font-heading leading-tight">{project.name}</p>
+                            <StatusBadge status={project.status} />
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">{client?.name || 'לקוח לא ידוע'}</p>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                            <span>התקדמות</span>
+                            <span>{project.progress || 0}%</span>
+                          </div>
+                          <Progress value={project.progress || 0} className="h-1.5" />
+                          {project.total_budget && (
+                            <p className="text-xs text-muted-foreground mt-2">₪{project.total_budget.toLocaleString()}</p>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })
                 )}
               </div>
-            </Link>
-          );
-        })}
-      </div>
-      {filtered.length === 0 && <EmptyState icon={Briefcase} title="אין פרויקטים" />}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

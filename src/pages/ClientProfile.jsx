@@ -7,16 +7,18 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare } from 'lucide-react';
+import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import EmptyState from '@/components/shared/EmptyState';
+import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 
 export default function ClientProfile() {
   const urlParams = new URLSearchParams(window.location.search);
   const pathParts = window.location.pathname.split('/');
   const clientId = pathParts[pathParts.length - 1];
   const { user, isAdmin } = useCurrentUser();
+  const [showUploadDoc, setShowUploadDoc] = useState(false);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
@@ -190,8 +192,15 @@ export default function ClientProfile() {
         )}
 
         <TabsContent value="documents">
+          <div className="flex justify-end mb-3">
+            <Button size="sm" onClick={() => setShowUploadDoc(true)} className="gap-1">
+              <Upload className="w-4 h-4" />
+              העלאת מסמך
+            </Button>
+          </div>
+          <UploadDocumentDialog open={showUploadDoc} onOpenChange={setShowUploadDoc} clientId={clientId} />
           {clientDocs.length === 0 ? (
-            <EmptyState icon={FileText} title="אין מסמכים" />
+            <EmptyState icon={FileText} title="אין מסמכים" description="העלה מסמך ראשון" />
           ) : (
             <div className="space-y-2">
               {clientDocs.filter(d => d.is_current !== false).map(doc => (

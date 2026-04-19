@@ -9,6 +9,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import CriticalAlerts from '@/components/dashboard/CriticalAlerts';
+import CustomerService from '@/components/dashboard/CustomerService';
 
 export default function Dashboard() {
   const { user, isAdmin } = useCurrentUser();
@@ -37,6 +39,11 @@ export default function Dashboard() {
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 200),
+  });
+
+  const { data: communications = [] } = useQuery({
+    queryKey: ['communications'],
+    queryFn: () => base44.entities.Communication.list('-created_date', 200),
   });
 
   // Filter by role
@@ -91,6 +98,24 @@ export default function Dashboard() {
         <StatsCard title="פרויקטים פעילים" value={activeProjects} icon={Briefcase} color="accent" />
         <StatsCard title="ערך Pipeline" value={`₪${pipelineValue.toLocaleString()}`} icon={TrendingUp} color="primary" />
         <StatsCard title="Conversion Rate" value={`${conversionRate}%`} subtitle="ליד → לקוח" icon={TrendingUp} color="success" />
+      </div>
+
+      {/* Widget 4+5: Alerts & Customer Service */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <CriticalAlerts
+          payments={payments}
+          tasks={myTasks}
+          communications={communications}
+          meetings={meetings}
+          clients={myClients}
+          isAdmin={isAdmin}
+        />
+        <CustomerService
+          clients={myClients}
+          communications={communications}
+          meetings={meetings}
+          projects={myProjects}
+        />
       </div>
 
       {/* Recent Activity */}
