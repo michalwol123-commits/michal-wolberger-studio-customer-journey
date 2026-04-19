@@ -1,0 +1,139 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05dc\u05d0"
+    },
+    "phone": {
+      "type": "string",
+      "description": "\u05d8\u05dc\u05e4\u05d5\u05df \u05db\u05d5\u05dc\u05dc 972+ (WhatsApp)"
+    },
+    "email": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "lead",
+        "qualified",
+        "proposal_sent",
+        "proposal_approved",
+        "active_client",
+        "completed_client",
+        "archived"
+      ],
+      "default": "lead",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05dc\u05e7\u05d5\u05d7"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "facebook",
+        "instagram",
+        "referral",
+        "google",
+        "website",
+        "other"
+      ],
+      "description": "\u05de\u05e7\u05d5\u05e8 \u05d4\u05dc\u05d9\u05d3"
+    },
+    "source_detail": {
+      "type": "string",
+      "description": "UTM / \u05e9\u05dd \u05d4\u05de\u05de\u05dc\u05d9\u05e5"
+    },
+    "budget_range": {
+      "type": "string",
+      "enum": [
+        "up_to_100k",
+        "100_300k",
+        "300_500k",
+        "above_500k"
+      ],
+      "description": "\u05d8\u05d5\u05d5\u05d7 \u05ea\u05e7\u05e6\u05d9\u05d1"
+    },
+    "design_style": {
+      "type": "string",
+      "description": "\u05e1\u05d2\u05e0\u05d5\u05df \u05e2\u05d9\u05e6\u05d5\u05d1 \u05de\u05d5\u05e2\u05d3\u05e3"
+    },
+    "address": {
+      "type": "string",
+      "description": "\u05db\u05ea\u05d5\u05d1\u05ea \u05d4\u05e0\u05db\u05e1"
+    },
+    "property_type": {
+      "type": "string",
+      "enum": [
+        "apartment",
+        "house",
+        "office",
+        "commercial"
+      ],
+      "description": "\u05e1\u05d5\u05d2 \u05e0\u05db\u05e1"
+    },
+    "portal_token": {
+      "type": "string",
+      "description": "Magic Link \u05dc\u05e4\u05d5\u05e8\u05d8\u05dc (auto-generate)"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "\u05de\u05d9 \u05de\u05d8\u05e4\u05dc (\u05de\u05d9\u05db\u05dc/\u05e2\u05d5\u05d6\u05e8\u05ea)"
+    },
+    "tags": {
+      "type": "array",
+      "description": "\u05ea\u05d2\u05d9\u05d5\u05ea: VIP, returning, cold, priority, referral_source",
+      "items": {
+        "type": "string",
+        "enum": [
+          "VIP",
+          "returning",
+          "cold",
+          "priority",
+          "referral_source"
+        ]
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "\u05d4\u05e2\u05e8\u05d5\u05ea \u05e4\u05e0\u05d9\u05de\u05d9\u05d5\u05ea (\u05d7\u05e1\u05d5\u05d9 \u05de\u05d4\u05dc\u05e7\u05d5\u05d7)"
+    },
+    "first_response_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u05d6\u05de\u05df \u05ea\u05d2\u05d5\u05d1\u05d4 \u05e8\u05d0\u05e9\u05d5\u05e0\u05d9"
+    },
+    "qualified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u05de\u05ea\u05d9 \u05d4\u05e4\u05da qualified"
+    },
+    "proposal_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u05de\u05ea\u05d9 \u05e0\u05e9\u05dc\u05d7\u05d4 \u05d4\u05e6\u05e2\u05d4 \u05e8\u05d0\u05e9\u05d5\u05e0\u05d4"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u05de\u05ea\u05d9 \u05d4\u05e1\u05ea\u05d9\u05d9\u05dd"
+    },
+    "duplicate_of": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05dc\u05e7\u05d5\u05d7 \u05de\u05e7\u05d5\u05e8\u05d9 \u05d0\u05dd \u05d6\u05d5\u05d4\u05d4 \u05db\u05db\u05e4\u05d9\u05dc\u05d5\u05ea"
+    },
+    "owner": {
+      "type": "string",
+      "description": "\u05d1\u05e2\u05dc\u05d9\u05dd (user)"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "\u05e2\u05d5\u05d3\u05db\u05df \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4 \u05e2\u05f4\u05d9 (user)"
+    }
+  },
+  "required": [
+    "name",
+    "phone",
+    "status"
+  ]
+}

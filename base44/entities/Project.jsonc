@@ -1,0 +1,175 @@
+{
+  "name": "Project",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "relationType": "Client",
+      "description": "\u05dc\u05e7\u05d5\u05d7 \u05de\u05e9\u05d5\u05d9\u05da"
+    },
+    "name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "on_hold",
+        "completed",
+        "cancelled"
+      ],
+      "default": "active",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8"
+    },
+    "stage_current": {
+      "type": "number",
+      "default": 1,
+      "description": "\u05e9\u05dc\u05d1 \u05e0\u05d5\u05db\u05d7\u05d9 \u05d1\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 (1-9)"
+    },
+    "progress": {
+      "type": "number",
+      "default": 0,
+      "description": "\u05d0\u05d7\u05d5\u05d6 \u05d4\u05e9\u05dc\u05de\u05d4 \u05db\u05d5\u05dc\u05dc (0-100)"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05e4\u05ea\u05d9\u05d7\u05ea \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8"
+    },
+    "end_date_est": {
+      "type": "string",
+      "format": "date",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05e1\u05d9\u05d5\u05dd \u05de\u05e9\u05d5\u05e2\u05e8"
+    },
+    "end_date_actual": {
+      "type": "string",
+      "format": "date",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05e1\u05d9\u05d5\u05dd \u05d1\u05e4\u05d5\u05e2\u05dc"
+    },
+    "total_budget": {
+      "type": "number",
+      "description": "\u05ea\u05e7\u05e6\u05d9\u05d1 \u05db\u05d5\u05dc\u05dc \u05de\u05d0\u05d5\u05e9\u05e8 (\u20aa)"
+    },
+    "contract_signed": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d4\u05d0\u05dd \u05d4\u05d7\u05d5\u05d6\u05d4 \u05e0\u05d7\u05ea\u05dd"
+    },
+    "contract_url": {
+      "type": "string",
+      "description": "\u05e7\u05d9\u05e9\u05d5\u05e8 \u05dc\u05d7\u05d5\u05d6\u05d4 \u05d7\u05ea\u05d5\u05dd"
+    },
+    "s1_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 1 \u2014 \u05e9\u05d0\u05dc\u05d5\u05df"
+    },
+    "s2_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 2 \u2014 \u05e4\u05d2\u05d9\u05e9\u05ea \u05ea\u05db\u05e0\u05d9\u05ea + \u05d2\u05d0\u05e0\u05d8/\u05ea\u05e7\u05e6\u05d9\u05d1"
+    },
+    "s3_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 3 \u2014 \u05ea\u05db\u05e0\u05d9\u05d5\u05ea \u05e2\u05d1\u05d5\u05d3\u05d4"
+    },
+    "s4_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 4 \u2014 \u05e7\u05d5\u05e0\u05e1\u05e4\u05d8 \u05e2\u05d9\u05e6\u05d5\u05d1\u05d9 + \u05e8\u05e0\u05d3\u05e8\u05d9\u05dd"
+    },
+    "s5_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 5 \u2014 \u05d9\u05de\u05d9 \u05e7\u05e0\u05d9\u05d5\u05ea"
+    },
+    "s6_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 6 \u2014 \u05ea\u05de\u05d7\u05d5\u05e8 \u05e7\u05d1\u05dc\u05e0\u05d9\u05dd + \u05d1\u05d7\u05d9\u05e8\u05ea \u05e1\u05e4\u05e7\u05d9\u05dd"
+    },
+    "s7_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 7 \u2014 \u05d1\u05d9\u05e6\u05d5\u05e2 + \u05d9\u05de\u05d9 \u05e4\u05d9\u05e7\u05d5\u05d7"
+    },
+    "s8_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 8 \u2014 \u05d9\u05de\u05d9 \u05d4\u05ea\u05e7\u05e0\u05d4 + \u05ea\u05d9\u05d0\u05d5\u05dd \u05e1\u05e4\u05e7\u05d9\u05dd"
+    },
+    "s9_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 9 \u2014 \u05de\u05e1\u05d9\u05e8\u05d4 \u05d5\u05e1\u05d9\u05d5\u05dd"
+    },
+    "nps_score": {
+      "type": "number",
+      "description": "\u05e9\u05d1\u05d9\u05e2\u05d5\u05ea \u05e8\u05e6\u05d5\u05df \u05e1\u05d5\u05e4\u05d9\u05ea (1-10)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\u05d4\u05e2\u05e8\u05d5\u05ea"
+    },
+    "owner": {
+      "type": "string",
+      "description": "\u05d1\u05e2\u05dc\u05d9\u05dd (user)"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "\u05e2\u05d5\u05d3\u05db\u05df \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4 \u05e2\u05f4\u05d9 (user)"
+    }
+  },
+  "required": [
+    "client_id",
+    "name",
+    "status"
+  ]
+}
