@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import EmptyState from '@/components/shared/EmptyState';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
+import ClientStatusChanger from '@/components/clients/ClientStatusChanger';
 
 export default function ClientProfile() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -127,7 +128,7 @@ export default function ClientProfile() {
           <div>
             <h1 className="text-2xl font-bold font-heading">{client.name}</h1>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
-              <StatusBadge status={client.status} />
+              <ClientStatusChanger client={client} />
               {client.tags?.map(t => (
                 <span key={t} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">{t}</span>
               ))}
