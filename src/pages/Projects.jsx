@@ -10,17 +10,8 @@ import { Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
 
-const stageConfig = [
-  { num: 1, name: 'שאלון' },
-  { num: 2, name: 'תכנית' },
-  { num: 3, name: 'תכניות עבודה' },
-  { num: 4, name: 'קונספט' },
-  { num: 5, name: 'קניות' },
-  { num: 6, name: 'תמחור קבלנים' },
-  { num: 7, name: 'ביצוע' },
-  { num: 8, name: 'התקנה' },
-  { num: 9, name: 'מסירה' },
-];
+import STAGES_CONFIG from '@/lib/stageConfig';
+const stageConfig = STAGES_CONFIG.map(s => ({ num: s.num, name: s.shortLabel }));
 
 export default function Projects() {
   const { user, isAdmin } = useCurrentUser();

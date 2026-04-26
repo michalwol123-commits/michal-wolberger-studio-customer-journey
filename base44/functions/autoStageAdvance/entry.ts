@@ -4,16 +4,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const STAGE_NAMES = {
-  1: 'שאלון',
-  2: 'פגישת תכנית + גאנט/תקציב',
-  3: 'תכניות עבודה',
-  4: 'קונספט עיצובי + רנדרים',
-  5: 'ימי קניות',
-  6: 'תמחור קבלנים + בחירת ספקים',
-  7: 'ביצוע + ימי פיקוח',
-  8: 'ימי התקנה + תיאום ספקים',
-  9: 'מסירה וסיום',
+  1: 'יצירת קשר ראשוני',
+  2: 'שיחת היכרות',
+  3: 'פגישת הצעת מחיר',
+  4: 'סגירת פרויקט',
+  5: 'שאלון מפורט',
+  6: 'פגישת תכנית + גאנט/תקציב',
+  7: 'תכניות עבודה',
+  8: 'קונספט עיצובי + רנדרים',
+  9: 'ימי קניות',
+  10: 'תמחור קבלנים ובחירת ספקים',
+  11: 'ביצוע בשטח + ימי פיקוח',
+  12: 'ימי התקנה ותיאום ספקים',
+  13: 'סיום פרויקט ומסירה',
 };
+
+const TOTAL_STAGES = 13;
 
 Deno.serve(async (req) => {
   try {
@@ -32,14 +38,14 @@ Deno.serve(async (req) => {
 
     // Update stage statuses: mark previous stage as completed, new stage as in_progress
     const stageUpdates = {};
-    if (oldStage >= 1 && oldStage <= 9) {
+    if (oldStage >= 1 && oldStage <= TOTAL_STAGES) {
       stageUpdates[`s${oldStage}_status`] = 'completed';
     }
-    if (newStage >= 1 && newStage <= 9) {
+    if (newStage >= 1 && newStage <= TOTAL_STAGES) {
       stageUpdates[`s${newStage}_status`] = 'in_progress';
     }
     // Calculate progress based on completed stages
-    stageUpdates.progress = Math.round(((newStage - 1) / 9) * 100);
+    stageUpdates.progress = Math.round(((newStage - 1) / TOTAL_STAGES) * 100);
     
     await base44.asServiceRole.entities.Project.update(projectId, stageUpdates);
 

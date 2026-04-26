@@ -29,7 +29,7 @@
     "stage_current": {
       "type": "number",
       "default": 1,
-      "description": "\u05e9\u05dc\u05d1 \u05e0\u05d5\u05db\u05d7\u05d9 \u05d1\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 (1-9)"
+      "description": "\u05e9\u05dc\u05d1 \u05e0\u05d5\u05db\u05d7\u05d9 \u05d1\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 (1-13)"
     },
     "progress": {
       "type": "number",
@@ -72,7 +72,7 @@
         "completed"
       ],
       "default": "pending",
-      "description": "\u05e9\u05dc\u05d1 1 \u2014 \u05e9\u05d0\u05dc\u05d5\u05df"
+      "description": "\u05e9\u05dc\u05d1 1 \u2014 \u05d9\u05e6\u05d9\u05e8\u05ea \u05e7\u05e9\u05e8 \u05e8\u05d0\u05e9\u05d5\u05e0\u05d9"
     },
     "s2_status": {
       "type": "string",
@@ -82,7 +82,7 @@
         "completed"
       ],
       "default": "pending",
-      "description": "\u05e9\u05dc\u05d1 2 \u2014 \u05e4\u05d2\u05d9\u05e9\u05ea \u05ea\u05db\u05e0\u05d9\u05ea + \u05d2\u05d0\u05e0\u05d8/\u05ea\u05e7\u05e6\u05d9\u05d1"
+      "description": "\u05e9\u05dc\u05d1 2 \u2014 \u05e9\u05d9\u05d7\u05ea \u05d4\u05d9\u05db\u05e8\u05d5\u05ea"
     },
     "s3_status": {
       "type": "string",
@@ -92,7 +92,7 @@
         "completed"
       ],
       "default": "pending",
-      "description": "\u05e9\u05dc\u05d1 3 \u2014 \u05ea\u05db\u05e0\u05d9\u05d5\u05ea \u05e2\u05d1\u05d5\u05d3\u05d4"
+      "description": "\u05e9\u05dc\u05d1 3 \u2014 \u05e4\u05d2\u05d9\u05e9\u05ea \u05d4\u05e6\u05e2\u05ea \u05de\u05d7\u05d9\u05e8"
     },
     "s4_status": {
       "type": "string",
@@ -102,7 +102,7 @@
         "completed"
       ],
       "default": "pending",
-      "description": "\u05e9\u05dc\u05d1 4 \u2014 \u05e7\u05d5\u05e0\u05e1\u05e4\u05d8 \u05e2\u05d9\u05e6\u05d5\u05d1\u05d9 + \u05e8\u05e0\u05d3\u05e8\u05d9\u05dd"
+      "description": "\u05e9\u05dc\u05d1 4 \u2014 \u05e1\u05d2\u05d9\u05e8\u05ea \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8"
     },
     "s5_status": {
       "type": "string",
@@ -112,7 +112,7 @@
         "completed"
       ],
       "default": "pending",
-      "description": "\u05e9\u05dc\u05d1 5 \u2014 \u05d9\u05de\u05d9 \u05e7\u05e0\u05d9\u05d5\u05ea"
+      "description": "\u05e9\u05dc\u05d1 5 \u2014 \u05e9\u05d0\u05dc\u05d5\u05df \u05de\u05e4\u05d5\u05e8\u05d8"
     },
     "s6_status": {
       "type": "string",
@@ -122,7 +122,7 @@
         "completed"
       ],
       "default": "pending",
-      "description": "\u05e9\u05dc\u05d1 6 \u2014 \u05ea\u05de\u05d7\u05d5\u05e8 \u05e7\u05d1\u05dc\u05e0\u05d9\u05dd + \u05d1\u05d7\u05d9\u05e8\u05ea \u05e1\u05e4\u05e7\u05d9\u05dd"
+      "description": "\u05e9\u05dc\u05d1 6 \u2014 \u05e4\u05d2\u05d9\u05e9\u05ea \u05ea\u05db\u05e0\u05d9\u05ea + \u05d2\u05d0\u05e0\u05d8/\u05ea\u05e7\u05e6\u05d9\u05d1"
     },
     "s7_status": {
       "type": "string",
@@ -132,7 +132,7 @@
         "completed"
       ],
       "default": "pending",
-      "description": "\u05e9\u05dc\u05d1 7 \u2014 \u05d1\u05d9\u05e6\u05d5\u05e2 + \u05d9\u05de\u05d9 \u05e4\u05d9\u05e7\u05d5\u05d7"
+      "description": "\u05e9\u05dc\u05d1 7 \u2014 \u05ea\u05db\u05e0\u05d9\u05d5\u05ea \u05e2\u05d1\u05d5\u05d3\u05d4"
     },
     "s8_status": {
       "type": "string",
@@ -142,7 +142,7 @@
         "completed"
       ],
       "default": "pending",
-      "description": "\u05e9\u05dc\u05d1 8 \u2014 \u05d9\u05de\u05d9 \u05d4\u05ea\u05e7\u05e0\u05d4 + \u05ea\u05d9\u05d0\u05d5\u05dd \u05e1\u05e4\u05e7\u05d9\u05dd"
+      "description": "\u05e9\u05dc\u05d1 8 \u2014 \u05e7\u05d5\u05e0\u05e1\u05e4\u05d8 \u05e2\u05d9\u05e6\u05d5\u05d1\u05d9 + \u05e8\u05e0\u05d3\u05e8\u05d9\u05dd"
     },
     "s9_status": {
       "type": "string",
@@ -152,7 +152,47 @@
         "completed"
       ],
       "default": "pending",
-      "description": "\u05e9\u05dc\u05d1 9 \u2014 \u05de\u05e1\u05d9\u05e8\u05d4 \u05d5\u05e1\u05d9\u05d5\u05dd"
+      "description": "\u05e9\u05dc\u05d1 9 \u2014 \u05d9\u05de\u05d9 \u05e7\u05e0\u05d9\u05d5\u05ea"
+    },
+    "s10_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 10 \u2014 \u05ea\u05de\u05d7\u05d5\u05e8 \u05e7\u05d1\u05dc\u05e0\u05d9\u05dd \u05d5\u05d1\u05d7\u05d9\u05e8\u05ea \u05e1\u05e4\u05e7\u05d9\u05dd"
+    },
+    "s11_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 11 \u2014 \u05d1\u05d9\u05e6\u05d5\u05e2 \u05d1\u05e9\u05d8\u05d7 + \u05d9\u05de\u05d9 \u05e4\u05d9\u05e7\u05d5\u05d7"
+    },
+    "s12_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 12 \u2014 \u05d9\u05de\u05d9 \u05d4\u05ea\u05e7\u05e0\u05d4 \u05d5\u05ea\u05d9\u05d0\u05d5\u05dd \u05e1\u05e4\u05e7\u05d9\u05dd"
+    },
+    "s13_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e9\u05dc\u05d1 13 \u2014 \u05e1\u05d9\u05d5\u05dd \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 \u05d5\u05de\u05e1\u05d9\u05e8\u05d4"
     },
     "nps_score": {
       "type": "number",

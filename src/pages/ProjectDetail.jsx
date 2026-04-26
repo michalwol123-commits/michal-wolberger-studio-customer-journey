@@ -13,11 +13,7 @@ import { format } from 'date-fns';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import { Button } from '@/components/ui/button';
 
-const stageNames = {
-  1: 'שאלון מפורט', 2: 'פגישת תכנית + גאנט', 3: 'תכניות עבודה',
-  4: 'קונספט עיצובי', 5: 'ימי קניות', 6: 'תמחור קבלנים',
-  7: 'ביצוע + פיקוח', 8: 'התקנה', 9: 'מסירה וסיום'
-};
+import STAGES, { TOTAL_STAGES } from '@/lib/stageConfig';
 
 export default function ProjectDetail() {
   const pathParts = window.location.pathname.split('/');
@@ -68,11 +64,9 @@ export default function ProjectDetail() {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">טוען...</div>;
   }
 
-  const stages = Array.from({ length: 9 }, (_, i) => {
-    const num = i + 1;
-    const statusKey = `s${num}_status`;
-    return { num, name: stageNames[num], status: project[statusKey] || 'pending' };
-  });
+  const stages = STAGES.map(s => ({
+    num: s.num, name: s.shortLabel, status: project[s.key] || 'pending'
+  }));
 
   return (
     <div>
@@ -96,7 +90,7 @@ export default function ProjectDetail() {
       <Card className="mb-6">
         <CardContent className="p-5">
           <h3 className="font-heading font-semibold mb-4">שלבי הפרויקט</h3>
-          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-3">
             {stages.map(stage => (
               <div
                 key={stage.num}
