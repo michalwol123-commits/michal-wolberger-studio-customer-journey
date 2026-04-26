@@ -86,7 +86,7 @@ export default function ProjectDetail() {
         <StatusBadge status={project.status} />
       </div>
 
-      {/* 9 Stages Progress */}
+      {/* 13 Stages Progress */}
       <Card className="mb-6">
         <CardContent className="p-5">
           <h3 className="font-heading font-semibold mb-4">שלבי הפרויקט</h3>

@@ -215,7 +215,7 @@ export default function ClientProfile() {
                     <CardContent className="p-4 flex items-center justify-between">
                       <div>
                         <p className="font-medium">{p.name}</p>
-                        <p className="text-xs text-muted-foreground">שלב {p.stage_current}/9 • {p.progress || 0}%</p>
+                        <p className="text-xs text-muted-foreground">שלב {p.stage_current}/13 • {p.progress || 0}%</p>
                       </div>
                       <StatusBadge status={p.status} />
                     </CardContent>

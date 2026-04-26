@@ -221,15 +221,19 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
               <Select value={form.stage} onValueChange={v => update('stage', v)}>
                 <SelectTrigger><SelectValue placeholder="בחר שלב" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1 — שאלון</SelectItem>
-                  <SelectItem value="2">2 — תכנית</SelectItem>
-                  <SelectItem value="3">3 — תכניות עבודה</SelectItem>
-                  <SelectItem value="4">4 — קונספט</SelectItem>
-                  <SelectItem value="5">5 — קניות</SelectItem>
-                  <SelectItem value="6">6 — תמחור קבלנים</SelectItem>
-                  <SelectItem value="7">7 — ביצוע</SelectItem>
-                  <SelectItem value="8">8 — התקנה</SelectItem>
-                  <SelectItem value="9">9 — מסירה</SelectItem>
+                  <SelectItem value="1">1 — קשר ראשוני</SelectItem>
+                  <SelectItem value="2">2 — שיחת היכרות</SelectItem>
+                  <SelectItem value="3">3 — הצעת מחיר</SelectItem>
+                  <SelectItem value="4">4 — סגירת פרויקט</SelectItem>
+                  <SelectItem value="5">5 — שאלון מפורט</SelectItem>
+                  <SelectItem value="6">6 — תכנית + גאנט</SelectItem>
+                  <SelectItem value="7">7 — תכניות עבודה</SelectItem>
+                  <SelectItem value="8">8 — קונספט עיצובי</SelectItem>
+                  <SelectItem value="9">9 — ימי קניות</SelectItem>
+                  <SelectItem value="10">10 — תמחור קבלנים</SelectItem>
+                  <SelectItem value="11">11 — ביצוע + פיקוח</SelectItem>
+                  <SelectItem value="12">12 — התקנה + ספקים</SelectItem>
+                  <SelectItem value="13">13 — סיום ומסירה</SelectItem>
                 </SelectContent>
               </Select>
             </div>
