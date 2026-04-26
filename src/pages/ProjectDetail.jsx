@@ -7,19 +7,22 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Check, Upload } from 'lucide-react';
+import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import { Button } from '@/components/ui/button';
 
 import STAGES, { TOTAL_STAGES } from '@/lib/stageConfig';
+import StageSelector from '@/components/projects/StageSelector';
+import StagePanel from '@/components/projects/StagePanel';
 
 export default function ProjectDetail() {
   const pathParts = window.location.pathname.split('/');
   const projectId = pathParts[pathParts.length - 1];
   const { isAdmin } = useCurrentUser();
   const [showUploadDoc, setShowUploadDoc] = React.useState(false);
+  const [selectedStage, setSelectedStage] = React.useState(null);
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
@@ -64,10 +67,6 @@ export default function ProjectDetail() {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">טוען...</div>;
   }
 
-  const stages = STAGES.map(s => ({
-    num: s.num, name: s.shortLabel, status: project[s.key] || 'pending'
-  }));
-
   return (
     <div>
       <div className="mb-4">
@@ -86,40 +85,20 @@ export default function ProjectDetail() {
         <StatusBadge status={project.status} />
       </div>
 
-      {/* 13 Stages Progress */}
+      {/* 13 Stages — Clickable */}
       <Card className="mb-6">
         <CardContent className="p-5">
-          <h3 className="font-heading font-semibold mb-4">שלבי הפרויקט</h3>
-          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-3">
-            {stages.map(stage => (
-              <div
-                key={stage.num}
-                className={`relative text-center p-3 rounded-xl border transition-all ${
-                  project.stage_current === stage.num
-                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                    : stage.status === 'completed'
-                    ? 'border-green-200 bg-green-50'
-                    : 'border-border bg-card'
-                }`}
-              >
-                <div className={`w-8 h-8 mx-auto mb-2 rounded-full flex items-center justify-center text-sm font-bold ${
-                  stage.status === 'completed'
-                    ? 'bg-green-500 text-white'
-                    : stage.status === 'in_progress'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                }`}>
-                  {stage.status === 'completed' ? <Check className="w-4 h-4" /> : stage.num}
-                </div>
-                <p className="text-[10px] sm:text-xs font-medium leading-tight">{stage.name}</p>
-                <p className="text-[9px] text-muted-foreground mt-0.5">
-                  {stage.status === 'completed' ? 'הושלם' : stage.status === 'in_progress' ? 'בביצוע' : 'ממתין'}
-                </p>
-              </div>
-            ))}
-          </div>
+          <h3 className="font-heading font-semibold mb-4">שלבי הפרויקט <span className="text-sm font-normal text-muted-foreground">(לחצי על שלב לצפייה)</span></h3>
+          <StageSelector project={project} selectedStage={selectedStage} onSelect={setSelectedStage} />
         </CardContent>
       </Card>
+
+      {/* Stage detail panel */}
+      {selectedStage && (
+        <div className="mb-6">
+          <StagePanel project={project} stageNum={selectedStage} />
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="overview" dir="rtl">

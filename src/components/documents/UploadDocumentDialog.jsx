@@ -24,13 +24,13 @@ const docTypes = [
   { value: 'other', label: 'אחר' },
 ];
 
-export default function UploadDocumentDialog({ open, onOpenChange, projectId, clientId }) {
+export default function UploadDocumentDialog({ open, onOpenChange, projectId, clientId, defaultStage }) {
   const queryClient = useQueryClient();
   const { user } = useCurrentUser();
   const fileRef = useRef(null);
 
   const [form, setForm] = useState({
-    name: '', type: 'other', stage: '', visible_to_client: false,
+    name: '', type: 'other', stage: defaultStage ? String(defaultStage) : '', visible_to_client: false,
   });
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
