@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload } from 'lucide-react';
+import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import STAGES, { TOTAL_STAGES } from '@/lib/stageConfig';
 import StageSelector from '@/components/projects/StageSelector';
 import StagePanel from '@/components/projects/StagePanel';
+import ProjectSuppliersTab from '@/components/suppliers/ProjectSuppliersTab';
 
 export default function ProjectDetail() {
   const pathParts = window.location.pathname.split('/');
@@ -107,6 +108,7 @@ export default function ProjectDetail() {
           {isAdmin && <TabsTrigger value="payments">תשלומים</TabsTrigger>}
           <TabsTrigger value="documents">מסמכים</TabsTrigger>
           <TabsTrigger value="tasks">משימות</TabsTrigger>
+          <TabsTrigger value="suppliers">ספקים</TabsTrigger>
           <TabsTrigger value="communications">תקשורת</TabsTrigger>
         </TabsList>
 
@@ -192,6 +194,10 @@ export default function ProjectDetail() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="suppliers">
+          <ProjectSuppliersTab projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="communications">

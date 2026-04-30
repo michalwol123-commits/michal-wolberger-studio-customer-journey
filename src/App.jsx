@@ -21,6 +21,7 @@ import Tasks from '@/pages/Tasks';
 import SettingsPage from '@/pages/SettingsPage';
 import UserGuide from '@/pages/UserGuide';
 import Portal from '@/pages/Portal';
+import Suppliers from '@/pages/Suppliers';
 
 const AuthGate = ({ children }) => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -70,6 +71,7 @@ function App() {
               <Route path="/meetings" element={<Meetings />} />
               <Route path="/communications" element={<Communications />} />
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="/suppliers" element={<Suppliers />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/user-guide" element={<UserGuide />} />
             </Route>

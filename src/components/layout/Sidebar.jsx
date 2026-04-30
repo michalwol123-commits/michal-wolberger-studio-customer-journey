@@ -11,6 +11,7 @@ import {
   MessageSquare,
   CheckSquare,
   FileText,
+  Truck,
   Settings,
   BookOpen,
   ChevronRight,
@@ -28,6 +29,7 @@ const navItems = [
   { path: '/meetings', label: 'פגישות', icon: Calendar, adminOnly: false },
   { path: '/communications', label: 'תקשורת', icon: MessageSquare, adminOnly: false },
   { path: '/tasks', label: 'משימות', icon: CheckSquare, adminOnly: false },
+  { path: '/suppliers', label: 'ספקים', icon: Truck, adminOnly: false },
   { path: '/settings', label: 'הגדרות', icon: Settings, adminOnly: true },
   { path: '/user-guide', label: 'מדריך למשתמשת', icon: BookOpen, adminOnly: true },
 ];

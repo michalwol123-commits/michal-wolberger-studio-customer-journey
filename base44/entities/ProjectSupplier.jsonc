@@ -1,0 +1,48 @@
+{
+  "name": "ProjectSupplier",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "relationType": "Project",
+      "description": "\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8"
+    },
+    "supplier_id": {
+      "type": "string",
+      "relationType": "Supplier",
+      "description": "\u05e1\u05e4\u05e7"
+    },
+    "category": {
+      "type": "string",
+      "description": "\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4 (\u05de\u05d5\u05e2\u05ea\u05e7 \u05de\u05d4\u05e1\u05e4\u05e7)"
+    },
+    "quoted_amount": {
+      "type": "number",
+      "description": "\u05e1\u05db\u05d5\u05dd \u05d4\u05e6\u05e2\u05d4 (\u20aa)"
+    },
+    "agreed_amount": {
+      "type": "number",
+      "description": "\u05e1\u05db\u05d5\u05dd \u05e1\u05d2\u05d5\u05e8 (\u20aa)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "quoted",
+        "approved",
+        "rejected",
+        "completed"
+      ],
+      "default": "pending",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\u05d4\u05e2\u05e8\u05d5\u05ea"
+    }
+  },
+  "required": [
+    "project_id",
+    "supplier_id"
+  ]
+}
