@@ -64,6 +64,59 @@
       "type": "string",
       "description": "\u05e7\u05d9\u05e9\u05d5\u05e8 \u05dc\u05d7\u05d5\u05d6\u05d4 \u05d7\u05ea\u05d5\u05dd"
     },
+    "questionnaire_url": {
+      "type": "string",
+      "description": "\u05e7\u05d9\u05e9\u05d5\u05e8 \u05dc\u05ea\u05e9\u05d5\u05d1\u05d5\u05ea \u05e9\u05d0\u05dc\u05d5\u05df \u05de\u05e4\u05d5\u05e8\u05d8"
+    },
+    "constraints": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05dc\u05d5\u05e6\u05d9\u05dd \u05de\u05d1\u05e0\u05d9\u05d9\u05dd/\u05ea\u05e7\u05e6\u05d9\u05d1\u05d9\u05d9\u05dd"
+    },
+    "spaces": {
+      "type": "string",
+      "description": "\u05d7\u05dc\u05dc\u05d9\u05dd \u05d1\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 (\u05d7\u05d3\u05e8\u05d9\u05dd/\u05d0\u05d6\u05d5\u05e8\u05d9\u05dd)"
+    },
+    "project_goals": {
+      "type": "string",
+      "description": "\u05de\u05d8\u05e8\u05d5\u05ea \u05d5\u05d7\u05d6\u05d5\u05df \u05d4\u05dc\u05e7\u05d5\u05d7"
+    },
+    "material_approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "revision"
+      ],
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d0\u05d9\u05e9\u05d5\u05e8 \u05d7\u05d5\u05de\u05e8\u05d9\u05dd (\u05e9\u05dc\u05d1 8)"
+    },
+    "concept_approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d0\u05d9\u05e9\u05d5\u05e8 \u05e7\u05d5\u05e0\u05e1\u05e4\u05d8 \u05e2\u05d9\u05e6\u05d5\u05d1\u05d9"
+    },
+    "shopping_days_quota": {
+      "type": "number",
+      "default": 5,
+      "description": "\u05de\u05db\u05e1\u05ea \u05d9\u05de\u05d9 \u05e7\u05e0\u05d9\u05d5\u05ea"
+    },
+    "shopping_days_used": {
+      "type": "number",
+      "default": 0,
+      "description": "\u05d9\u05de\u05d9 \u05e7\u05e0\u05d9\u05d5\u05ea \u05e9\u05e0\u05d5\u05e6\u05dc\u05d5"
+    },
+    "handover_checklist": {
+      "type": "string",
+      "description": "\u05e6'\u05e7\u05dc\u05d9\u05e1\u05d8 \u05de\u05e1\u05d9\u05e8\u05d4 (JSON)"
+    },
+    "client_signoff": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d0\u05d9\u05e9\u05d5\u05e8 \u05e7\u05d1\u05dc\u05ea \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 \u05de\u05d4\u05dc\u05e7\u05d5\u05d7"
+    },
+    "lessons_learned": {
+      "type": "string",
+      "description": "\u05dc\u05e7\u05d7\u05d9\u05dd \u05dc\u05e9\u05d9\u05e4\u05d5\u05e8"
+    },
     "s1_status": {
       "type": "string",
       "enum": [
@@ -208,7 +261,7 @@
     },
     "updated_by": {
       "type": "string",
-      "description": "\u05e2\u05d5\u05d3\u05db\u05df \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4 \u05e2\u05f4\u05d9 (user)"
+      "description": "\u05e2\u05d5\u05d3\u05db\u05df \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4 \u05e2\"\u05d9 (user)"
     }
   },
   "required": [
