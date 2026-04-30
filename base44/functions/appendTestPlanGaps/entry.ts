@@ -9,24 +9,49 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Admin only' }, { status: 403 });
   }
 
-  // 1. Get current document length
-  const { accessToken: docsToken } = await base44.asServiceRole.connectors.getConnection('googledocs');
+  const { accessToken } = await base44.asServiceRole.connectors.getConnection('googledocs');
 
+  // 1. Read doc to find Part I start
   const docRes = await fetch(`https://docs.googleapis.com/v1/documents/${DOC_ID}`, {
-    headers: { 'Authorization': `Bearer ${docsToken}` },
+    headers: { 'Authorization': `Bearer ${accessToken}` },
   });
   if (!docRes.ok) {
     return Response.json({ error: 'Failed to read doc', detail: await docRes.text() }, { status: 500 });
   }
   const doc = await docRes.json();
-  const endIndex = doc.body.content[doc.body.content.length - 1].endIndex - 1;
 
-  // 2. Build the new content
-  const blocks = buildGapContent();
+  // Find "חלק I" heading and delete everything from there to end
+  let partIStart = null;
+  const docEnd = doc.body.content[doc.body.content.length - 1].endIndex - 1;
 
-  // 3. Insert all text at the end of the document
+  for (const el of doc.body.content) {
+    if (el.paragraph && el.paragraph.elements) {
+      const text = el.paragraph.elements.map(e => e.textRun?.content || '').join('');
+      if (text.includes('חלק I')) {
+        // Start from the newline before this paragraph
+        partIStart = el.startIndex;
+        break;
+      }
+    }
+  }
+
   const requests = [];
-  let currentIndex = endIndex;
+
+  // Delete old Part I if it exists
+  if (partIStart && partIStart < docEnd) {
+    requests.push({
+      deleteContentRange: {
+        range: { startIndex: partIStart, endIndex: docEnd },
+      },
+    });
+  }
+
+  // Determine insert index
+  const insertAt = partIStart || docEnd;
+
+  // Build new content
+  const blocks = buildDevPlan();
+  let currentIndex = insertAt;
 
   for (const block of blocks) {
     requests.push({
@@ -36,12 +61,11 @@ Deno.serve(async (req) => {
       },
     });
 
-    const startIndex = currentIndex;
-
     if (block.style && block.style.startsWith('HEADING')) {
+      const headingEnd = currentIndex + block.text.split('\n')[0].length + 1;
       requests.push({
         updateParagraphStyle: {
-          range: { startIndex, endIndex: startIndex + block.text.split('\n')[0].length + 1 },
+          range: { startIndex: currentIndex, endIndex: headingEnd },
           paragraphStyle: { namedStyleType: block.style },
           fields: 'namedStyleType',
         },
@@ -51,11 +75,11 @@ Deno.serve(async (req) => {
     currentIndex += block.text.length;
   }
 
-  // 4. Send batchUpdate
+  // Execute
   const updateRes = await fetch(`https://docs.googleapis.com/v1/documents/${DOC_ID}:batchUpdate`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${docsToken}`,
+      'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ requests }),
@@ -65,240 +89,188 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Failed to update doc', detail: await updateRes.text() }, { status: 500 });
   }
 
-  return Response.json({ success: true, message: 'Part I appended successfully' });
+  return Response.json({ success: true, message: 'Part I rewritten as dev plan' });
 });
 
-function lines(items) {
-  return items.map((line, i) => `☐ ${i + 1}. ${line}`).join('\n') + '\n\n';
-}
-
-function buildGapContent() {
+function buildDevPlan() {
   const blocks = [];
+  const b = (text, style) => blocks.push({ text, style });
 
-  blocks.push({ text: '\n\n', style: 'NORMAL_TEXT' });
-  blocks.push({ text: 'חלק I — פערי אפיון: שדות, אוטומציות ומנגנונים שטרם מומשו\n', style: 'HEADING_1' });
-  blocks.push({ text: 'סעיף זה מבוסס על השוואה בין מצגת האפיון (PRD) לבין המערכת הקיימת. כל פריט מסומן ☐ — יש לבדוק אם קיים במערכת או שנדרש פיתוח.\n\n', style: 'NORMAL_TEXT' });
+  b('\n', 'NORMAL_TEXT');
+  b('חלק I — פערי אפיון: רשימת פיתוח והשלמות\n', 'HEADING_1');
+  b('מסמך זה מפרט פערים שזוהו בין מצגת האפיון (PRD) למערכת הקיימת.\nכל פריט מסומן לפי סטטוס:\n🔧 = לפתח (אני יכול לבצע)\n❓ = דורש החלטה עסקית שלך\n📋 = פאזה 2 (מורכב, נדחה)\n✅ = הושלם\n\n', 'NORMAL_TEXT');
 
-  // I1: Stage-specific CRM fields gaps
-  blocks.push({ text: 'I1: שדות CRM חסרים לפי שלבי האפיון\n', style: 'HEADING_2' });
+  // ============ I1: Fields ============
+  b('I1: שדות CRM חסרים לפי שלב\n', 'HEADING_2');
 
-  blocks.push({ text: 'שלב 02 — שיחת היכרות\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שדה "רמת עניין (H/M/L)" — דירוג חום/קור של הליד — לא קיים ב-Client entity',
-    'שדה "תקציב משוער" — הערכה ראשונית מהשיחה — לא קיים (קיים budget_range אבל לא סכום חופשי)',
-    'שדה "דדליין משוער" — מתי הלקוח צריך סיום — לא קיים',
-    'שדה "סיכום שיחה" — תיעוד נקודות עיקריות — נשמר כ-Communication אבל לא כשדה ייעודי',
-  ]) });
+  b('שלב 02 — שיחת היכרות\n', 'HEADING_3');
+  b(
+    '🔧 שדה "רמת עניין (H/M/L)" — דירוג חום ליד — להוסיף ל-Client\n' +
+    '🔧 שדה "תקציב משוער" — סכום חופשי (לא range) — להוסיף ל-Client\n' +
+    '🔧 שדה "דדליין משוער" — מתי הלקוח צריך סיום — להוסיף ל-Client\n' +
+    '✅ שדה "סיכום שיחה" — נשמר כ-Communication (מספיק)\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 05 — שאלון מפורט\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שדה "קישור לתשובות שאלון" — לינק מלא לשאלון שמולא — לא קיים',
-    'שדה "העדפות עיצוביות" — סגנון, צבעים, חומרים — קיים design_style אבל חלקי',
-    'שדה "אילוצים" — מגבלות מבניות, תקציב קשיח — לא קיים',
-    'שדה "חללים בפרויקט" — רשימת חדרים/אזורים — לא קיים',
-    'שדה "מטרות הפרויקט" — חזון הלקוח — לא קיים',
-    'שדה "דדליין לפרויקט" — תאריך כניסה רצוי — לא קיים (יש end_date_est אבל לא מאותו שלב)',
-  ]) });
+  b('שלב 05 — שאלון מפורט\n', 'HEADING_3');
+  b(
+    '🔧 שדה "קישור לתשובות שאלון" — להוסיף ל-Project\n' +
+    '🔧 שדה "אילוצים" — מגבלות מבניות/תקציב — להוסיף ל-Project\n' +
+    '🔧 שדה "חללים בפרויקט" — רשימת חדרים — להוסיף ל-Project\n' +
+    '🔧 שדה "מטרות הפרויקט" — חזון הלקוח — להוסיף ל-Project\n' +
+    '✅ שדה "העדפות עיצוביות" — קיים design_style על Client\n' +
+    '✅ שדה "דדליין לפרויקט" — קיים end_date_est\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 06 — פגישת תכנית + גאנט/תקציב\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שדה "אבני דרך" — שלבים מרכזיים ודדליינים — לא קיים כ-entity',
-    'שדה "בעלי תפקידים" — קבלנים/ספקים פוטנציאליים — לא קיים',
-    'שדה "מסמכי Output" — קישורים לקבצים שנוצרו — נשמרים כ-Documents אבל לא כשדה ייעודי',
-    'שדה "תקציב יעד" — מסגרת תקציבית מוסכמת — קיים total_budget אבל שאלה אם מנוהל נכון',
-  ]) });
+  b('שלב 06 — פגישת תכנית + גאנט/תקציב\n', 'HEADING_3');
+  b(
+    '❓ שדה "אבני דרך" — האם ליצור entity Milestone או שדה JSON? (דורש החלטה)\n' +
+    '❓ שדה "בעלי תפקידים" — האם ליצור entity Supplier? (דורש החלטה)\n' +
+    '✅ שדה "מסמכי Output" — נשמרים כ-Documents\n' +
+    '✅ שדה "תקציב יעד" — קיים total_budget\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 07 — תכניות עבודה\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שדה "סוג תכנית" — חשמל / אינסטלציה / תאורה / מיזוג — לא קיים (Document.type לא תומך)',
-    'שדה "גרסה תכנית" — V1, V2... — קיים version_number על Document אבל לא ספציפי לסוג',
-    'שדה "סטטוס אישור תכנית" — טיוטה / בהמתנה / מאושר — לא קיים',
-    'שדה "תאריך יעד לאישור" — דדליין ללקוח — לא קיים',
-  ]) });
+  b('שלב 07 — תכניות עבודה\n', 'HEADING_3');
+  b(
+    '🔧 שדה "סוג תכנית" — להרחיב Document.type (חשמל/אינסטלציה/תאורה/מיזוג)\n' +
+    '🔧 שדה "סטטוס אישור תכנית" — להוסיף ל-Document\n' +
+    '🔧 שדה "תאריך יעד לאישור" — להוסיף ל-Document\n' +
+    '✅ שדה "גרסה תכנית" — קיים version_number\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 08 — קונספט עיצובי\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שדה "לוחות השראה" — קישור לתיקיית תמונות — לא קיים',
-    'שדה "קישורי רנדרים" — תוצרי AI להדמיה — לא קיים (נשמרים כ-Documents)',
-    'שדה "סטטוס אישור חומרים" — גוונים, טקסטורות — לא קיים',
-    'שדה "תיעוד החלטות" — סיכום פגישה ב-CRM — נשמר כ-Communication',
-    'שדה "תאריך אישור קונספט" — אבן דרך — לא קיים',
-  ]) });
+  b('שלב 08 — קונספט עיצובי\n', 'HEADING_3');
+  b(
+    '🔧 שדה "סטטוס אישור חומרים" — להוסיף ל-Project\n' +
+    '🔧 שדה "תאריך אישור קונספט" — להוסיף ל-Project\n' +
+    '✅ שדה "לוחות השראה" + "רנדרים" — נשמרים כ-Documents\n' +
+    '✅ שדה "תיעוד החלטות" — נשמר כ-Communication\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 09 — ימי קניות (פער גדול!)\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שדה "מכסת ימים" — מספר ימי קניות בהסכם (ברירת מחדל 5) — לא קיים כלל',
-    'שדה "סטטוס ניצול" — ימים שנוצלו / ימים שנותרו — לא קיים',
-    'שדה "יומן רכישות" — רשימת ספקים וחנויות שבוקרו — לא קיים',
-    'שדה "רשימת פריטים" — מוצרים שנרכשו + עלויות — לא קיים',
-    'שדה "אסמכתאות" — קישור לקבלות / הזמנות — לא קיים',
-    'מנגנון מכסה + מונה ימים — לא ממומש',
-    'התראה כשנותר יום 1 — לא ממומשת',
-    'הצעת Upsell לרכישת יום נוסף — לא ממומשת',
-  ]) });
+  b('שלב 09 — ימי קניות (פער גדול!)\n', 'HEADING_3');
+  b(
+    '❓ Entity חדש "ShoppingDay" — יומן ימי קניות, מכסה, מונה — דורש החלטה\n' +
+    '🔧 שדה "מכסת ימי קניות" — להוסיף ל-Project (ברירת מחדל 5)\n' +
+    '🔧 שדה "ימים שנוצלו" — להוסיף ל-Project\n' +
+    '❓ רשימת פריטים שנרכשו — entity נפרד או שדה? דורש החלטה\n' +
+    '📋 מנגנון Upsell ליום נוסף — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 10 — תמחור קבלנים\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שדה "רשימת ספקים" — פרטי קבלנים ואנשי מקצוע — לא קיים כ-entity',
-    'שדה "סטטוס הצעה ספק" — נשלח / התקבל / בבחינה — לא קיים',
-    'שדה "תוקף הצעה" — תאריך אחרון לאישור — לא קיים',
-    'שדה "עלות ופירוט" — סכום כולל + הערות — לא קיים',
-    'שדה "החלטת לקוח" — מאושר / נדחה / למשא ומתן — לא קיים',
-    'טבלת השוואת הצעות ספקים — לא ממומשת',
-  ]) });
+  b('שלב 10 — תמחור קבלנים\n', 'HEADING_3');
+  b(
+    '❓ Entity חדש "Supplier" — פרטי ספקים, הצעות, סטטוסים — דורש החלטה\n' +
+    '❓ Entity חדש "SupplierQuote" — הצעות מחיר ספקים, השוואה — דורש החלטה\n' +
+    '📋 טבלת השוואת הצעות ספקים — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 11 — ביצוע בשטח + פיקוח\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שדה "יומן ביקורים" — תיעוד תאריכים ומטרת ביקור — לא קיים',
-    'שדה "רשימת ליקויים (Punch List)" — מעקב פתוח/סגור — לא קיים',
-    'שדה "סטטוס תיקון" — בטיפול / הושלם / דורש בדיקה — לא קיים',
-    'שדה "תיעוד ויזואלי" — תמונות לפני ואחרי — לא קיים (אפשר Documents)',
-    'שדה "אחריות" — תעודות אחריות ותוקף — לא קיים',
-    'הפקת דוח פיקוח אוטומטי (PDF) — לא ממומש',
-  ]) });
+  b('שלב 11 — ביצוע בשטח + פיקוח\n', 'HEADING_3');
+  b(
+    '❓ Entity חדש "SiteVisit" — יומן ביקורים, תיעוד — דורש החלטה\n' +
+    '❓ Entity חדש "PunchListItem" — ליקויים, סטטוס תיקון — דורש החלטה\n' +
+    '🔧 שדה "תיעוד ויזואלי" — ניתן לשמור כ-Documents type=photo\n' +
+    '📋 הפקת דוח פיקוח PDF אוטומטי — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 12 — ימי התקנה\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שדה "ספק" — שם הספק ופרטי קשר — לא קיים ברמת שלב',
-    'שדה "תאריך התקנה" — יום ושעה מתואמים — לא קיים',
-    'שדה "חלל/מיקום" — היכן מתבצעת ההתקנה — לא קיים',
-    'שדה "סטטוס התקנה" — מתוכנן / בתהליך / הושלם — לא קיים',
-    'שדה "הערות/חריגות" — בעיות שעלו — לא קיים',
-    'סנכרון Google Calendar — לא ממומש',
-  ]) });
+  b('שלב 12 — ימי התקנה\n', 'HEADING_3');
+  b(
+    '❓ Entity חדש "Installation" — ספק, תאריך, חלל, סטטוס — דורש החלטה\n' +
+    '📋 סנכרון Google Calendar — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 13 — סיום ומסירה\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שדה "צ\'קליסט מסירה" — רשימת סעיפים חיוניים — לא קיים',
-    'שדה "אישורי לקוח" — חתימה על קבלת פרויקט — לא קיים',
-    'שדה "לקחים" — הערות לשיפור — לא קיים',
-    'שדה "נכסים לשיווק" — אישור שימוש בתמונות/המלצות — לא קיים',
-    'יצירת תיקייה לשיווק אוטומטית — לא ממומש',
-    'שליחת מכתב תודה אוטומטי — לא ממומש',
-  ]) });
+  b('שלב 13 — סיום ומסירה\n', 'HEADING_3');
+  b(
+    '🔧 שדה "צ\'קליסט מסירה" — להוסיף ל-Project כ-JSON\n' +
+    '🔧 שדה "אישורי לקוח" — חתימה דיגיטלית — להוסיף ל-Project\n' +
+    '🔧 שדה "לקחים" — להוסיף ל-Project\n' +
+    '📋 יצירת תיקייה לשיווק אוטומטית — פאזה 2\n' +
+    '📋 שליחת מכתב תודה אוטומטי — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  // I2: Missing automations
-  blocks.push({ text: 'I2: אוטומציות שמוזכרות באפיון וטרם מומשו\n', style: 'HEADING_2' });
+  // ============ I2: Automations ============
+  b('I2: אוטומציות חסרות — רשימת פיתוח\n', 'HEADING_2');
 
-  blocks.push({ text: 'שלב 01 — לידים\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'עדכון סטטוס ליד ל-"מילא שאלון" בעת סיום שאלון — לא ממומש',
-    'תיוג אוטומטי של מקור ליד (UTM/Source) — חלקי (שדה source קיים, אוטומציה לא)',
-  ]) });
+  b('שלבים 01-02\n', 'HEADING_3');
+  b(
+    '🔧 עדכון סטטוס ליד ל-"מילא שאלון" אוטומטית\n' +
+    '🔧 תיוג אוטומטי של מקור ליד (UTM/Source)\n' +
+    '🔧 פתיחת משימת "הכנת הצעת מחיר" אוטומטית בסיום שלב 2\n' +
+    '📋 שליחת לינק תיאום Calendly אוטומטי — פאזה 2\n' +
+    '📋 עדכון יומן פגישות אוטומטי — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 02 — שיחת היכרות\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שליחת לינק תיאום (Calendly) אוטומטי ללקוח — לא ממומש (cal.com webhook קיים אבל לא שליחה)',
-    'עדכון יומן פגישות אוטומטי — לא ממומש',
-    'יצירת כרטיס לקוח אוטומטי אם אושר המשך — לא ממומש (סטטוס ידני)',
-    'פתיחת משימת "הכנת הצעת מחיר" אוטומטית — לא ממומש',
-  ]) });
+  b('שלבים 03-04\n', 'HEADING_3');
+  b(
+    '🔧 תזכורת תשלום לפני פגישה (250₪)\n' +
+    '✅ פתיחת Follow-Up אחרי 48-72 שעות — autoQuoteFollowup קיים\n' +
+    '🔧 שליחת הודעת "ברוכים הבאים" בסגירת פרויקט\n' +
+    '📋 יצירת ספריות Drive אוטומטית — פאזה 2\n' +
+    '📋 הזנת Timeline ראשוני — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 03 — הצעת מחיר\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'תזכורת תשלום אוטומטית לפני פגישה (250₪) — לא ממומש',
-    'פתיחת משימת Follow-Up למשרד אחרי 48-72 שעות — חלקי (autoQuoteFollowup קיים)',
-    'עדכון סטטוס ליד ל-"קיבל הצעה" — לא ממומש כאוטומציה',
-  ]) });
+  b('שלבים 05-06\n', 'HEADING_3');
+  b(
+    '🔧 קליטת תשובות שאלון לכרטיס לקוח\n' +
+    '🔧 שליחת אישור קבלה ללקוח עם תאריך פגישה\n' +
+    '🔧 שליחת סיכום פגישה וקבצים ללקוח במייל\n' +
+    '📋 הפקת סיכום מנהלים AI — פאזה 2\n' +
+    '📋 הקמת גאנט ראשוני אוטומטי — פאזה 2\n' +
+    '📋 יצירת טבלת תקציב ראשונית — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 04 — סגירת פרויקט\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'יצירת ספריות פרויקט ב-Drive/Cloud — לא ממומש',
-    'שליחת הודעת "ברוכים הבאים" עם פרטי גישה — לא ממומש',
-    'הזנת לוח שלבים ראשוני (Timeline) — לא ממומש',
-  ]) });
+  b('שלבים 07-08\n', 'HEADING_3');
+  b(
+    '🔧 תזכורות אוטומטיות ללקוח לאישור תכניות\n' +
+    '📋 עדכון גאנט לפי סטטוס אישור — פאזה 2\n' +
+    '📋 קליטת תמונות מוואטסאפ לתיקייה — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 05 — שאלון מפורט\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'קליטה אוטומטית של תשובות שאלון לכרטיס הלקוח — לא ממומש',
-    'הפקת תקציר מנהלים אוטומטי (AI Summary) — לא ממומש',
-    'שליחת אישור קבלה ללקוח עם תאריך הפגישה — לא ממומש',
-  ]) });
+  b('שלב 09 — ימי קניות\n', 'HEADING_3');
+  b(
+    '🔧 עדכון מונה ימים אוטומטי אחרי כל יום שטח\n' +
+    '🔧 התראה כשנותר יום 1\n' +
+    '📋 הצעת Upsell אוטומטית — פאזה 2\n' +
+    '📋 סיכום יום קניות נשלח ללקוח — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 06 — פגישת תכנית\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'יצירה אוטומטית של טבלת תקציב ראשונית — לא ממומש',
-    'הקמת גאנט ראשוני מבוסס תאריך סיום — לא ממומש',
-    'פתיחת משימות אוטומטית לפי אבני דרך — לא ממומש',
-    'שליחת סיכום פגישה וקבצים ללקוח במייל — לא ממומש',
-  ]) });
+  b('שלבים 10-12\n', 'HEADING_3');
+  b(
+    '📋 תזכורות אוטומטיות לספקים — פאזה 2\n' +
+    '📋 טבלת השוואה אוטומטית — פאזה 2\n' +
+    '📋 שליחת אישור/דחייה לספקים — פאזה 2\n' +
+    '📋 עדכון גאנט לפי התקדמות — פאזה 2\n' +
+    '📋 הפקת דוח פיקוח PDF — פאזה 2\n' +
+    '📋 התראות חריגות לוחות זמנים — פאזה 2\n' +
+    '📋 סנכרון Google Calendar — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלבים 07-08 — תכניות עבודה + קונספט\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'תזכורות אוטומטיות ללקוח לאישור תכניות — לא ממומש',
-    'עדכון גאנט לפי סטטוס אישור תכנית — לא ממומש',
-    'קליטת תמונות השראה ישירות מוואטסאפ לתיקייה — לא ממומש',
-    'שמירת רנדרים בתיק לקוח וקישור אוטומטי — לא ממומש',
-  ]) });
+  b('שלב 13 — סיום\n', 'HEADING_3');
+  b(
+    '🔧 שליחת סקר שביעות רצון אוטומטי\n' +
+    '📋 יצירת תיקייה לשיווק — פאזה 2\n' +
+    '📋 ארכוב חכם — פאזה 2\n' +
+    '📋 שליחת מכתב תודה — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 09 — ימי קניות\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'עדכון מונה ימים אוטומטי לאחר כל יום שטח — לא ממומש',
-    'התראה חכמה כשנותר יום 1 או פחות — לא ממומש',
-    'הצעה אוטומטית לרכישת יום נוסף (Upsell) — לא ממומש',
-    'הטמעת רכישות בטבלת תקציב בזמן אמת — לא ממומש',
-    'סיכום יום קניות נשלח ללקוח במייל/וואטסאפ — לא ממומש',
-  ]) });
+  // ============ I3: Mechanisms ============
+  b('I3: 3 מנגנונים מרכזיים — טרם מומשו\n', 'HEADING_2');
 
-  blocks.push({ text: 'שלבים 10-12 — תמחור, ביצוע, התקנות\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'תזכורות אוטומטיות לספקים על הצעות שלא הגיעו — לא ממומש',
-    'הפקת טבלת השוואה אוטומטית ללקוח — לא ממומש',
-    'שליחת הודעת אישור/דחייה לספקים — לא ממומש',
-    'עדכון גאנט לפי קצב התקדמות בשטח — לא ממומש',
-    'הפקת סיכום דוח פיקוח אוטומטי (PDF) — לא ממומש',
-    'התראות על חריגות בלוחות זמנים — לא ממומש',
-    'סנכרון אוטומטי ליומן (Google Calendar) — לא ממומש',
-  ]) });
+  b('מנגנון 1: ניהול ימי קניות\n', 'HEADING_3');
+  b(
+    '🔧 מכסה מוגדרת (5 ימים ברירת מחדל) — שדה על Project\n' +
+    '🔧 דשבורד מונה ימים שנוצלו / נותרו\n' +
+    '❓ תיעוד מלא: תאריך, מיקום, פריטים — entity חדש? דורש החלטה\n' +
+    '🔧 התראת חריגה כשמתקרבים לסיום\n' +
+    '📋 הצעה אוטומטית ל-Upsell — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'שלב 13 — סיום\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'שליחת סקר שביעות רצון אוטומטי בסיום — לא ממומש',
-    'יצירת "תיקייה לשיווק" עם תמונות והמלצות — לא ממומש',
-    'ארכוב חכם של מסמכי הפרויקט — לא ממומש',
-    'שליחת מכתב תודה וסיכום ללקוח — לא ממומש',
-  ]) });
+  b('מנגנון 2: מעקב תקציב רציף\n', 'HEADING_3');
+  b(
+    '📋 עדכון אוטומטי של תקציב בכל שלב — פאזה 2\n' +
+    '📋 תצוגה ויזואלית ירוק/אדום תכנון מול ביצוע — פאזה 2\n' +
+    '📋 התראה על חריגה מעל 10% — פאזה 2\n' +
+    '📋 הפקת דוח תקציב ללקוח — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  // I3: Three core mechanisms
-  blocks.push({ text: 'I3: 3 מנגנונים מרכזיים מהאפיון — טרם מומשו\n', style: 'HEADING_2' });
+  b('מנגנון 3: גאנט דינמי\n', 'HEADING_3');
+  b(
+    '📋 עדכון דינמי לפי התקדמות בפועל — פאזה 2\n' +
+    '📋 תלויות בין משימות — פאזה 2\n' +
+    '📋 התראות צוואר בקבוק — פאזה 2\n' +
+    '📋 תצוגת Timeline ללקוח — פאזה 2\n\n', 'NORMAL_TEXT');
 
-  blocks.push({ text: 'מנגנון 1: ניהול ימי קניות\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'מכסה מוגדרת (5 ימים ברירת מחדל) — שדה על Project — לא קיים',
-    'דשבורד מונה ימים שנוצלו / נותרו — לא קיים',
-    'תיעוד מלא: תאריך, מיקום, פריטים שנרכשו — לא קיים',
-    'התראת חריגה כשמתקרבים לסיום המכסה — לא ממומש',
-    'הצעה אוטומטית לרכישת ימים נוספים (Upsell) — לא ממומש',
-  ]) });
-
-  blocks.push({ text: 'מנגנון 2: מעקב תקציב רציף\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'עדכון אוטומטי של תקציב בכל שלב (פגישה → ביצוע → סיום) — לא ממומש',
-    'תצוגה ויזואלית (ירוק/אדום) של תכנון מול ביצוע — לא ממומש',
-    'התראה מיידית על חריגה מעל 10% מסעיף תקציבי — לא ממומש',
-    'הפקת דוח סטטוס תקציב ללקוח בלחיצת כפתור — לא ממומש',
-  ]) });
-
-  blocks.push({ text: 'מנגנון 3: גאנט דינמי אוטומטי\n', style: 'HEADING_3' });
-  blocks.push({ text: lines([
-    'עדכון דינמי של גאנט לפי התקדמות בפועל — לא ממומש',
-    'תלויות בין משימות (משימה A מתעכבת → B+C זזות) — לא ממומש',
-    'התראות על צוואר בקבוק שעלול לעכב מסירה — לא ממומש',
-    'תצוגה ויזואלית (Timeline) שקופה ללקוח ולספקים — לא ממומש',
-  ]) });
-
-  // Summary
-  blocks.push({ text: 'I4: סיכום פערים — עדיפות לטיפול\n', style: 'HEADING_2' });
-  blocks.push({ text:
-    '• עדיפות גבוהה: שלב 09 (ימי קניות) — פער גדול, מנגנון שלם חסר\n' +
-    '• עדיפות גבוהה: מנגנון תקציב רציף — ליבת הערך של המערכת\n' +
-    '• עדיפות בינונית: שלבים 10-12 (ספקים, פיקוח, התקנות) — entities חדשים נדרשים\n' +
-    '• עדיפות בינונית: שדות שלבים 05-08 — העשרת נתונים על Project\n' +
-    '• עדיפות נמוכה: גאנט דינמי — מורכב, אפשר לדחות לפאזה 2\n' +
-    '• עדיפות נמוכה: אוטומציות ספקים — תלוי בהחלטות עסקיות\n\n' +
-    'הערה: חלק מהפערים הם שדות שניתן להוסיף ל-entities הקיימים, וחלק דורשים entities חדשים (למשל: Supplier, ShoppingDay, PunchListItem).\n',
-    style: 'NORMAL_TEXT'
-  });
+  // ============ I4: Summary ============
+  b('I4: סיכום ועדיפויות\n', 'HEADING_2');
+  b(
+    'סה"כ פריטים לפיתוח מיידי (🔧): ~25 פריטים — בעיקר שדות חדשים ואוטומציות\n' +
+    'פריטים הדורשים החלטה שלך (❓): ~7 פריטים — בעיקר entities חדשים\n' +
+    'פריטים לפאזה 2 (📋): ~30 פריטים — גאנט, תקציב, ספקים\n\n' +
+    'סדר עבודה מוצע:\n' +
+    '1. הוספת שדות ל-Client ול-Project (מהיר, שובר פערים רבים)\n' +
+    '2. הרחבת Document entity (סוג תכנית, סטטוס אישור)\n' +
+    '3. אוטומציות שלב 01-04 (תזכורות, הודעות, משימות)\n' +
+    '4. מנגנון ימי קניות (אחרי שתחליטי על entity)\n' +
+    '5. אוטומציות שלבים 05-09\n' +
+    '6. פאזה 2 — גאנט, תקציב, ספקים\n',
+    'NORMAL_TEXT');
 
   return blocks;
 }
