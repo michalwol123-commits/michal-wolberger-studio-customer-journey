@@ -11,6 +11,10 @@ import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import CriticalAlerts from '@/components/dashboard/CriticalAlerts';
 import CustomerService from '@/components/dashboard/CustomerService';
+import PipelineChart from '@/components/dashboard/PipelineChart';
+import RevenueForecast from '@/components/dashboard/RevenueForecast';
+import WorkloadGauge from '@/components/dashboard/WorkloadGauge';
+import BudgetHealthCard from '@/components/dashboard/BudgetHealthCard';
 
 export default function Dashboard() {
   const { user, isAdmin } = useCurrentUser();
@@ -117,6 +121,24 @@ export default function Dashboard() {
           projects={myProjects}
         />
       </div>
+
+      {/* Pipeline & Revenue Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <PipelineChart clients={myClients} />
+        {isAdmin ? (
+          <RevenueForecast payments={payments} />
+        ) : (
+          <WorkloadGauge projects={myProjects} tasks={myTasks} meetings={meetings} />
+        )}
+      </div>
+
+      {/* Budget Health & Workload */}
+      {isAdmin && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <BudgetHealthCard projects={myProjects} />
+          <WorkloadGauge projects={myProjects} tasks={myTasks} meetings={meetings} />
+        </div>
+      )}
 
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
