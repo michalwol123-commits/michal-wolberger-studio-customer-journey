@@ -9,6 +9,9 @@ import { ArrowRight, Calendar, Clock, MapPin, CreditCard, Download } from 'lucid
 import StatusBadge from '@/components/shared/StatusBadge';
 import PortalTimeline from './PortalTimeline';
 import PortalStageView from './PortalStageView';
+import PortalGanttView from './PortalGanttView';
+import PortalBudgetView from './PortalBudgetView';
+import PortalDocApproval from './PortalDocApproval';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 
@@ -24,6 +27,11 @@ export default function PortalProjectView({ project, onBack }) {
   const { data: meetings = [] } = useQuery({
     queryKey: ['portal-meetings', client.id],
     queryFn: () => base44.entities.Meeting.filter({ client_id: client.id }),
+  });
+
+  const { data: allDocs = [] } = useQuery({
+    queryKey: ['portal-approval-docs', project.id],
+    queryFn: () => base44.entities.Document.filter({ project_id: project.id }),
   });
 
   const visiblePayments = payments;
@@ -86,7 +94,16 @@ export default function PortalProjectView({ project, onBack }) {
 
         {/* Stage content */}
         <div className="lg:col-span-8 space-y-6">
+          {/* Document approvals */}
+          <PortalDocApproval documents={allDocs} projectId={project.id} />
+
           <PortalStageView project={project} stageNum={selectedStage} />
+
+          {/* Gantt timeline */}
+          <PortalGanttView project={project} />
+
+          {/* Budget utilization */}
+          <PortalBudgetView project={project} />
 
           {/* Upcoming meetings */}
           {upcomingMeetings.length > 0 && (
