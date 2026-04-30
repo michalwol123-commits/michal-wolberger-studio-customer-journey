@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck } from 'lucide-react';
+import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
@@ -17,6 +17,8 @@ import STAGES, { TOTAL_STAGES } from '@/lib/stageConfig';
 import StageSelector from '@/components/projects/StageSelector';
 import StagePanel from '@/components/projects/StagePanel';
 import ProjectSuppliersTab from '@/components/suppliers/ProjectSuppliersTab';
+import GanttChart from '@/components/projects/GanttChart';
+import BudgetOverview from '@/components/projects/BudgetOverview';
 
 export default function ProjectDetail() {
   const pathParts = window.location.pathname.split('/');
@@ -108,6 +110,8 @@ export default function ProjectDetail() {
           {isAdmin && <TabsTrigger value="payments">תשלומים</TabsTrigger>}
           <TabsTrigger value="documents">מסמכים</TabsTrigger>
           <TabsTrigger value="tasks">משימות</TabsTrigger>
+          <TabsTrigger value="gantt">גאנט</TabsTrigger>
+          <TabsTrigger value="budget">תקציב</TabsTrigger>
           <TabsTrigger value="suppliers">ספקים</TabsTrigger>
           <TabsTrigger value="communications">תקשורת</TabsTrigger>
         </TabsList>
@@ -194,6 +198,14 @@ export default function ProjectDetail() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="gantt">
+          <GanttChart projectId={projectId} />
+        </TabsContent>
+
+        <TabsContent value="budget">
+          <BudgetOverview projectId={projectId} totalBudget={project.total_budget} />
         </TabsContent>
 
         <TabsContent value="suppliers">

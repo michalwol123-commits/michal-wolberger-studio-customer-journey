@@ -1,0 +1,42 @@
+{
+  "name": "BudgetItem",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "relationType": "Project",
+      "description": "\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 \u05de\u05e9\u05d5\u05d9\u05da"
+    },
+    "category": {
+      "type": "string",
+      "description": "\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4 (\u05de\u05d8\u05d1\u05d7, \u05e8\u05d9\u05e6\u05d5\u05e3, \u05d7\u05e9\u05de\u05dc...)"
+    },
+    "planned_amount": {
+      "type": "number",
+      "description": "\u05e1\u05db\u05d5\u05dd \u05de\u05ea\u05d5\u05db\u05e0\u05df (\u20aa)"
+    },
+    "actual_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "\u05e1\u05db\u05d5\u05dd \u05d1\u05e4\u05d5\u05e2\u05dc (\u20aa)"
+    },
+    "supplier_id": {
+      "type": "string",
+      "relationType": "Supplier",
+      "description": "\u05e1\u05e4\u05e7 (\u05d0\u05d5\u05e4\u05e6\u05d9\u05d5\u05e0\u05dc\u05d9)"
+    },
+    "stage": {
+      "type": "number",
+      "description": "\u05e9\u05dc\u05d1 \u05e7\u05e9\u05d5\u05e8 (1-13)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "\u05d4\u05e2\u05e8\u05d5\u05ea"
+    }
+  },
+  "required": [
+    "project_id",
+    "category",
+    "planned_amount"
+  ]
+}
