@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet } from 'lucide-react';
+import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
@@ -19,6 +19,7 @@ import StagePanel from '@/components/projects/StagePanel';
 import ProjectSuppliersTab from '@/components/suppliers/ProjectSuppliersTab';
 import GanttChart from '@/components/projects/GanttChart';
 import BudgetOverview from '@/components/projects/BudgetOverview';
+import ProjectPurchaseOrders from '@/components/purchases/ProjectPurchaseOrders';
 
 export default function ProjectDetail() {
   const pathParts = window.location.pathname.split('/');
@@ -113,6 +114,7 @@ export default function ProjectDetail() {
           <TabsTrigger value="gantt">גאנט</TabsTrigger>
           <TabsTrigger value="budget">תקציב</TabsTrigger>
           <TabsTrigger value="suppliers">ספקים</TabsTrigger>
+          <TabsTrigger value="purchases">רכש</TabsTrigger>
           <TabsTrigger value="communications">תקשורת</TabsTrigger>
         </TabsList>
 
@@ -210,6 +212,10 @@ export default function ProjectDetail() {
 
         <TabsContent value="suppliers">
           <ProjectSuppliersTab projectId={projectId} />
+        </TabsContent>
+
+        <TabsContent value="purchases">
+          <ProjectPurchaseOrders projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="communications">

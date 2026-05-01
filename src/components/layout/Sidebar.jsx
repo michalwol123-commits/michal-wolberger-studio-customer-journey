@@ -30,6 +30,7 @@ const navItems = [
   { path: '/communications', label: 'תקשורת', icon: MessageSquare, adminOnly: false },
   { path: '/tasks', label: 'משימות', icon: CheckSquare, adminOnly: false },
   { path: '/suppliers', label: 'ספקים', icon: Truck, adminOnly: false },
+  { path: '/purchase-orders', label: 'הזמנות רכש', icon: FileText, adminOnly: false },
   { path: '/settings', label: 'הגדרות', icon: Settings, adminOnly: true },
   { path: '/user-guide', label: 'מדריך למשתמשת', icon: BookOpen, adminOnly: true },
 ];
