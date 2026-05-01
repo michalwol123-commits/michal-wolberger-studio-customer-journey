@@ -11,8 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Search, ShoppingCart, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import AddPurchaseOrderDialog from '@/components/purchases/AddPurchaseOrderDialog';
-import PurchaseOrdersTable from '@/components/purchases/PurchaseOrdersTable';
-import ViewToggle from '@/components/shared/ViewToggle';
 
 const statusOptions = [
   { value: 'all', label: 'כל הסטטוסים' },
@@ -28,7 +26,6 @@ export default function PurchaseOrders() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [view, setView] = useState('cards');
   const queryClient = useQueryClient();
 
   const { data: orders = [] } = useQuery({
@@ -70,12 +67,9 @@ export default function PurchaseOrders() {
   return (
     <div>
       <PageHeader title="הזמנות רכש" subtitle={`סה״כ פעיל: ₪${totalActive.toLocaleString()}`}>
-        <div className="flex items-center gap-3">
-          <ViewToggle view={view} onViewChange={setView} />
-          <Button size="sm" onClick={() => { setEditing(null); setShowDialog(true); }} className="gap-1">
-            <Plus className="w-4 h-4" />הזמנה חדשה
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => { setEditing(null); setShowDialog(true); }} className="gap-1">
+          <Plus className="w-4 h-4" />הזמנה חדשה
+        </Button>
       </PageHeader>
 
       <div className="flex flex-wrap gap-3 mb-4">
@@ -98,14 +92,6 @@ export default function PurchaseOrders() {
 
       {filtered.length === 0 ? (
         <EmptyState icon={ShoppingCart} title="אין הזמנות רכש" description="הוסיפי הזמנת רכש ראשונה" />
-      ) : view === 'table' ? (
-        <PurchaseOrdersTable
-          orders={filtered}
-          supplierName={supplierName}
-          projectName={projectName}
-          onEdit={(o) => { setEditing(o); setShowDialog(true); }}
-          onDelete={(id) => deleteMutation.mutate(id)}
-        />
       ) : (
         <div className="space-y-2">
           {filtered.map(order => (

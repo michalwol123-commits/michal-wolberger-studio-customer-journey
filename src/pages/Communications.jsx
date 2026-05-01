@@ -10,8 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { MessageSquare, Search, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
-import CommunicationsTable from '@/components/communications/CommunicationsTable';
-import ViewToggle from '@/components/shared/ViewToggle';
 
 const typeLabels = {
   whatsapp: 'WhatsApp', email: 'אימייל', call: 'שיחה', meeting: 'פגישה',
@@ -22,7 +20,6 @@ export default function Communications() {
   const { user, isAdmin } = useCurrentUser();
   const [typeFilter, setTypeFilter] = useState('all');
   const [search, setSearch] = useState('');
-  const [view, setView] = useState('cards');
 
   const { data: communications = [] } = useQuery({
     queryKey: ['communications'],
@@ -51,9 +48,7 @@ export default function Communications() {
 
   return (
     <div>
-      <PageHeader title="תקשורת" subtitle="לוג הודעות ותקשורת">
-        <ViewToggle view={view} onViewChange={setView} />
-      </PageHeader>
+      <PageHeader title="תקשורת" subtitle="לוג הודעות ותקשורת" />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-md">
@@ -76,8 +71,6 @@ export default function Communications() {
 
       {filtered.length === 0 ? (
         <EmptyState icon={MessageSquare} title="אין תקשורת" />
-      ) : view === 'table' ? (
-        <CommunicationsTable communications={filtered} clientMap={clientMap} isAdmin={isAdmin} />
       ) : (
         <div className="space-y-2">
           {filtered.map(comm => {
