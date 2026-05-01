@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
+import ViewToggle from '@/components/shared/ViewToggle';
+import ProjectsTable from '@/components/projects/ProjectsTable';
 
 import STAGES_CONFIG from '@/lib/stageConfig';
 const stageConfig = STAGES_CONFIG.map(s => ({ num: s.num, name: s.shortLabel }));
@@ -16,6 +18,7 @@ const stageConfig = STAGES_CONFIG.map(s => ({ num: s.num, name: s.shortLabel }))
 export default function Projects() {
   const { user, isAdmin } = useCurrentUser();
   const [statusFilter, setStatusFilter] = useState('all');
+  const [view, setView] = useState('cards');
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
@@ -49,25 +52,29 @@ export default function Projects() {
   return (
     <div>
       <PageHeader title="פרויקטים" subtitle={`${totalCount} פרויקטים`}>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">הכל</SelectItem>
-            <SelectItem value="active">פעילים</SelectItem>
-            <SelectItem value="on_hold">מוקפאים</SelectItem>
-            <SelectItem value="completed">הושלמו</SelectItem>
-            <SelectItem value="cancelled">בוטלו</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-3">
+          <ViewToggle view={view} onViewChange={setView} />
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">הכל</SelectItem>
+              <SelectItem value="active">פעילים</SelectItem>
+              <SelectItem value="on_hold">מוקפאים</SelectItem>
+              <SelectItem value="completed">הושלמו</SelectItem>
+              <SelectItem value="cancelled">בוטלו</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </PageHeader>
 
       {totalCount === 0 ? (
         <EmptyState icon={Briefcase} title="אין פרויקטים" />
+      ) : view === 'table' ? (
+        <ProjectsTable projects={filtered} clientMap={clientMap} />
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-4" dir="rtl">
           {stageConfig.map(stage => (
             <div key={stage.num} className="min-w-[220px] max-w-[260px] flex-shrink-0">
-              {/* Column header */}
               <div className="flex items-center justify-between bg-muted/60 rounded-t-xl px-3 py-2.5 border border-border border-b-0">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center">
@@ -79,8 +86,6 @@ export default function Projects() {
                   {stageGroups[stage.num].length}
                 </span>
               </div>
-
-              {/* Column body */}
               <div className="bg-muted/30 border border-border border-t-0 rounded-b-xl p-2 space-y-2 min-h-[120px]">
                 {stageGroups[stage.num].length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-6">—</p>
