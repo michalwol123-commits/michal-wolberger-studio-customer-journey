@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
+import ViewToggle from '@/components/shared/ViewToggle';
+import ProjectsTable from '@/components/projects/ProjectsTable';
 
 import STAGES_CONFIG from '@/lib/stageConfig';
 const stageConfig = STAGES_CONFIG.map(s => ({ num: s.num, name: s.shortLabel }));
@@ -16,6 +18,7 @@ const stageConfig = STAGES_CONFIG.map(s => ({ num: s.num, name: s.shortLabel }))
 export default function Projects() {
   const { user, isAdmin } = useCurrentUser();
   const [statusFilter, setStatusFilter] = useState('all');
+  const [view, setView] = useState('cards');
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
@@ -49,6 +52,7 @@ export default function Projects() {
   return (
     <div>
       <PageHeader title="פרויקטים" subtitle={`${totalCount} פרויקטים`}>
+        <ViewToggle view={view} onViewChange={setView} />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -63,6 +67,8 @@ export default function Projects() {
 
       {totalCount === 0 ? (
         <EmptyState icon={Briefcase} title="אין פרויקטים" />
+      ) : view === 'table' ? (
+        <ProjectsTable projects={filtered} clientMap={clientMap} />
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-4" dir="rtl">
           {stageConfig.map(stage => (

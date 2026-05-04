@@ -10,6 +10,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Search, Star, Phone, Mail, Truck } from 'lucide-react';
 import SupplierCategoryBadge, { categoryLabel } from '@/components/suppliers/SupplierCategoryBadge';
 import AddSupplierDialog from '@/components/suppliers/AddSupplierDialog';
+import ViewToggle from '@/components/shared/ViewToggle';
+import SuppliersTable from '@/components/suppliers/SuppliersTable';
 
 const PRICE_LABELS = { low: 'נמוך', mid: 'בינוני', high: 'גבוה' };
 
@@ -18,6 +20,7 @@ export default function Suppliers() {
   const [catFilter, setCatFilter] = useState('all');
   const [showAdd, setShowAdd] = useState(false);
   const [editSupplier, setEditSupplier] = useState(null);
+  const [view, setView] = useState('cards');
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
@@ -34,6 +37,7 @@ export default function Suppliers() {
   return (
     <div>
       <PageHeader title="ספקים" subtitle={`${filtered.length} ספקים`}>
+        <ViewToggle view={view} onViewChange={setView} />
         <Button onClick={() => setShowAdd(true)} className="gap-1">
           <Plus className="w-4 h-4" />הוסף ספק
         </Button>
@@ -72,6 +76,8 @@ export default function Suppliers() {
 
       {filtered.length === 0 ? (
         <EmptyState icon={Truck} title="אין ספקים" description="הוסיפי ספק ראשון" />
+      ) : view === 'table' ? (
+        <SuppliersTable suppliers={filtered} onEdit={(s) => { setEditSupplier(s); setShowAdd(true); }} />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map(s => (

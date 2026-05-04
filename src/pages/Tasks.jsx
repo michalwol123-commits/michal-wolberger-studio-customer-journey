@@ -8,6 +8,8 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckSquare, Clock, User, Plus } from 'lucide-react';
+import ViewToggle from '@/components/shared/ViewToggle';
+import TasksTable from '@/components/tasks/TasksTable';
 import { format } from 'date-fns';
 import AddTaskDialog from '@/components/tasks/AddTaskDialog';
 
@@ -24,6 +26,7 @@ const priorityColors = { low: 'text-gray-500', normal: 'text-blue-500', high: 't
 export default function Tasks() {
   const { user, isAdmin } = useCurrentUser();
   const [showAdd, setShowAdd] = useState(false);
+  const [view, setView] = useState('cards');
   const queryClient = useQueryClient();
 
   const { data: tasks = [] } = useQuery({
@@ -49,12 +52,20 @@ export default function Tasks() {
   return (
     <div>
       <PageHeader title="משימות" subtitle={`${filtered.filter(t => t.status !== 'done' && t.status !== 'cancelled').length} משימות פתוחות`}>
+        <ViewToggle view={view} onViewChange={setView} />
         <Button onClick={() => setShowAdd(true)} className="gap-2">
           <Plus className="w-4 h-4" />
           משימה חדשה
         </Button>
       </PageHeader>
 
+      {view === 'table' ? (
+        <TasksTable
+          tasks={filtered}
+          clientMap={clientMap}
+          onStatusChange={(id, status) => updateMutation.mutate({ id, data: { status } })}
+        />
+      ) : (
       <div className="flex gap-4 overflow-x-auto pb-4">
         {columns.map(col => {
           const colTasks = filtered.filter(t => t.status === col.id);
@@ -109,6 +120,7 @@ export default function Tasks() {
           );
         })}
       </div>
+      )}
 
       <AddTaskDialog open={showAdd} onOpenChange={setShowAdd} />
     </div>

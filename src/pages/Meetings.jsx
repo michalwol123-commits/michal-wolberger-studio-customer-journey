@@ -6,8 +6,12 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Clock, MapPin, User } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Plus } from 'lucide-react';
+import ViewToggle from '@/components/shared/ViewToggle';
+import MeetingsTable from '@/components/meetings/MeetingsTable';
+import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 import { format, startOfWeek, endOfWeek, addWeeks, isWithinInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
 
@@ -19,6 +23,9 @@ const typeLabels = {
 export default function Meetings() {
   const { user, isAdmin } = useCurrentUser();
   const [weekOffset, setWeekOffset] = useState(0);
+  const [view, setView] = useState('cards');
+  const [showAdd, setShowAdd] = useState(false);
+  const [editMeeting, setEditMeeting] = useState(null);
 
   const { data: meetings = [] } = useQuery({
     queryKey: ['meetings'],
@@ -63,9 +70,13 @@ export default function Meetings() {
     <div>
       <PageHeader title="פגישות" subtitle="לוח שנה שבועי">
         <div className="flex items-center gap-2">
+          <ViewToggle view={view} onViewChange={setView} />
           <button onClick={() => setWeekOffset(w => w - 1)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted">הקודם</button>
           <button onClick={() => setWeekOffset(0)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted font-medium">היום</button>
           <button onClick={() => setWeekOffset(w => w + 1)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted">הבא</button>
+          <Button onClick={() => { setEditMeeting(null); setShowAdd(true); }} className="gap-1">
+            <Plus className="w-4 h-4" />פגישה חדשה
+          </Button>
         </div>
       </PageHeader>
 
@@ -73,8 +84,10 @@ export default function Meetings() {
         {format(weekStart, 'dd/MM', { locale: he })} — {format(weekEnd, 'dd/MM/yyyy', { locale: he })}
       </p>
 
-      {Object.keys(dayGroups).length === 0 ? (
+      {weekMeetings.length === 0 ? (
         <EmptyState icon={Calendar} title="אין פגישות השבוע" />
+      ) : view === 'table' ? (
+        <MeetingsTable meetings={weekMeetings} clientMap={clientMap} onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }} />
       ) : (
         <div className="space-y-6">
           {Object.entries(dayGroups).sort().map(([day, dayMeetings]) => (
@@ -86,7 +99,7 @@ export default function Meetings() {
                 {dayMeetings.map(m => {
                   const client = clientMap[m.client_id];
                   return (
-                    <Card key={m.id}>
+                    <Card key={m.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => { setEditMeeting(m); setShowAdd(true); }}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -111,6 +124,12 @@ export default function Meetings() {
           ))}
         </div>
       )}
+
+      <AddMeetingDialog
+        open={showAdd}
+        onOpenChange={(open) => { setShowAdd(open); if (!open) setEditMeeting(null); }}
+        initialData={editMeeting}
+      />
     </div>
   );
 }
