@@ -24,6 +24,7 @@ import Portal from '@/pages/Portal';
 import Suppliers from '@/pages/Suppliers';
 import PurchaseOrders from '@/pages/PurchaseOrders';
 import Reports from '@/pages/Reports';
+import Quotes from '@/pages/Quotes';
 
 const AuthGate = ({ children }) => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -70,6 +71,7 @@ function App() {
               <Route path="/projects" element={<Projects />} />
               <Route path="/projects/:id" element={<ProjectDetail />} />
               <Route path="/payments" element={<Payments />} />
+              <Route path="/quotes" element={<Quotes />} />
               <Route path="/meetings" element={<Meetings />} />
               <Route path="/communications" element={<Communications />} />
               <Route path="/tasks" element={<Tasks />} />
