@@ -7,6 +7,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Briefcase } from 'lucide-react';
+import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
 import ViewToggle from '@/components/shared/ViewToggle';
@@ -52,6 +53,18 @@ export default function Projects() {
   return (
     <div>
       <PageHeader title="פרויקטים" subtitle={`${totalCount} פרויקטים`}>
+        <ExportCSVButton
+          data={filtered}
+          columns={[
+            { key: 'name', label: 'שם פרויקט' },
+            { label: 'לקוח', format: r => clientMap[r.client_id]?.name || '' },
+            { key: 'status', label: 'סטטוס' },
+            { key: 'stage_current', label: 'שלב' },
+            { key: 'progress', label: 'התקדמות %' },
+            { label: 'תקציב', format: r => r.total_budget || '' },
+          ]}
+          filename="פרויקטים"
+        />
         <ViewToggle view={view} onViewChange={setView} />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>

@@ -8,6 +8,7 @@ import StatsCard from '@/components/shared/StatsCard';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreditCard, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { format } from 'date-fns';
 import { Navigate } from 'react-router-dom';
 
@@ -46,7 +47,21 @@ export default function Payments() {
 
   return (
     <div>
-      <PageHeader title="תשלומים" subtitle="מעקב תשלומים — Admin בלבד" />
+      <PageHeader title="תשלומים" subtitle="מעקב תשלומים — Admin בלבד">
+        <ExportCSVButton
+          data={filtered}
+          columns={[
+            { label: 'לקוח', format: r => { const p = projectMap[r.project_id]; return p ? (clientMap[p.client_id]?.name || '') : ''; } },
+            { label: 'פרויקט', format: r => projectMap[r.project_id]?.name || '' },
+            { key: 'milestone', label: 'אבן דרך' },
+            { key: 'amount', label: 'סכום' },
+            { key: 'amount_paid', label: 'שולם' },
+            { key: 'due_date', label: 'תאריך יעד' },
+            { key: 'status', label: 'סטטוס' },
+          ]}
+          filename="תשלומים"
+        />
+      </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <StatsCard title="ממתינים" value={`₪${totalPending.toLocaleString()}`} icon={Clock} color="warning" />

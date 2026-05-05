@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search, FileText, ExternalLink } from 'lucide-react';
+import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { format } from 'date-fns';
 import AddQuoteDialog from '@/components/quotes/AddQuoteDialog';
 import QuotesTable from '@/components/quotes/QuotesTable';
@@ -60,6 +61,18 @@ export default function Quotes() {
   return (
     <div>
       <PageHeader title="הצעות מחיר" subtitle={`${filtered.length} הצעות • ₪${totalAmount.toLocaleString()}`}>
+        <ExportCSVButton
+          data={filtered}
+          columns={[
+            { key: 'title', label: 'כותרת' },
+            { label: 'לקוח', format: r => clientMap[r.client_id]?.name || '' },
+            { key: 'total_amount', label: 'סכום' },
+            { key: 'package_type', label: 'חבילה' },
+            { key: 'status', label: 'סטטוס' },
+            { label: 'תאריך', format: r => r.created_date ? format(new Date(r.created_date), 'dd/MM/yyyy') : '' },
+          ]}
+          filename="הצעות_מחיר"
+        />
         <ViewToggle view={view} onViewChange={setView} />
         <Button onClick={() => { setEditQuote(null); setShowAdd(true); }} className="gap-1">
           <Plus className="w-4 h-4" />הצעה חדשה

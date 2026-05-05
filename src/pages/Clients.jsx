@@ -8,6 +8,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Users } from 'lucide-react';
+import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 
@@ -31,7 +32,19 @@ export default function Clients() {
 
   return (
     <div>
-      <PageHeader title="לקוחות" subtitle={`${filtered.length} לקוחות`} />
+      <PageHeader title="לקוחות" subtitle={`${filtered.length} לקוחות`}>
+        <ExportCSVButton
+          data={filtered}
+          columns={[
+            { key: 'name', label: 'שם' },
+            { key: 'phone', label: 'טלפון' },
+            { key: 'email', label: 'אימייל' },
+            { key: 'status', label: 'סטטוס' },
+            { key: 'source', label: 'מקור' },
+          ]}
+          filename="לקוחות"
+        />
+      </PageHeader>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-md">

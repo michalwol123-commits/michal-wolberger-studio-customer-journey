@@ -9,10 +9,12 @@ import PortalWelcome from '@/components/portal/PortalWelcome';
 import PortalProjectList from '@/components/portal/PortalProjectList';
 import PortalProjectView from '@/components/portal/PortalProjectView';
 import PortalCompleted from '@/components/portal/PortalCompleted';
+import PortalGuide from '@/components/portal/PortalGuide';
 
 function PortalRouter() {
   const { client, loading, error } = usePortal();
   const [selectedProject, setSelectedProject] = useState(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   const { data: projects = [], isLoading: projectsLoading } = useQuery({
     queryKey: ['portal-projects', client?.id],
@@ -22,6 +24,16 @@ function PortalRouter() {
 
   if (loading || projectsLoading) return <PortalLoading />;
   if (error || !client) return <PortalError />;
+
+  const guideProps = { onShowGuide: () => setShowGuide(!showGuide), showingGuide: showGuide };
+
+  if (showGuide) {
+    return (
+      <PortalLayout {...guideProps}>
+        <PortalGuide />
+      </PortalLayout>
+    );
+  }
 
   const activeProjects = projects.filter(p => p.status === 'active' || p.status === 'on_hold');
   const completedProjects = projects.filter(p => p.status === 'completed');
@@ -33,7 +45,7 @@ function PortalRouter() {
   if (selectedProject) {
     if (selectedProject.status === 'completed') {
       return (
-        <PortalLayout>
+        <PortalLayout {...guideProps}>
           <PortalCompleted
             project={selectedProject}
             onBack={allProjects.length > 1 ? () => setSelectedProject(null) : null}
@@ -42,7 +54,7 @@ function PortalRouter() {
       );
     }
     return (
-      <PortalLayout>
+      <PortalLayout {...guideProps}>
         <PortalProjectView
           project={selectedProject}
           onBack={allProjects.length > 1 ? () => setSelectedProject(null) : null}
@@ -54,7 +66,7 @@ function PortalRouter() {
   // State A — no active project (lead/qualified)
   if (allProjects.length === 0) {
     return (
-      <PortalLayout>
+      <PortalLayout {...guideProps}>
         <PortalWelcome />
       </PortalLayout>
     );
@@ -65,13 +77,13 @@ function PortalRouter() {
     const proj = allProjects[0];
     if (proj.status === 'completed') {
       return (
-        <PortalLayout>
+        <PortalLayout {...guideProps}>
           <PortalCompleted project={proj} />
         </PortalLayout>
       );
     }
     return (
-      <PortalLayout>
+      <PortalLayout {...guideProps}>
         <PortalProjectView project={proj} />
       </PortalLayout>
     );
@@ -79,7 +91,7 @@ function PortalRouter() {
 
   // State C — multiple projects
   return (
-    <PortalLayout>
+    <PortalLayout {...guideProps}>
       <PortalProjectList projects={allProjects} onSelect={setSelectedProject} />
     </PortalLayout>
   );

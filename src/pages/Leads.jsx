@@ -8,6 +8,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, UserPlus } from 'lucide-react';
+import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import AddClientDialog from '@/components/clients/AddClientDialog';
@@ -30,6 +31,17 @@ export default function Leads() {
   return (
     <div>
       <PageHeader title="לידים" subtitle={`${leads.length} לידים פעילים`}>
+        <ExportCSVButton
+          data={leads}
+          columns={[
+            { key: 'name', label: 'שם' },
+            { key: 'phone', label: 'טלפון' },
+            { key: 'source', label: 'מקור' },
+            { key: 'interest_level', label: 'רמת עניין' },
+            { label: 'תאריך', format: r => r.created_date ? format(new Date(r.created_date), 'dd/MM/yyyy') : '' },
+          ]}
+          filename="לידים"
+        />
         <Button onClick={() => setShowAdd(true)} className="gap-2">
           <Plus className="w-4 h-4" />
           ליד חדש

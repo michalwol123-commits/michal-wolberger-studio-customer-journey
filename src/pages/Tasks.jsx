@@ -8,6 +8,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckSquare, Clock, User, Plus } from 'lucide-react';
+import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import ViewToggle from '@/components/shared/ViewToggle';
 import TasksTable from '@/components/tasks/TasksTable';
 import { format } from 'date-fns';
@@ -52,6 +53,18 @@ export default function Tasks() {
   return (
     <div>
       <PageHeader title="משימות" subtitle={`${filtered.filter(t => t.status !== 'done' && t.status !== 'cancelled').length} משימות פתוחות`}>
+        <ExportCSVButton
+          data={filtered}
+          columns={[
+            { key: 'title', label: 'כותרת' },
+            { key: 'status', label: 'סטטוס' },
+            { key: 'priority', label: 'עדיפות' },
+            { key: 'due_date', label: 'תאריך יעד' },
+            { key: 'assigned_to', label: 'אחראי' },
+            { label: 'לקוח', format: r => clientMap[r.client_id]?.name || '' },
+          ]}
+          filename="משימות"
+        />
         <ViewToggle view={view} onViewChange={setView} />
         <Button onClick={() => setShowAdd(true)} className="gap-2">
           <Plus className="w-4 h-4" />

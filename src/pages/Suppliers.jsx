@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Search, Star, Phone, Mail, Truck } from 'lucide-react';
+import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import SupplierCategoryBadge, { categoryLabel } from '@/components/suppliers/SupplierCategoryBadge';
 import AddSupplierDialog from '@/components/suppliers/AddSupplierDialog';
 import ViewToggle from '@/components/shared/ViewToggle';
@@ -37,6 +38,18 @@ export default function Suppliers() {
   return (
     <div>
       <PageHeader title="ספקים" subtitle={`${filtered.length} ספקים`}>
+        <ExportCSVButton
+          data={filtered}
+          columns={[
+            { key: 'name', label: 'שם' },
+            { key: 'category', label: 'קטגוריה' },
+            { key: 'phone', label: 'טלפון' },
+            { key: 'email', label: 'אימייל' },
+            { key: 'rating', label: 'דירוג' },
+            { key: 'price_level', label: 'רמת מחיר' },
+          ]}
+          filename="ספקים"
+        />
         <ViewToggle view={view} onViewChange={setView} />
         <Button onClick={() => setShowAdd(true)} className="gap-1">
           <Plus className="w-4 h-4" />הוסף ספק

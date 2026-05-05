@@ -8,6 +8,7 @@ import ProjectsReport from '@/components/reports/ProjectsReport';
 import FinancialReport from '@/components/reports/FinancialReport';
 import LeadsReport from '@/components/reports/LeadsReport';
 import SuppliersReport from '@/components/reports/SuppliersReport';
+import QuotesReport from '@/components/reports/QuotesReport';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Loader2 } from 'lucide-react';
 
@@ -20,8 +21,9 @@ export default function Reports() {
   const { data: payments = [], isLoading: lpay } = useQuery({ queryKey: ['payments'], queryFn: () => base44.entities.Payment.list(), enabled: isAdmin });
   const { data: suppliers = [], isLoading: ls } = useQuery({ queryKey: ['suppliers'], queryFn: () => base44.entities.Supplier.list() });
   const { data: projectSuppliers = [], isLoading: lps } = useQuery({ queryKey: ['projectSuppliers'], queryFn: () => base44.entities.ProjectSupplier.list() });
+  const { data: quotes = [], isLoading: lq } = useQuery({ queryKey: ['quotes'], queryFn: () => base44.entities.Quote.list() });
 
-  const isLoading = lp || lc || lpay || ls || lps;
+  const isLoading = lp || lc || lpay || ls || lps || lq;
 
   const getReportData = () => {
     switch (activeTab) {
@@ -29,6 +31,7 @@ export default function Reports() {
       case 'financial': return { payments, projects };
       case 'leads': return { clients };
       case 'suppliers': return { suppliers, projectSuppliers, projects };
+      case 'quotes': return { quotes, clients };
       default: return {};
     }
   };
@@ -53,6 +56,7 @@ export default function Reports() {
           {isAdmin && <TabsTrigger value="financial">כספי</TabsTrigger>}
           <TabsTrigger value="leads">לידים</TabsTrigger>
           <TabsTrigger value="suppliers">ספקים</TabsTrigger>
+          <TabsTrigger value="quotes">הצעות מחיר</TabsTrigger>
         </TabsList>
 
         <TabsContent value="projects">
@@ -68,6 +72,9 @@ export default function Reports() {
         </TabsContent>
         <TabsContent value="suppliers">
           <SuppliersReport suppliers={suppliers} projectSuppliers={projectSuppliers} projects={projects} />
+        </TabsContent>
+        <TabsContent value="quotes">
+          <QuotesReport quotes={quotes} clients={clients} />
         </TabsContent>
       </Tabs>
     </div>
