@@ -12,7 +12,7 @@ import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 
-const activeStatuses = ['qualified', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client'];
+const activeStatuses = ['proposal_approved', 'active_client', 'completed_client'];
 
 export default function Clients() {
   const { user, isAdmin } = useCurrentUser();
@@ -55,8 +55,6 @@ export default function Clients() {
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">כל הסטטוסים</SelectItem>
-            <SelectItem value="qualified">מתעניין</SelectItem>
-            <SelectItem value="proposal_sent">הצעה נשלחה</SelectItem>
             <SelectItem value="proposal_approved">הצעה אושרה</SelectItem>
             <SelectItem value="active_client">לקוח פעיל</SelectItem>
             <SelectItem value="completed_client">הושלם</SelectItem>

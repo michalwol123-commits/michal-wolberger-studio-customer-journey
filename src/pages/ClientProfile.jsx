@@ -115,9 +115,9 @@ export default function ClientProfile() {
   return (
     <div>
       <div className="mb-4">
-        <Link to={client.status === 'lead' || client.status === 'qualified' ? '/leads' : '/clients'} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+        <Link to={['lead', 'qualified', 'proposal_sent'].includes(client.status) ? '/leads' : '/clients'} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
           <ArrowRight className="w-4 h-4" />
-          {client.status === 'lead' || client.status === 'qualified' ? 'חזרה ללידים' : 'חזרה לרשימה'}
+          {['lead', 'qualified', 'proposal_sent'].includes(client.status) ? 'חזרה ללידים' : 'חזרה לרשימה'}
         </Link>
       </div>
       
@@ -128,7 +128,7 @@ export default function ClientProfile() {
           </div>
           <div>
             <h1 className="text-2xl font-bold font-heading">
-              {client.status === 'lead' || client.status === 'qualified' ? 'כרטיס ליד' : 'כרטיס לקוח'} — {client.name}
+              {['lead', 'qualified', 'proposal_sent'].includes(client.status) ? 'כרטיס ליד' : 'כרטיס לקוח'} — {client.name}
             </h1>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               <ClientStatusChanger client={client} />
