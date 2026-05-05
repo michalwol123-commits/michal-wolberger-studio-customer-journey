@@ -7,13 +7,14 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban } from 'lucide-react';
+import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban, Clock } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import EmptyState from '@/components/shared/EmptyState';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import ClientStatusChanger from '@/components/clients/ClientStatusChanger';
+import ClientTimeline from '@/components/clients/ClientTimeline';
 
 export default function ClientProfile() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -114,9 +115,9 @@ export default function ClientProfile() {
   return (
     <div>
       <div className="mb-4">
-        <Link to="/clients" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+        <Link to={client.status === 'lead' || client.status === 'qualified' ? '/leads' : '/clients'} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
           <ArrowRight className="w-4 h-4" />
-          חזרה לרשימה
+          {client.status === 'lead' || client.status === 'qualified' ? 'חזרה ללידים' : 'חזרה לרשימה'}
         </Link>
       </div>
       
@@ -126,7 +127,9 @@ export default function ClientProfile() {
             {client.name?.[0]}
           </div>
           <div>
-            <h1 className="text-2xl font-bold font-heading">{client.name}</h1>
+            <h1 className="text-2xl font-bold font-heading">
+              {client.status === 'lead' || client.status === 'qualified' ? 'כרטיס ליד' : 'כרטיס לקוח'} — {client.name}
+            </h1>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               <ClientStatusChanger client={client} />
               {client.tags?.map(t => (
@@ -202,6 +205,7 @@ export default function ClientProfile() {
           {isAdmin && <TabsTrigger value="payments" className="gap-1"><CreditCard className="w-4 h-4" />תשלומים</TabsTrigger>}
           <TabsTrigger value="documents" className="gap-1"><FileText className="w-4 h-4" />מסמכים</TabsTrigger>
           <TabsTrigger value="communications" className="gap-1"><MessageSquare className="w-4 h-4" />תקשורת</TabsTrigger>
+          <TabsTrigger value="history" className="gap-1"><Clock className="w-4 h-4" />היסטוריה</TabsTrigger>
         </TabsList>
 
         <TabsContent value="projects">
@@ -291,6 +295,10 @@ export default function ClientProfile() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="history">
+          <ClientTimeline client={client} />
         </TabsContent>
 
         <TabsContent value="communications">
