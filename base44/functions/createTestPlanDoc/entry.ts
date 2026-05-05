@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      name: 'תכנית בדיקות — CRM מיכל וולברגר',
+      name: 'מסלול בדיקות E2E — CRM מיכל וולברגר',
       mimeType: 'application/vnd.google-apps.document',
     }),
   });
@@ -53,394 +53,242 @@ Deno.serve(async (req) => {
 });
 
 function buildDocRequests() {
-  // Build document content — inserted in REVERSE order since we always insert at index 1
-  const sections = [];
-
-  // We'll build text blocks and then create insertText requests
   const blocks = [];
 
-  // Title
-  blocks.push({ text: 'תכנית בדיקות — CRM מיכל וולברגר\n', style: 'HEADING_1' });
-  blocks.push({ text: 'גרסה 5.0 | תאריך: ' + new Date().toLocaleDateString('he-IL') + '\n\n', style: 'NORMAL_TEXT' });
+  // ===== TITLE =====
+  blocks.push({ text: 'מסלול בדיקות מקצה לקצה — CRM מיכל וולברגר\n', style: 'HEADING_1' });
+  blocks.push({ text: `תאריך: ${new Date().toLocaleDateString('he-IL')} | גרסה 6.0 — מסלול E2E מלא\n\n`, style: 'NORMAL_TEXT' });
 
-  // ===== PART A =====
-  blocks.push({ text: 'חלק A — Entities (ארכיטקטורת נתונים)\n', style: 'HEADING_1' });
-
-  blocks.push({ text: 'A1: Client Entity\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'יצירת ליד חדש — לידים → "ליד חדש" → מלא שם + טלפון → רשומה נוצרת עם status=lead',
-    'שדות חובה — נסה ליצור ליד בלי שם או טלפון → שגיאת ולידציה',
-    'שדה source — בדוק שכל ערכי ה-enum קיימים: facebook, instagram, referral, google, website, whatsapp, other',
-    'שדה budget_range — בדוק enum: up_to_100k, 100_300k, 300_500k, above_500k',
-    'שדה property_type — בדוק enum: apartment, house, office, commercial',
-    'שדה tags — בדוק multi-select: VIP, returning, cold, priority, referral_source',
-    'שדה notes — הזן הערה ארוכה → נשמרת ומוצגת',
-    'Portal token — לחץ "העתק קישור פורטל" בפרופיל לקוח → token נוצר + קישור הועתק',
-    'ביטול token — לחץ "בטל קישור" → portal_token_revoked=true',
-    'חידוש token — לחץ "חדש קישור" → token חדש, הישן לא עובד',
+  // ===== PREP =====
+  blocks.push({ text: 'הכנה לפני תחילת הבדיקות\n', style: 'HEADING_1' });
+  blocks.push({ text: lines([
+    'מחקי כל רשומות בדיקה קודמות (לקוחות/פרויקטים/משימות של "בדיקה")',
+    'ודאי שאת מחוברת כ-admin (מיכל)',
+    'פתחי את המערכת בשני חלונות: CRM (רגיל) + פורטל (אנונימי)',
   ]) });
 
-  blocks.push({ text: 'A2: Project Entity\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'יצירת פרויקט — צור פרויקט חדש עם client_id → נוצר עם stage_current=1, status=active',
-    '13 שלבים — פתח Project Detail → בדוק שיש 13 שלבים ב-StageSelector',
-    'שדות sX_status — בדוק שכל s1 עד s13 קיימים עם ערכים: pending/in_progress/completed',
-    'שדה progress — עדכן progress ל-50 → מוצג בסקירה',
-    'שדה total_budget — הזן תקציב → מוצג בפורמט ₪',
-    'תאריכי פרויקט — מלא start_date + end_date_est → מוצגים בפורמט dd/MM/yyyy',
+  // ===== STEP 0 =====
+  blocks.push({ text: 'שלב 0 — יצירת ליד חדש\n', style: 'HEADING_1' });
+  blocks.push({ text: '👩 מיכל (אדמין)\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'עמוד לידים → "+ הוסף ליד" → שם: "לקוח בדיקה", טלפון: 0501234567, אימייל: test@test.com, מקור: facebook',
+    'הליד נוצר בסטטוס lead ✅',
+  ]) });
+  blocks.push({ text: '🤖 אוטומציה A (autoLeadResponse) — חכי 10-15 שניות\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'בדקי בעמוד משימות: נוצרה משימה "פנייה ראשונית — לקוח בדיקה" בעדיפות גבוהה',
+    'בדקי בעמוד תקשורת: נוצרה הודעת WhatsApp pending "תודה על הפנייה"',
+    'בכרטיס הלקוח: first_response_at מעודכן',
   ]) });
 
-  blocks.push({ text: 'A3: Quote Entity\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'יצירת הצעה — צור הצעת מחיר ללקוח → נוצרת עם status=draft',
-    'שדה package_type — בדוק: basic, mid, premium',
-    'שדה url — הזן קישור ל-PDF → נשמר ולחיץ',
-    'שדה version — בדוק ברירת מחדל 1',
+  // ===== STEP 1 =====
+  blocks.push({ text: 'שלב 1 — קידום ליד → מתעניין (qualified)\n', style: 'HEADING_1' });
+  blocks.push({ text: '👩 מיכל\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'כרטיס לקוח → שני סטטוס ל-"מתעניין" (qualified)',
+    'הסטטוס משתנה ל-qualified ✅',
+  ]) });
+  blocks.push({ text: '🤖 State Machine I\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'last_valid_status = qualified ✅',
+    'qualified_at מעודכן ✅',
+  ]) });
+  blocks.push({ text: '🧪 בדיקה שלילית\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'נסי לשנות סטטוס ישירות ל-active_client → State Machine חוסם → rollback ל-qualified ✅',
+    'בדקי בתקשורת: רשומת system_error על מעבר לא חוקי ✅',
   ]) });
 
-  blocks.push({ text: 'A4: Payment Entity\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'יצירת תשלום — צור תשלום לפרויקט → נוצר עם status=pending',
-    'שדות סכום — הזן amount + amount_paid → מוצגים בפורמט ₪',
-    'שדה due_date — הזן תאריך יעד → מוצג בפורמט dd/MM/yyyy',
-    'Admin only — צא ל-user רגיל → נסה לגשת לתשלומים → לא מוצג / הפניה',
+  // ===== STEP 2 =====
+  blocks.push({ text: 'שלב 2 — שיחת היכרות (פגישה + תשלום)\n', style: 'HEADING_1' });
+  blocks.push({ text: '👩 מיכל\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'עמוד פגישות → "+ הוסף פגישה" → סוג: qualifying, לקוח: "לקוח בדיקה", תאריך: מחר',
+    'הפגישה נוצרה ✅',
+  ]) });
+  blocks.push({ text: '🤖 אוטומציה qualifying (autoQualifyingPayment) — חכי 10-15 שניות\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'תשלומים: נוצר תשלום ₪250 "תשלום לפגישת היכרות" ✅',
+    'משימות: נוצרה משימה "תזכורת תשלום לפגישת היכרות" ✅',
+    'תקשורת: רשומת note על יצירת התשלום ✅',
   ]) });
 
-  blocks.push({ text: 'A5: Communication Entity\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'סוגי תקשורת — בדוק: whatsapp, email, call, meeting, note, system_error, portal_activity',
-    'שדה direction — בדוק inbound/outbound → חצים שונים מוצגים',
-    'שדה error_detail — גלוי רק ל-Admin, Staff לא רואה',
+  // ===== STEP 3 =====
+  blocks.push({ text: 'שלב 3 — הצעת מחיר\n', style: 'HEADING_1' });
+  blocks.push({ text: '👩 מיכל\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'סטטוס לקוח → "הצעה נשלחה" (proposal_sent) → State Machine מאשר ✅',
+    'עמוד הצעות מחיר → "+ הצעה חדשה" → לקוח: "לקוח בדיקה", סכום: 50,000₪, חבילה: mid, URL: כתובת כלשהי, סטטוס: draft',
+    'ההצעה נוצרה ✅',
+    'שני סטטוס הצעה ל-sent → State Machine: draft→sent מותר ✅',
+    'שני סטטוס הצעה ל-viewed → State Machine: sent→viewed מותר ✅',
+    'שני סטטוס הצעה ל-approved → State Machine: viewed→approved מותר ✅',
   ]) });
 
-  blocks.push({ text: 'A6: Meeting Entity\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'סוגי פגישה — בדוק: intro, qualifying, stage_review, site_visit, zoom, design_approval',
-    'תצוגה שבועית — נווט בין שבועות → פגישות מסוננות נכון',
-    'קישור ללקוח — לחץ על שם לקוח בפגישה → מוביל לפרופיל',
+  // ===== STEP 4 =====
+  blocks.push({ text: 'שלב 4 — אישור הצעה → פרויקט נפתח אוטומטית! (קריטי!)\n', style: 'HEADING_1' });
+  blocks.push({ text: '🤖 אוטומציה J (autoQuoteApproval) — חכי 15-20 שניות\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'פרויקטים: נוצר פרויקט חדש בסטטוס active, שלב 1, progress=0 ✅',
+    'תשלומים: 3 תשלומים נוצרו: מקדמה 40% (₪20,000), אמצע 30% (₪15,000), סיום 30% (₪15,000) ✅',
+    'לקוח: סטטוס עודכן ל-active_client + portal_token נוצר ✅',
+    'תקשורת: הודעת WhatsApp "ההצעה אושרה ופרויקט נפתח!" ✅',
   ]) });
 
-  blocks.push({ text: 'A7: Document Entity\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'העלאת מסמך — Project Detail → מסמכים → העלאת מסמך → קובץ עולה + רשומה נוצרת',
-    'סוגי מסמך — בדוק כל 11 הסוגים (plan, concept, render...)',
-    'שיוך שלב — בחר שלב 1-13 → נשמר נכון',
-    'visible_to_client — סמן ✓ → מסמך גלוי בפורטל',
-    'Versioning — העלה מסמך עם אותו שם → מוצע כגרסה חדשה',
-    'קבלת גרסה — אשר כגרסה 2 → גרסה 1 = is_current:false, גרסה 2 = is_current:true',
-    'העלאה מ-StagePanel — לחץ על שלב → העלה מסמך → שדה "שלב" ממולא אוטומטית',
+  // ===== STEP 5 =====
+  blocks.push({ text: 'שלב 5 — קידום שלבי פרויקט (1→13)\n', style: 'HEADING_1' });
+
+  blocks.push({ text: '5A: קידום מ-1 ל-2 (שיחת היכרות)\n', style: 'HEADING_2' });
+  blocks.push({ text: '👩 מיכל\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'כרטיס פרויקט → העבירי שלב נוכחי ל-שלב 2',
+  ]) });
+  blocks.push({ text: '🤖 אוטומציה D (autoStageAdvance)\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    's1_status = completed, s2_status = in_progress, progress ≈ 8% ✅',
+    'תקשורת: הודעה "עברנו לשלב 2 — שיחת היכרות" ✅',
+    'משימות: "הכנה לשלב 2 — שיחת היכרות" ✅',
   ]) });
 
-  blocks.push({ text: 'A8: Task Entity\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'יצירת משימה — משימות → "משימה חדשה" → נוצרת עם status=open',
-    'שינוי סטטוס — לחץ "התחל" / "סיים" → עוברת open→in_progress→done',
-    'סוגי משימה — בדוק: followup, payment_reminder, approval, site_visit, supplier_contact, manual, automation_failed',
-    'עדיפויות — בדוק: low, normal, high, urgent → צבעים שונים',
-    'Kanban — 4 עמודות: פתוח, בביצוע, הושלם, בוטל → מוצגות נכון',
+  blocks.push({ text: '5B: קידום מ-2 ל-3 (הצעת מחיר)\n', style: 'HEADING_2' });
+  blocks.push({ text: lines([
+    'קדמי פרויקט ל-שלב 3 → s2=completed, s3=in_progress, progress ≈ 15% ✅',
+    'אוטומציה autoStageTask: נוצרה משימה "הכנת הצעת מחיר" בעדיפות גבוהה ✅',
   ]) });
 
-  // ===== PART B =====
-  blocks.push({ text: 'חלק B — Views (12 מסכים)\n', style: 'HEADING_1' });
-
-  blocks.push({ text: 'B1: Dashboard (מסך ראשי)\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'KPI — לידים חדשים (שבוע) → מספר נכון של לידים ב-7 ימים אחרונים',
-    'KPI — פגישות היום → מספר נכון של פגישות scheduled להיום',
-    'KPI — תשלומים באיחור → מוצג רק ל-Admin, סכום נכון',
-    'KPI — משימות פתוחות → open + in_progress',
-    'KPI — פרויקטים פעילים → ספירה נכונה של active',
-    'KPI — ערך Pipeline → SUM של total_budget מפרויקטים active',
-    'KPI — Conversion Rate → (active+completed) / total × 100',
-    'Widget — התראות קריטיות → שגיאות, פגישות בלי סיכום, כפילויות',
-    'Widget — שירות לקוחות → מדדי שירות מוצגים',
-    'לידים אחרונים → 5 לידים אחרונים עם קישורים',
-    'משימות קרובות → 5 משימות פתוחות/בביצוע',
+  blocks.push({ text: '5C: קידום מ-3 ל-4 (סגירת פרויקט)\n', style: 'HEADING_2' });
+  blocks.push({ text: '👩 מיכל\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'קדמי ל-שלב 4 → stage_current = 4',
+    'סמני s4_status ל-completed ידנית',
+  ]) });
+  blocks.push({ text: '🤖 אוטומציה Welcome (autoWelcomeClient)\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'לקוח: סטטוס = active_client ✅',
+    'אימייל: "ברוכים הבאים" נשלח (בדקי Communication סוג email) ✅',
   ]) });
 
-  blocks.push({ text: 'B2: Pipeline Kanban\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    '7 עמודות — lead, qualified, proposal_sent, proposal_approved, active_client, completed_client, archived',
-    'כרטיס לקוח — שם, טלפון, source, tags',
-    'ספירות — מספר לקוחות בכל עמודה נכון',
-    'קישור — לחיצה → פרופיל לקוח',
+  blocks.push({ text: '5D-5K: קידום שלבים 5-12 (לכל שלב)\n', style: 'HEADING_2' });
+  blocks.push({ text: lines([
+    'לכל קידום שלב: Stage Advance (D) רץ → שלב קודם=completed, חדש=in_progress, progress עולה ✅',
+    'נוצרת משימה "הכנה לשלב X" ✅',
+    'נוצרת תקשורת WhatsApp "עברנו לשלב X" ✅',
+  ]) });
+  blocks.push({ text: 'בדיקות ספציפיות לפי שלב:\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'שלב 5 (שאלון): סמני s5=completed → אוטומציה autoStageTask מעדכנת Client ל-qualified (אם lead)',
+    'שלב 6 (גאנט): צרי אבני דרך (milestones) → בדקי שהן מופיעות בגאנט',
+    'שלב 8 (קונספט): העלי מסמך עם visible_to_client=true → אוטומציה DocNotification שולחת WhatsApp',
+    'שלב 9 (קניות): עדכני shopping_days_used → בדקי שמתעדכן בפורטל',
+    'שלב 10 (ספקים): צרי ספק + שייכי לפרויקט + צרי הזמנת רכש',
+    'שלב 11 (ביצוע): צרי budget items עם actual > planned×1.1 → אוטומציה יומית תיצור התראת חריגה',
   ]) });
 
-  blocks.push({ text: 'B3: Leads\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'סינון — רק status=lead, לא מופיעים סטטוסים אחרים',
-    'חיפוש — חפש לפי שם/טלפון/אימייל → תוצאות נכונות',
-    'יצירת ליד — לחיצה על "ליד חדש" → דיאלוג נפתח',
-    'ספירה — subtitle מציג מספר לידים נכון',
+  // ===== STEP 6 =====
+  blocks.push({ text: 'שלב 6 — בדיקת תשלומים\n', style: 'HEADING_1' });
+  blocks.push({ text: lines([
+    'בדקי שיש 3 תשלומים (מקדמה, אמצע, סיום) → סכומים: 20K/15K/15K ✅',
+    'עדכני תשלום מקדמה: amount_paid=20000, paid_date=היום, status=paid → State Machine: pending→paid ✅',
+    'עדכני תשלום אמצע: amount_paid=5000, status=partial → partial מותר ✅',
+    'בדיקת overdue: שני due_date של תשלום סיום לתאריך שעבר → אוטומציה F (08:00 יומי) תסמן כ-overdue + Task urgent',
   ]) });
 
-  blocks.push({ text: 'B4: Clients List\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'סינון בסיסי — רק qualified, proposal_sent, proposal_approved, active_client, completed_client',
-    'סינון סטטוס — בחר סטטוס ספציפי → רק אותו סטטוס',
-    'חיפוש — לפי שם/טלפון/אימייל → עובד',
+  // ===== STEP 7 =====
+  blocks.push({ text: 'שלב 7 — בדיקת הפורטל (צד לקוח)\n', style: 'HEADING_1' });
+  blocks.push({ text: '👩 מיכל\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'כרטיס לקוח → "צפה בפורטל" → העתיקי URL',
+  ]) });
+  blocks.push({ text: '👤 כלקוח (חלון אנונימי)\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'פתחי URL → רואים "שלום + שם הלקוח" ✅',
+    'רואים את הפרויקט + שלב נוכחי + progress ✅',
+    'מסמכים: רואים רק visible_to_client=true ✅',
+    'גאנט: לוח זמנים מוצג ✅',
+    'כפתור "מדריך" בהדר → מדריך הלקוח מוצג ✅',
+  ]) });
+  blocks.push({ text: '👩 מיכל → 👤 לקוח\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'מיכל: העלי מסמך חדש עם approval_status=pending + visible_to_client=true',
+    'לקוח בפורטל: בדקי שהמסמך מופיע → לחצי "מאשר" → approval_status=approved ✅',
   ]) });
 
-  blocks.push({ text: 'B5: Client Profile\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'פרטי לקוח — שם, טלפון, אימייל, כתובת, תקציב, סוג נכס, מקור → כולם מוצגים',
-    'שינוי סטטוס — dropdown → שנה סטטוס → מתעדכן',
-    'Tab פרויקטים — רשימת פרויקטים של הלקוח → מקושרים נכון',
-    'Tab תשלומים (Admin) — טבלת תשלומים → גלוי רק ל-Admin',
-    'Tab מסמכים — מסמכים + כפתור העלאה → עובד',
-    'Tab תקשורת — לוג הודעות → system_error רק ל-Admin',
-    'Portal buttons — העתק/צפה/חדש/בטל קישור → כולם עובדים',
+  // ===== STEP 8 =====
+  blocks.push({ text: 'שלב 8 — סיום פרויקט (שלב 13)\n', style: 'HEADING_1' });
+  blocks.push({ text: '👩 מיכל\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'קדמי ל-שלב 13 → stage_current = 13',
+    'שני סטטוס פרויקט ל-completed',
+  ]) });
+  blocks.push({ text: '🤖 אוטומציה G (autoProjectCompletion) — חכי 15-20 שניות\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'end_date_actual מעודכן ✅',
+    'לקוח: סטטוס → completed_client ✅',
+    'תקשורת: WhatsApp "הפרויקט הושלם!" ✅',
+    'משימות: "פולואפ סיום" — לשלוח NPS ✅',
+  ]) });
+  blocks.push({ text: '👤 לקוח בפורטל\n', style: 'HEADING_3' });
+  blocks.push({ text: lines([
+    'רענני → מסך "הפרויקט הושלם" (PortalCompleted) מוצג ✅',
   ]) });
 
-  blocks.push({ text: 'B6: Projects\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'תצוגת פרויקטים — פרויקטים מקובצים לפי שלב → סדר נכון',
-    'קישור — לחיצה → Project Detail → ניווט תקין',
-    'סינון סטטוס — active/on_hold/completed/cancelled → עובד',
+  // ===== STEP 9 =====
+  blocks.push({ text: 'שלב 9 — בדיקות State Machine שליליות (ניסיון שבירה)\n', style: 'HEADING_1' });
+  blocks.push({ text: lines([
+    'נסי להחזיר פרויקט completed → active → State Machine חוסם (completed → [] ריק) ❌✅',
+    'נסי להחזיר לקוח archived → active_client → ארכיון → רק lead ❌✅',
+    'נסי לשנות הצעה approved → sent → approved → [] ❌✅',
+    'נסי לשנות תשלום paid → pending → paid → [] ❌✅',
   ]) });
 
-  blocks.push({ text: 'B7: Project Detail\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'Header — שם פרויקט + לקוח (קישור) + סטטוס → מוצג',
-    'StageSelector — 13 שלבים לחיצים → כל שלב נפתח',
-    'סטטוס שלב — pending=אפור, in_progress=כתום, completed=ירוק+✓ → נכון',
-    'StagePanel — לחץ על שלב → מסמכים, גלריה (שלב 8) → תוכן רלוונטי',
-    'Tab סקירה — תקציב, התקדמות, תאריכים, הערות → מוצג',
-    'Tab תשלומים — Admin only, טבלה → מוסתר ל-Staff',
-    'Tab מסמכים — רשימה + העלאה → עובד',
-    'Tab משימות — רשימת משימות הפרויקט → סטטוס + תאריך',
-    'Tab תקשורת — לוג הודעות → מסונן לפרויקט',
-    'חזרה — "חזרה לפרויקטים" → חוזר לרשימה',
+  // ===== STEP 10 =====
+  blocks.push({ text: 'שלב 10 — בדיקת דוחות וייצוא\n', style: 'HEADING_1' });
+  blocks.push({ text: lines([
+    'עמוד דוחות → טאב פרויקטים → הפרויקט מופיע בסטטיסטיקות ✅',
+    'טאב כספי → 3 תשלומים מופיעים, סכומים נכונים ✅',
+    'טאב הצעות מחיר → ההצעה מופיעה ב-funnel ✅',
+    'טאב ספקים → הספק שנוצר מופיע ✅',
+    'ייצוא CSV מכל עמוד → הקובץ יורד, מכיל נתוני בדיקה ✅',
+    'ייצוא PDF מדוחות → PDF נוצר ✅',
+    'חיפוש גלובלי (⌘K) → חפשי "לקוח בדיקה" → מוצא לקוח, פרויקט, הצעה ✅',
   ]) });
 
-  blocks.push({ text: 'B8: Payments\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'Admin only — Staff אינו רואה בתפריט → מופנה ל-/',
-    'KPIs — ממתינים/באיחור/שולם → סכומים נכונים',
-    'סינון — לפי סטטוס → עובד',
-    'קישור ללקוח/פרויקט — שמות מוצגים → נכונים',
+  // ===== STEP 11 =====
+  blocks.push({ text: 'שלב 11 — ניקוי\n', style: 'HEADING_1' });
+  blocks.push({ text: lines([
+    'מחקי את "לקוח בדיקה" + הפרויקט + ההצעה + התשלומים + המשימות שנוצרו',
+    'ודאי שאין שאריות בדשבורד/התראות',
   ]) });
 
-  blocks.push({ text: 'B9: Meetings\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'ניווט שבועי — הקודם/היום/הבא → תאריכים נכונים',
-    'קיבוץ יומי — פגישות מקובצות לפי יום → סדר נכון',
-    'פרטי פגישה — סוג, שעה, משך, מיקום, לקוח, סטטוס → כולם מוצגים',
-  ]) });
-
-  blocks.push({ text: 'B10: Communications\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'סינון סוג — WhatsApp, אימייל, שיחה, פגישה, הערה, (system_error רק Admin) → עובד',
-    'חיפוש — בתוכן ושם לקוח → עובד',
-    'כיוון — חצים שונים ל-inbound/outbound → מוצגים',
-    'error_detail — מוצג רק ל-Admin → Staff לא רואה',
-  ]) });
-
-  blocks.push({ text: 'B11: Tasks Kanban\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    '4 עמודות — פתוח, בביצוע, הושלם, בוטל → כולן',
-    'פעולות מהירות — "התחל" / "סיים" → מעדכנות סטטוס',
-    'שם לקוח — מוצג בכרטיס → נכון',
-  ]) });
-
-  // ===== PART C =====
-  blocks.push({ text: 'חלק C — Client Portal (פורטל לקוח)\n', style: 'HEADING_1' });
-
-  blocks.push({ text: 'C1: גישה וזיהוי\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'Magic Link תקין — פתח URL עם token → נטען לפרופיל הלקוח',
-    'Token שגוי — שנה token ב-URL → מסך שגיאה',
-    'Token מבוטל — בטל token ב-CRM → נסה → מסך שגיאה',
-  ]) });
-
-  blocks.push({ text: 'C2: מצבי תצוגה\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'אין פרויקט — status=lead/qualified → מסך ברוכים הבאים + הצעות',
-    'פרויקט בודד — פרויקט active אחד → ישר לתצוגת פרויקט',
-    'כמה פרויקטים — 2+ פרויקטים → רשימת פרויקטים לבחירה',
-    'פרויקט הושלם — status=completed → מסך סיום + NPS + גלריה',
-  ]) });
-
-  blocks.push({ text: 'C3: תצוגת פרויקט בפורטל\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'Timeline שלבים — 13 שלבים עם סטטוסים → הושלם=✓ ירוק, בביצוע=כחול, עתידי=אפור',
-    'מסמכים גלויים — רק visible_to_client=true → מסמכים פנימיים לא נראים',
-    'תשלומים — סכום + סטטוס → חשבונית לא גלויה',
-    'פגישות קרובות — scheduled_at עתידי → מוצגות',
-  ]) });
-
-  blocks.push({ text: 'C4: אישור הצעה בפורטל\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'הצגת הצעה — status=sent/viewed → מוצגת עם כפתור אישור',
-    'אישור — לחץ "אשר הצעה" → status=approved',
-    'דחייה — לחץ "דחה" → status=rejected',
-  ]) });
-
-  // ===== PART D =====
-  blocks.push({ text: 'חלק D — State Machines (אכיפת מעברים)\n', style: 'HEADING_1' });
-
-  blocks.push({ text: 'D1: Client State Machine\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    '✅ lead → qualified — מותר',
-    '✅ lead → archived — מותר',
-    '✅ qualified → proposal_sent — מותר',
-    '✅ qualified → lead — מותר (חזרה)',
-    '✅ proposal_sent → proposal_approved — מותר',
-    '✅ proposal_sent → archived — מותר',
-    '✅ proposal_approved → active_client — מותר',
-    '✅ active_client → completed_client — מותר',
-    '❌ lead → active_client — Rollback!',
-    '❌ completed_client → lead — Rollback!',
-    '❌ archived → lead — Rollback!',
-  ]) });
-
-  blocks.push({ text: 'D2: Project State Machine\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    '✅ active → on_hold — מותר',
-    '✅ active → completed — מותר',
-    '✅ active → cancelled — מותר',
-    '✅ on_hold → active — מותר',
-    '❌ completed → active — Rollback!',
-    '❌ cancelled → active — Rollback!',
-  ]) });
-
-  blocks.push({ text: 'D3: Quote State Machine\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    '✅ draft → sent — מותר',
-    '✅ sent → viewed — מותר',
-    '✅ viewed → approved — מותר',
-    '✅ viewed → rejected — מותר',
-    '❌ approved → draft — Rollback!',
-  ]) });
-
-  blocks.push({ text: 'D4: Task State Machine\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    '✅ open → in_progress — מותר',
-    '✅ in_progress → done — מותר',
-    '✅ open → cancelled — מותר',
-    '❌ done → open — Rollback!',
-  ]) });
-
-  blocks.push({ text: 'D5: Rollback Logging\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'לאחר rollback — בדוק Communications → type=system_error → רשומת שגיאה עם פירוט',
-  ]) });
-
-  // ===== PART E =====
-  blocks.push({ text: 'חלק E — Automations\n', style: 'HEADING_1' });
-
-  blocks.push({ text: 'E1: A — מענה לליד חדש (autoLeadResponse)\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'יצירת ליד חדש → Communication WhatsApp outbound נוצר',
-    'Task followup → Task "Follow-up ליד חדש" עם due_date = מחר',
-    'first_response_at → מתעדכן',
-  ]) });
-
-  blocks.push({ text: 'E2: B — תזכורות פגישה (autoMeetingReminder)\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'פגישה מחר → Communication תזכורת D-1 + reminder_d1_sent=true',
-    'פגישה בעוד שעה → Communication תזכורת H-1 + reminder_h1_sent=true',
-  ]) });
-
-  blocks.push({ text: 'E3: D — עדכון שלב (autoStageAdvance)\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'sX_status → completed → stage_current++ + s{next}=in_progress',
-    'Communication → WhatsApp ללקוח על שלב שהושלם',
-    'Task → משימת הכנה לשלב הבא (due_date = +2 ימים)',
-  ]) });
-
-  blocks.push({ text: 'E4: E — תשלום באיחור (autoOverduePayments)\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'Payment עם due_date < today + status=pending → status=overdue + Communication + Task',
-  ]) });
-
-  blocks.push({ text: 'E5: H — כפילויות (autoDuplicateDetection)\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'צור ליד עם טלפון קיים → duplicate_of מולא + Task "בדוק כפילות"',
-  ]) });
-
-  blocks.push({ text: 'E6: I — State Machine Automations\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'Automations קיימות — Client, Project, Quote, Task, Payment — כולן Active (5 automations)',
-  ]) });
-
-  blocks.push({ text: 'E7: J — Quote Approval (autoQuoteApproval)\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'Quote status → approved → Project נוצר + Payments + Client → active_client',
-  ]) });
-
-  blocks.push({ text: 'E8: K — Retry Communications (autoRetryComms)\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'Communication status=failed, retry_count<3 → retry_count++ + ניסיון שליחה חוזר',
-  ]) });
-
-  blocks.push({ text: 'E9: Scheduled Automations\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'Email Sender — פעיל, כל 5 דקות',
-    'WhatsApp Sender — פעיל, כל 5 דקות (cron)',
-    'Communication Retry — פעיל, כל 5 דקות',
-  ]) });
-
-  // ===== PART F =====
-  blocks.push({ text: 'חלק F — RBAC (הרשאות)\n', style: 'HEADING_1' });
-
-  blocks.push({ text: 'F1: Admin\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'רואה את כל הלקוחות → כן',
-    'רואה תשלומים → כן',
-    'רואה system_error → כן',
-    'גישה לכל המסכים → 13 מסכים',
-  ]) });
-
-  blocks.push({ text: 'F2: Staff\n', style: 'HEADING_2' });
-  blocks.push({ text: testLines([
-    'Dashboard — רואה רק owner=me, לא רואה שגיאות מערכת',
-    'Payments — לא רואה בתפריט / מופנה → מוסתר',
-    'Tasks — רק assigned_to=me → אחרות לא מופיעות',
-    'Communications — system_error לא מוצג → מסונן',
-  ]) });
-
-  // ===== PART G =====
-  blocks.push({ text: 'חלק G — ניווט וUI כללי\n', style: 'HEADING_1' });
-  blocks.push({ text: testLines([
-    'Sidebar — כל 11 הקישורים + Settings + User Guide → מנווט נכון',
-    'RTL — כל הממשק בעברית, מימין לשמאל → תקין',
-    'Mobile responsive — פתח על טלפון → כל המסכים קריאים',
-    'טעינה — Loading spinner בטעינה → לא מסך ריק',
-    'Empty states — מסך ללא נתונים → אייקון + הודעה',
-    'לינקים פנימיים — כל הלינקים בין מסכים → עובדים בלי 404',
-    'User Guide — /user-guide → Admin only, נפתח',
-    'Settings — /settings → Admin only',
-  ]) });
-
-  // ===== PART H =====
-  blocks.push({ text: 'חלק H — מסלול End-to-End (קריטי!)\n', style: 'HEADING_1' });
-  blocks.push({ text: testLines([
-    'שלב 1: ליד חדש — צור ליד "לקוח בדיקה" → בדוק autoLeadResponse',
-    'שלב 2: Qualified — שנה סטטוס ל-qualified',
-    'שלב 3: הצעת מחיר — צור Quote → שנה ל-sent',
-    'שלב 4: אישור הצעה — שנה Quote ל-approved → בדוק שנוצר Project + Client=active_client',
-    'שלב 5: פתח פורטל — העתק קישור פורטל → פתח → בדוק תצוגת פרויקט',
-    'שלב 6: העלאת מסמך — העלה מסמך לשלב 1 (visible_to_client=true) → בדוק בפורטל',
-    'שלב 7: קדם שלב — עדכן s1_status=completed → בדוק stage_current=2',
-    'שלב 8: צור תשלום — צור Payment עם due_date=אתמול → בדוק autoOverduePayments',
-    'שלב 9: צור משימה — צור Task → התחל → סיים → בדוק completed_at',
-    'שלב 10: גלריה שלב 8 — העלה render/concept לשלב 8 → בדוק StageGallery + lightbox',
-    'שלב 11: סיום פרויקט — עדכן כל sX=completed → status=completed → בדוק autoProjectCompletion',
-    'שלב 12: NPS — בפורטל → דרג שביעות רצון',
-    'שלב 13: ניקוי — מחק נתוני בדיקה',
-  ]) });
-
-  blocks.push({ text: '\nעצות לביצוע:\n', style: 'HEADING_2' });
-  blocks.push({ text: 
-    '• עבדי שלב-שלב לפי הסדר (A→B→C→D→E→F→G→H)\n' +
-    '• סמני ✅ או ❌ בכל שורה\n' +
-    '• אם יש ❌ — כתבי מה בדיוק לא עובד\n' +
-    '• חלק H (End-to-End) הוא הבדיקה הקריטית ביותר — שם רואים את "התמונה הגדולה"\n',
+  // ===== SUMMARY TABLE =====
+  blocks.push({ text: '\nסיכום אוטומציות שצריכות לרוץ במהלך הבדיקה:\n', style: 'HEADING_1' });
+  blocks.push({ text:
+    'A — autoLeadResponse → שלב 0 (יצירת ליד)\n' +
+    'I — autoStateMachine → שלבים 1, 3, 6, 8, 9 (כל שינוי סטטוס)\n' +
+    'qualifying — autoQualifyingPayment → שלב 2 (פגישת היכרות)\n' +
+    'J — autoQuoteApproval → שלב 4 (אישור הצעה)\n' +
+    'D — autoStageAdvance → שלב 5 (כל קידום שלב)\n' +
+    'autoStageTask → שלב 5B, 5D (s2/s5 completed)\n' +
+    'autoWelcomeClient → שלב 5C (s4 completed)\n' +
+    'autoDocNotification → שלב 5 (מסמך visible_to_client)\n' +
+    'F — autoOverduePayments → שלב 6 (תשלום באיחור)\n' +
+    'G — autoProjectCompletion → שלב 8 (סיום פרויקט)\n' +
+    'autoBudgetAlert → שלב 5 (חריגת תקציב — יומי)\n' +
+    'autoGanttDelayAlert → שלב 5 (עיכוב גאנט — יומי)\n\n',
     style: 'NORMAL_TEXT'
   });
 
-  // Now build the actual requests — insert all text at position 1, in reverse order
+  blocks.push({ text: 'עצות לביצוע:\n', style: 'HEADING_2' });
+  blocks.push({ text:
+    '• עבדי שלב-שלב לפי הסדר (0→1→2→...→11)\n' +
+    '• סמני ✅ או ❌ בכל שורה\n' +
+    '• אחרי כל אוטומציה — חכי 15 שניות ורענני\n' +
+    '• אם יש ❌ — כתבי מה בדיוק לא עובד + צילום מסך\n' +
+    '• שלב 4 (אישור הצעה) הוא הקריטי ביותר — שם הכי הרבה אוטומציות רצות\n',
+    style: 'NORMAL_TEXT'
+  });
+
+  // Build the actual Google Docs API requests
   const requests = [];
   let currentIndex = 1;
 
@@ -471,6 +319,6 @@ function buildDocRequests() {
   return requests;
 }
 
-function testLines(lines) {
-  return lines.map((line, i) => `☐ ${i + 1}. ${line}`).join('\n') + '\n\n';
+function lines(items) {
+  return items.map((line, i) => `☐ ${i + 1}. ${line}`).join('\n') + '\n\n';
 }
