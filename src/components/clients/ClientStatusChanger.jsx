@@ -25,7 +25,7 @@ export default function ClientStatusChanger({ client }) {
       await base44.entities.Client.update(client.id, { status: newStatus });
 
       // Wait for the State Machine automation to potentially rollback
-      await new Promise(r => setTimeout(r, 2500));
+      await new Promise(r => setTimeout(r, 4000));
 
       // Re-fetch the client to check if the status actually changed
       const [updated] = await base44.entities.Client.filter({ id: client.id });
@@ -44,7 +44,7 @@ export default function ClientStatusChanger({ client }) {
   return (
     <Select value={client.status} onValueChange={(val) => mutation.mutate(val)} disabled={mutation.isPending}>
       <SelectTrigger className="w-44 h-8 text-xs">
-        <SelectValue />
+        <SelectValue>{mutation.isPending ? '⏳ בודק...' : undefined}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {CLIENT_STATUSES.map(s => (
