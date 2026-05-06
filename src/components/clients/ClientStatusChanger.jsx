@@ -16,39 +16,39 @@ const CLIENT_STATUSES = [
 
 const statusLabels = Object.fromEntries(CLIENT_STATUSES.map(s => [s.value, s.label]));
 
+const ALLOWED_TRANSITIONS = {
+  lead: ['qualified', 'archived'],
+  qualified: ['proposal_sent', 'archived'],
+  proposal_sent: ['proposal_approved', 'qualified', 'archived'],
+  proposal_approved: ['active_client', 'archived'],
+  active_client: ['completed_client', 'archived'],
+  completed_client: ['active_client', 'archived'],
+  archived: ['lead'],
+};
+
 export default function ClientStatusChanger({ client }) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (newStatus) => {
-      const previousStatus = client.status;
       await base44.entities.Client.update(client.id, { status: newStatus });
-
-      // Wait for the State Machine automation to potentially rollback
-      await new Promise(r => setTimeout(r, 6000));
-
-      // First check
-      const [firstCheck] = await base44.entities.Client.filter({ id: client.id });
-
-      // Double-check after 1 more second to catch late rollbacks
-      await new Promise(r => setTimeout(r, 1000));
-      const [finalCheck] = await base44.entities.Client.filter({ id: client.id });
-
-      const actual = finalCheck || firstCheck;
-      if (actual && actual.status !== newStatus) {
-        toast.error(
-          `לא ניתן להעביר סטטוס מ"${statusLabels[previousStatus]}" ל"${statusLabels[newStatus]}"`,
-          { description: `הסטטוס חזר ל"${statusLabels[actual.status]}"` }
-        );
-      } else {
-        toast.success(`הסטטוס עודכן ל"${statusLabels[newStatus]}"`);
-      }
+      toast.success(`הסטטוס עודכן ל"${statusLabels[newStatus]}"`);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['client', client.id] }),
   });
 
   return (
-    <Select value={client.status} onValueChange={(val) => mutation.mutate(val)} disabled={mutation.isPending}>
+    <Select value={client.status} onValueChange={(val) => {
+      const allowed = ALLOWED_TRANSITIONS[client.status] || [];
+      if (!allowed.includes(val)) {
+        toast.error(
+          `לא ניתן לעבור מ"${statusLabels[client.status]}" ל"${statusLabels[val]}"`,
+          { description: `מעברים מותרים: ${allowed.map(s => statusLabels[s]).join(', ')}` }
+        );
+        return;
+      }
+      mutation.mutate(val);
+    }} disabled={mutation.isPending}>
       <SelectTrigger className="w-44 h-8 text-xs">
         <SelectValue>{mutation.isPending ? '⏳ בודק...' : undefined}</SelectValue>
       </SelectTrigger>
