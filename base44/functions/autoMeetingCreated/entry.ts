@@ -64,6 +64,11 @@ Deno.serve(async (req) => {
     const calData = await calRes.json();
     console.log('Calendar event created:', calData.id);
 
+    // Save google_event_id on the meeting record
+    await base44.asServiceRole.entities.Meeting.update(event.entity_id, {
+      google_event_id: calData.id,
+    });
+
     // 2. Send email invitation to client (if email exists)
     if (client.email) {
       const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });

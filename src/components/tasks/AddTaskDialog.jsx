@@ -9,12 +9,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import useCurrentUser from '@/lib/useCurrentUser';
 
-export default function AddTaskDialog({ open, onOpenChange }) {
+export default function AddTaskDialog({ open, onOpenChange, initialData = null }) {
   const queryClient = useQueryClient();
   const { user } = useCurrentUser();
-  const [form, setForm] = useState({
-    title: '', description: '', type: 'manual', priority: 'normal', due_date: '', assigned_to: '', client_id: '', project_id: '',
-  });
+  const emptyForm = { title: '', description: '', type: 'manual', priority: 'normal', due_date: '', assigned_to: '', client_id: '', project_id: '' };
+  const [form, setForm] = useState(emptyForm);
+
+  React.useEffect(() => {
+    if (initialData) {
+      setForm({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        type: initialData.type || 'manual',
+        priority: initialData.priority || 'normal',
+        due_date: initialData.due_date || '',
+        assigned_to: initialData.assigned_to || '',
+        client_id: initialData.client_id || '',
+        project_id: initialData.project_id || '',
+      });
+    } else {
+      setForm(emptyForm);
+    }
+  }, [initialData, open]);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
@@ -27,22 +43,28 @@ export default function AddTaskDialog({ open, onOpenChange }) {
   });
 
   const mutation = useMutation({
-    mutationFn: (data) => base44.entities.Task.create(data),
+    mutationFn: (data) => initialData
+      ? base44.entities.Task.update(initialData.id, data)
+      : base44.entities.Task.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       onOpenChange(false);
-      setForm({ title: '', description: '', type: 'manual', priority: 'normal', due_date: '', assigned_to: '', client_id: '', project_id: '' });
+      setForm(emptyForm);
     },
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    mutation.mutate({
-      ...form,
-      status: 'open',
-      owner: user?.email,
-      assigned_to: form.assigned_to || user?.email,
-    });
+    if (initialData) {
+      mutation.mutate(form);
+    } else {
+      mutation.mutate({
+        ...form,
+        status: 'open',
+        owner: user?.email,
+        assigned_to: form.assigned_to || user?.email,
+      });
+    }
   };
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -50,7 +72,7 @@ export default function AddTaskDialog({ open, onOpenChange }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg" dir="rtl">
-        <DialogHeader><DialogTitle className="font-heading">משימה חדשה</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="font-heading">{initialData ? 'עריכת משימה' : 'משימה חדשה'}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label>כותרת *</Label>
@@ -114,7 +136,7 @@ export default function AddTaskDialog({ open, onOpenChange }) {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
-            <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? 'שומר...' : 'צור משימה'}</Button>
+            <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? 'שומר...' : initialData ? 'עדכן' : 'צור משימה'}</Button>
           </div>
         </form>
       </DialogContent>

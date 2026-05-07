@@ -10,7 +10,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Search, UserPlus } from 'lucide-react';
+import { Plus, Search, UserPlus, Pencil } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -21,6 +21,7 @@ export default function Leads() {
   const { user, isAdmin } = useCurrentUser();
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
+  const [editLead, setEditLead] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const queryClient = useQueryClient();
 
@@ -67,7 +68,7 @@ export default function Leads() {
           ]}
           filename="לידים"
         />
-        <Button onClick={() => setShowAdd(true)} className="gap-2">
+        <Button onClick={() => { setEditLead(null); setShowAdd(true); }} className="gap-2">
           <Plus className="w-4 h-4" />
           ליד חדש
         </Button>
@@ -100,7 +101,7 @@ export default function Leads() {
                 <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">מקור</th>
                 <th className="text-right px-4 py-3 font-medium hidden md:table-cell">תאריך</th>
                 <th className="text-right px-4 py-3 font-medium">סטטוס</th>
-                {isAdmin && <th className="w-10"></th>}
+                <th className="w-20"></th>
               </tr>
             </thead>
             <tbody>
@@ -124,11 +125,14 @@ export default function Leads() {
                     {lead.created_date ? format(new Date(lead.created_date), 'dd/MM/yyyy') : '—'}
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={lead.status} /></td>
-                  {isAdmin && (
-                    <td className="px-2">
-                      <DeleteButton onDelete={() => deleteMutation.mutate(lead.id)} entityLabel="ליד" />
-                    </td>
-                  )}
+                  <td className="px-2">
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditLead(lead); setShowAdd(true); }}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      {isAdmin && <DeleteButton onDelete={() => deleteMutation.mutate(lead.id)} entityLabel="ליד" />}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -137,7 +141,7 @@ export default function Leads() {
         {leads.length === 0 && <EmptyState icon={UserPlus} title="אין לידים" description="הוסיפי ליד חדש כדי להתחיל" />}
       </div>
 
-      <AddClientDialog open={showAdd} onOpenChange={setShowAdd} defaultStatus="lead" />
+      <AddClientDialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) setEditLead(null); }} defaultStatus="lead" initialData={editLead} />
     </div>
   );
 }

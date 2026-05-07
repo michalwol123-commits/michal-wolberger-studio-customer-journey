@@ -10,7 +10,9 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Users } from 'lucide-react';
+import { Search, Users, Pencil } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import AddClientDialog from '@/components/clients/AddClientDialog';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -23,6 +25,8 @@ export default function Clients() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState([]);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editClient, setEditClient] = useState(null);
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
@@ -104,7 +108,7 @@ export default function Clients() {
                 <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">אימייל</th>
                 <th className="text-right px-4 py-3 font-medium hidden md:table-cell">מקור</th>
                 <th className="text-right px-4 py-3 font-medium">סטטוס</th>
-                {isAdmin && <th className="w-10"></th>}
+                <th className="w-20"></th>
               </tr>
             </thead>
             <tbody>
@@ -124,11 +128,14 @@ export default function Clients() {
                     {client.source && <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{client.source}</span>}
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={client.status} /></td>
-                  {isAdmin && (
-                    <td className="px-2">
-                      <DeleteButton onDelete={() => deleteMutation.mutate(client.id)} entityLabel="לקוח" />
-                    </td>
-                  )}
+                  <td className="px-2">
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditClient(client); setShowEdit(true); }}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      {isAdmin && <DeleteButton onDelete={() => deleteMutation.mutate(client.id)} entityLabel="לקוח" />}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -136,6 +143,7 @@ export default function Clients() {
         </div>
         {filtered.length === 0 && <EmptyState icon={Users} title="אין לקוחות" />}
       </div>
+      <AddClientDialog open={showEdit} onOpenChange={(open) => { setShowEdit(open); if (!open) setEditClient(null); }} initialData={editClient} />
     </div>
   );
 }

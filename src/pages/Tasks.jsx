@@ -10,7 +10,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckSquare, Clock, User, Plus } from 'lucide-react';
+import { CheckSquare, Clock, User, Plus, Pencil } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import ViewToggle from '@/components/shared/ViewToggle';
 import TasksTable from '@/components/tasks/TasksTable';
@@ -31,6 +31,7 @@ const priorityColors = { low: 'text-gray-500', normal: 'text-blue-500', high: 't
 export default function Tasks() {
   const { user, isAdmin } = useCurrentUser();
   const [showAdd, setShowAdd] = useState(false);
+  const [editTask, setEditTask] = useState(null);
   const [view, setView] = useState('cards');
   const [selectedIds, setSelectedIds] = useState([]);
   const queryClient = useQueryClient();
@@ -90,7 +91,7 @@ export default function Tasks() {
           filename="משימות"
         />
         <ViewToggle view={view} onViewChange={setView} />
-        <Button onClick={() => setShowAdd(true)} className="gap-2">
+        <Button onClick={() => { setEditTask(null); setShowAdd(true); }} className="gap-2">
           <Plus className="w-4 h-4" />
           משימה חדשה
         </Button>
@@ -127,11 +128,16 @@ export default function Tasks() {
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <p className="font-medium text-sm mb-2 flex-1">{task.title}</p>
-                          {isAdmin && (
-                            <div onClick={e => e.stopPropagation()}>
-                              <DeleteButton onDelete={() => deleteMutation.mutate(task.id)} entityLabel="משימה" />
-                            </div>
-                          )}
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditTask(task); setShowAdd(true); }}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            {isAdmin && (
+                              <div onClick={e => e.stopPropagation()}>
+                                <DeleteButton onDelete={() => deleteMutation.mutate(task.id)} entityLabel="משימה" />
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-2">
                           {task.due_date && (
@@ -173,7 +179,7 @@ export default function Tasks() {
       </div>
       )}
 
-      <AddTaskDialog open={showAdd} onOpenChange={setShowAdd} />
+      <AddTaskDialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) setEditTask(null); }} initialData={editTask} />
     </div>
   );
 }

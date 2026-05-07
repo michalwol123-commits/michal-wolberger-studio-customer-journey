@@ -9,30 +9,51 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import useCurrentUser from '@/lib/useCurrentUser';
 
-export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'lead' }) {
+export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'lead', initialData = null }) {
   const queryClient = useQueryClient();
   const { user } = useCurrentUser();
-  const [form, setForm] = useState({
-    name: '', phone: '', email: '', source: '', source_detail: '',
-    budget_range: '', property_type: '', notes: '',
-  });
+  const emptyForm = { name: '', phone: '', email: '', source: '', source_detail: '', budget_range: '', property_type: '', notes: '' };
+  const [form, setForm] = useState(emptyForm);
+
+  React.useEffect(() => {
+    if (initialData) {
+      setForm({
+        name: initialData.name || '',
+        phone: initialData.phone || '',
+        email: initialData.email || '',
+        source: initialData.source || '',
+        source_detail: initialData.source_detail || '',
+        budget_range: initialData.budget_range || '',
+        property_type: initialData.property_type || '',
+        notes: initialData.notes || '',
+      });
+    } else {
+      setForm(emptyForm);
+    }
+  }, [initialData, open]);
 
   const mutation = useMutation({
-    mutationFn: (data) => base44.entities.Client.create(data),
+    mutationFn: (data) => initialData
+      ? base44.entities.Client.update(initialData.id, data)
+      : base44.entities.Client.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       onOpenChange(false);
-      setForm({ name: '', phone: '', email: '', source: '', source_detail: '', budget_range: '', property_type: '', notes: '' });
+      setForm(emptyForm);
     },
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    mutation.mutate({
-      ...form,
-      status: defaultStatus,
-      owner: user?.email,
-    });
+    if (initialData) {
+      mutation.mutate(form);
+    } else {
+      mutation.mutate({
+        ...form,
+        status: defaultStatus,
+        owner: user?.email,
+      });
+    }
   };
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -41,7 +62,7 @@ export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'l
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="font-heading">ליד חדש</DialogTitle>
+          <DialogTitle className="font-heading">{initialData ? 'עריכת לקוח/ליד' : 'ליד חדש'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -105,7 +126,7 @@ export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'l
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? 'שומר...' : 'צור ליד'}
+              {mutation.isPending ? 'שומר...' : initialData ? 'עדכן' : 'צור ליד'}
             </Button>
           </div>
         </form>
