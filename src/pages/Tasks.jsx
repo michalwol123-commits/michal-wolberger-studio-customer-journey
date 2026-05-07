@@ -4,15 +4,19 @@ import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
+import BulkDeleteBar from '@/components/shared/BulkDeleteBar';
+import DeleteButton from '@/components/shared/DeleteButton';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CheckSquare, Clock, User, Plus } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import ViewToggle from '@/components/shared/ViewToggle';
 import TasksTable from '@/components/tasks/TasksTable';
 import { format } from 'date-fns';
 import AddTaskDialog from '@/components/tasks/AddTaskDialog';
+import { toast } from 'sonner';
 
 const columns = [
   { id: 'open', label: 'פתוח', color: 'border-t-blue-400' },
@@ -28,6 +32,7 @@ export default function Tasks() {
   const { user, isAdmin } = useCurrentUser();
   const [showAdd, setShowAdd] = useState(false);
   const [view, setView] = useState('cards');
+  const [selectedIds, setSelectedIds] = useState([]);
   const queryClient = useQueryClient();
 
   const { data: tasks = [] } = useQuery({
@@ -49,6 +54,25 @@ export default function Tasks() {
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Task.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) await base44.entities.Task.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setSelectedIds([]);
+      toast.success('המשימות נמחקו');
+    },
+  });
+
+  const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = () => setSelectedIds(prev => prev.length === filtered.length ? [] : filtered.map(t => t.id));
 
   return (
     <div>
@@ -72,11 +96,18 @@ export default function Tasks() {
         </Button>
       </PageHeader>
 
+      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="משימות" />}
+
       {view === 'table' ? (
         <TasksTable
           tasks={filtered}
           clientMap={clientMap}
           onStatusChange={(id, status) => updateMutation.mutate({ id, data: { status } })}
+          onDelete={(id) => deleteMutation.mutate(id)}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleAll={toggleAll}
+          isAdmin={isAdmin}
         />
       ) : (
       <div className="flex gap-4 overflow-x-auto pb-4">
@@ -94,7 +125,14 @@ export default function Tasks() {
                   return (
                     <Card key={task.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
-                        <p className="font-medium text-sm mb-2">{task.title}</p>
+                        <div className="flex items-start justify-between">
+                          <p className="font-medium text-sm mb-2 flex-1">{task.title}</p>
+                          {isAdmin && (
+                            <div onClick={e => e.stopPropagation()}>
+                              <DeleteButton onDelete={() => deleteMutation.mutate(task.id)} entityLabel="משימה" />
+                            </div>
+                          )}
+                        </div>
                         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-2">
                           {task.due_date && (
                             <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{format(new Date(task.due_date), 'dd/MM')}</span>

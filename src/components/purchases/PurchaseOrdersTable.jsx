@@ -1,16 +1,23 @@
 import React from 'react';
 import StatusBadge from '@/components/shared/StatusBadge';
+import DeleteButton from '@/components/shared/DeleteButton';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 
-export default function PurchaseOrdersTable({ orders, supplierName, projectName, onEdit, onDelete }) {
+export default function PurchaseOrdersTable({ orders, supplierName, projectName, onEdit, onDelete, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
   return (
     <div className="bg-card rounded-xl border overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">
+              {isAdmin && (
+                <th className="px-3 py-3 w-10">
+                  <Checkbox checked={selectedIds?.length === orders.length && orders.length > 0} onCheckedChange={onToggleAll} />
+                </th>
+              )}
               <th className="text-right px-4 py-3 font-medium">תיאור</th>
               <th className="text-right px-4 py-3 font-medium">פרויקט</th>
               <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">ספק</th>
@@ -24,6 +31,11 @@ export default function PurchaseOrdersTable({ orders, supplierName, projectName,
           <tbody>
             {orders.map(o => (
               <tr key={o.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                {isAdmin && (
+                  <td className="px-3 py-3">
+                    <Checkbox checked={selectedIds?.includes(o.id)} onCheckedChange={() => onToggleSelect(o.id)} />
+                  </td>
+                )}
                 <td className="px-4 py-3 font-medium">{o.description}</td>
                 <td className="px-4 py-3 text-muted-foreground">{projectName(o.project_id)}</td>
                 <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground">{supplierName(o.supplier_id)}</td>
@@ -37,9 +49,7 @@ export default function PurchaseOrdersTable({ orders, supplierName, projectName,
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(o)}>
                     <Pencil className="w-3.5 h-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(o.id)}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  {isAdmin && <DeleteButton onDelete={() => onDelete(o.id)} entityLabel="הזמנה" />}
                 </td>
               </tr>
             ))}

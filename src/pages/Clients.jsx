@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
+import BulkDeleteBar from '@/components/shared/BulkDeleteBar';
+import DeleteButton from '@/components/shared/DeleteButton';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Users } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 const activeStatuses = ['proposal_approved', 'active_client', 'completed_client'];
 
@@ -18,6 +22,27 @@ export default function Clients() {
   const { user, isAdmin } = useCurrentUser();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedIds, setSelectedIds] = useState([]);
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Client.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clients'] }),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) await base44.entities.Client.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      setSelectedIds([]);
+      toast.success('הלקוחות נמחקו');
+    },
+  });
+
+  const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = () => setSelectedIds(prev => prev.length === filtered.length ? [] : filtered.map(c => c.id));
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
@@ -62,21 +87,34 @@ export default function Clients() {
         </Select>
       </div>
 
+      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="לקוחות" />}
+
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50">
+                {isAdmin && (
+                  <th className="px-3 py-3 w-10">
+                    <Checkbox checked={selectedIds.length === filtered.length && filtered.length > 0} onCheckedChange={toggleAll} />
+                  </th>
+                )}
                 <th className="text-right px-4 py-3 font-medium">שם</th>
                 <th className="text-right px-4 py-3 font-medium">טלפון</th>
                 <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">אימייל</th>
                 <th className="text-right px-4 py-3 font-medium hidden md:table-cell">מקור</th>
                 <th className="text-right px-4 py-3 font-medium">סטטוס</th>
+                {isAdmin && <th className="w-10"></th>}
               </tr>
             </thead>
             <tbody>
               {filtered.map(client => (
                 <tr key={client.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  {isAdmin && (
+                    <td className="px-3 py-3">
+                      <Checkbox checked={selectedIds.includes(client.id)} onCheckedChange={() => toggleSelect(client.id)} />
+                    </td>
+                  )}
                   <td className="px-4 py-3">
                     <Link to={`/clients/${client.id}`} className="font-medium text-primary hover:underline">{client.name}</Link>
                   </td>
@@ -86,6 +124,11 @@ export default function Clients() {
                     {client.source && <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{client.source}</span>}
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={client.status} /></td>
+                  {isAdmin && (
+                    <td className="px-2">
+                      <DeleteButton onDelete={() => deleteMutation.mutate(client.id)} entityLabel="לקוח" />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

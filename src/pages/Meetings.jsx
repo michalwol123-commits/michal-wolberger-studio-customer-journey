@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
+import BulkDeleteBar from '@/components/shared/BulkDeleteBar';
+import DeleteButton from '@/components/shared/DeleteButton';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar, Clock, MapPin, User, Plus } from 'lucide-react';
 import ViewToggle from '@/components/shared/ViewToggle';
 import MeetingsTable from '@/components/meetings/MeetingsTable';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 import { format, startOfWeek, endOfWeek, addWeeks, isWithinInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 const typeLabels = {
   intro: 'היכרות', qualifying: 'אפיון', stage_review: 'סקירת שלב',
@@ -26,6 +29,8 @@ export default function Meetings() {
   const [view, setView] = useState('cards');
   const [showAdd, setShowAdd] = useState(false);
   const [editMeeting, setEditMeeting] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const queryClient = useQueryClient();
 
   const { data: meetings = [] } = useQuery({
     queryKey: ['meetings'],
@@ -40,7 +45,6 @@ export default function Meetings() {
   const clientMap = {};
   clients.forEach(c => { clientMap[c.id] = c; });
 
-  // Filter by role
   const filtered = isAdmin
     ? meetings
     : meetings.filter(m => {
@@ -58,13 +62,31 @@ export default function Meetings() {
     return isWithinInterval(d, { start: weekStart, end: weekEnd });
   }).sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
 
-  // Group by day
   const dayGroups = {};
   weekMeetings.forEach(m => {
     const day = format(new Date(m.scheduled_at), 'yyyy-MM-dd');
     if (!dayGroups[day]) dayGroups[day] = [];
     dayGroups[day].push(m);
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Meeting.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['meetings'] }),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) await base44.entities.Meeting.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      setSelectedIds([]);
+      toast.success('הפגישות נמחקו');
+    },
+  });
+
+  const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = () => setSelectedIds(prev => prev.length === weekMeetings.length ? [] : weekMeetings.map(m => m.id));
 
   return (
     <div>
@@ -84,10 +106,21 @@ export default function Meetings() {
         {format(weekStart, 'dd/MM', { locale: he })} — {format(weekEnd, 'dd/MM/yyyy', { locale: he })}
       </p>
 
+      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="פגישות" />}
+
       {weekMeetings.length === 0 ? (
         <EmptyState icon={Calendar} title="אין פגישות השבוע" />
       ) : view === 'table' ? (
-        <MeetingsTable meetings={weekMeetings} clientMap={clientMap} onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }} />
+        <MeetingsTable
+          meetings={weekMeetings}
+          clientMap={clientMap}
+          onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
+          onDelete={(id) => deleteMutation.mutate(id)}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleAll={toggleAll}
+          isAdmin={isAdmin}
+        />
       ) : (
         <div className="space-y-6">
           {Object.entries(dayGroups).sort().map(([day, dayMeetings]) => (
@@ -102,18 +135,30 @@ export default function Meetings() {
                     <Card key={m.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => { setEditMeeting(m); setShowAdd(true); }}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-sm">{typeLabels[m.type] || m.type}</span>
-                              <StatusBadge status={m.status} />
+                          <div className="flex items-start gap-3 flex-1">
+                            {isAdmin && (
+                              <div onClick={e => e.stopPropagation()} className="pt-0.5">
+                                <Checkbox checked={selectedIds.includes(m.id)} onCheckedChange={() => toggleSelect(m.id)} />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-sm">{typeLabels[m.type] || m.type}</span>
+                                <StatusBadge status={m.status} />
+                              </div>
+                              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                {client && <span className="flex items-center gap-1"><User className="w-3 h-3" />{client.name}</span>}
+                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{format(new Date(m.scheduled_at), 'HH:mm')} • {m.duration} דק׳</span>
+                                {m.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{m.location}</span>}
+                              </div>
+                              {m.summary && <p className="text-sm mt-2 text-muted-foreground">{m.summary}</p>}
                             </div>
-                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                              {client && <span className="flex items-center gap-1"><User className="w-3 h-3" />{client.name}</span>}
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{format(new Date(m.scheduled_at), 'HH:mm')} • {m.duration} דק׳</span>
-                              {m.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{m.location}</span>}
-                            </div>
-                            {m.summary && <p className="text-sm mt-2 text-muted-foreground">{m.summary}</p>}
                           </div>
+                          {isAdmin && (
+                            <div onClick={e => e.stopPropagation()}>
+                              <DeleteButton onDelete={() => deleteMutation.mutate(m.id)} entityLabel="פגישה" />
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

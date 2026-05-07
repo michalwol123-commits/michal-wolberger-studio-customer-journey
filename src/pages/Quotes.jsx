@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
+import BulkDeleteBar from '@/components/shared/BulkDeleteBar';
+import DeleteButton from '@/components/shared/DeleteButton';
 import ViewToggle from '@/components/shared/ViewToggle';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search, FileText, ExternalLink } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { format } from 'date-fns';
 import AddQuoteDialog from '@/components/quotes/AddQuoteDialog';
 import QuotesTable from '@/components/quotes/QuotesTable';
+import { toast } from 'sonner';
 
 const packageLabels = { basic: 'בסיסי', mid: 'בינוני', premium: 'פרימיום' };
 
@@ -25,6 +29,8 @@ export default function Quotes() {
   const [view, setView] = useState('cards');
   const [showAdd, setShowAdd] = useState(false);
   const [editQuote, setEditQuote] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const queryClient = useQueryClient();
 
   const { data: quotes = [] } = useQuery({
     queryKey: ['quotes'],
@@ -48,15 +54,30 @@ export default function Quotes() {
       return q.title?.includes(search) || client?.name?.includes(search);
     });
 
-  // Stats
   const totalAmount = filtered.reduce((s, q) => s + (q.total_amount || 0), 0);
   const approvedCount = filtered.filter(q => q.status === 'approved').length;
   const pendingCount = filtered.filter(q => ['sent', 'viewed'].includes(q.status)).length;
 
-  const handleEdit = (q) => {
-    setEditQuote(q);
-    setShowAdd(true);
-  };
+  const handleEdit = (q) => { setEditQuote(q); setShowAdd(true); };
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Quote.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quotes'] }),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) await base44.entities.Quote.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      setSelectedIds([]);
+      toast.success('ההצעות נמחקו');
+    },
+  });
+
+  const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = () => setSelectedIds(prev => prev.length === filtered.length ? [] : filtered.map(q => q.id));
 
   return (
     <div>
@@ -79,7 +100,6 @@ export default function Quotes() {
         </Button>
       </PageHeader>
 
-      {/* Stats row */}
       <div className="flex gap-3 mb-4 text-sm">
         <div className="bg-card border rounded-lg px-3 py-1.5">
           <span className="text-muted-foreground">ממתינות: </span>
@@ -97,7 +117,6 @@ export default function Quotes() {
         )}
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -117,11 +136,21 @@ export default function Quotes() {
         </Select>
       </div>
 
-      {/* Content */}
+      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="הצעות" />}
+
       {filtered.length === 0 ? (
         <EmptyState icon={FileText} title="אין הצעות מחיר" description="צרי הצעה ראשונה" />
       ) : view === 'table' ? (
-        <QuotesTable quotes={filtered} clientMap={clientMap} onEdit={handleEdit} />
+        <QuotesTable
+          quotes={filtered}
+          clientMap={clientMap}
+          onEdit={handleEdit}
+          onDelete={(id) => deleteMutation.mutate(id)}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleAll={toggleAll}
+          isAdmin={isAdmin}
+        />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map(q => {
@@ -130,11 +159,25 @@ export default function Quotes() {
               <Card key={q.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleEdit(q)}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold text-sm">{q.title}</h3>
-                      <p className="text-xs text-muted-foreground">{client?.name || '—'}</p>
+                    <div className="flex items-start gap-2">
+                      {isAdmin && (
+                        <div onClick={e => e.stopPropagation()} className="pt-0.5">
+                          <Checkbox checked={selectedIds.includes(q.id)} onCheckedChange={() => toggleSelect(q.id)} />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-semibold text-sm">{q.title}</h3>
+                        <p className="text-xs text-muted-foreground">{client?.name || '—'}</p>
+                      </div>
                     </div>
-                    <StatusBadge status={q.status} />
+                    <div className="flex items-center gap-1">
+                      <StatusBadge status={q.status} />
+                      {isAdmin && (
+                        <div onClick={e => e.stopPropagation()}>
+                          <DeleteButton onDelete={() => deleteMutation.mutate(q.id)} entityLabel="הצעה" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center justify-between text-sm mt-3">
                     <span className="font-bold">₪{(q.total_amount || 0).toLocaleString()}</span>

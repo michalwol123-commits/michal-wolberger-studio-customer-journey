@@ -1,5 +1,7 @@
 import React from 'react';
 import StatusBadge from '@/components/shared/StatusBadge';
+import DeleteButton from '@/components/shared/DeleteButton';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 
 const typeLabels = {
@@ -7,13 +9,18 @@ const typeLabels = {
   site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב'
 };
 
-export default function MeetingsTable({ meetings, clientMap, onEdit }) {
+export default function MeetingsTable({ meetings, clientMap, onEdit, onDelete, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
   return (
     <div className="bg-card rounded-xl border overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">
+              {isAdmin && (
+                <th className="px-3 py-3 w-10">
+                  <Checkbox checked={selectedIds?.length === meetings.length && meetings.length > 0} onCheckedChange={onToggleAll} />
+                </th>
+              )}
               <th className="text-right px-4 py-3 font-medium">סוג</th>
               <th className="text-right px-4 py-3 font-medium">לקוח</th>
               <th className="text-right px-4 py-3 font-medium">תאריך</th>
@@ -21,6 +28,7 @@ export default function MeetingsTable({ meetings, clientMap, onEdit }) {
               <th className="text-right px-4 py-3 font-medium hidden md:table-cell">משך</th>
               <th className="text-right px-4 py-3 font-medium hidden md:table-cell">מיקום</th>
               <th className="text-right px-4 py-3 font-medium">סטטוס</th>
+              {isAdmin && <th className="w-10"></th>}
             </tr>
           </thead>
           <tbody>
@@ -32,6 +40,11 @@ export default function MeetingsTable({ meetings, clientMap, onEdit }) {
                   className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
                   onClick={() => onEdit?.(m)}
                 >
+                  {isAdmin && (
+                    <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                      <Checkbox checked={selectedIds?.includes(m.id)} onCheckedChange={() => onToggleSelect(m.id)} />
+                    </td>
+                  )}
                   <td className="px-4 py-3 font-medium">{typeLabels[m.type] || m.type}</td>
                   <td className="px-4 py-3 text-muted-foreground">{client?.name || '—'}</td>
                   <td className="px-4 py-3">{m.scheduled_at ? format(new Date(m.scheduled_at), 'dd/MM/yyyy') : '—'}</td>
@@ -39,6 +52,11 @@ export default function MeetingsTable({ meetings, clientMap, onEdit }) {
                   <td className="px-4 py-3 hidden md:table-cell">{m.duration} דק׳</td>
                   <td className="px-4 py-3 hidden md:table-cell text-muted-foreground truncate max-w-[150px]">{m.location || '—'}</td>
                   <td className="px-4 py-3"><StatusBadge status={m.status} /></td>
+                  {isAdmin && (
+                    <td className="px-2" onClick={e => e.stopPropagation()}>
+                      <DeleteButton onDelete={() => onDelete(m.id)} entityLabel="פגישה" />
+                    </td>
+                  )}
                 </tr>
               );
             })}

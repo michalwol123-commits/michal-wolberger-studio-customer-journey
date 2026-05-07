@@ -4,15 +4,20 @@ import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import StatusBadge from '@/components/shared/StatusBadge';
+import BulkDeleteBar from '@/components/shared/BulkDeleteBar';
+import DeleteButton from '@/components/shared/DeleteButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, ShoppingCart, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, ShoppingCart, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import AddPurchaseOrderDialog from '@/components/purchases/AddPurchaseOrderDialog';
 import ViewToggle from '@/components/shared/ViewToggle';
 import PurchaseOrdersTable from '@/components/purchases/PurchaseOrdersTable';
+import useCurrentUser from '@/lib/useCurrentUser';
+import { toast } from 'sonner';
 
 const statusOptions = [
   { value: 'all', label: 'כל הסטטוסים' },
@@ -24,11 +29,13 @@ const statusOptions = [
 ];
 
 export default function PurchaseOrders() {
+  const { isAdmin } = useCurrentUser();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showDialog, setShowDialog] = useState(false);
   const [editing, setEditing] = useState(null);
   const [view, setView] = useState('cards');
+  const [selectedIds, setSelectedIds] = useState([]);
   const queryClient = useQueryClient();
 
   const { data: orders = [] } = useQuery({
@@ -51,6 +58,17 @@ export default function PurchaseOrders() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['purchase-orders'] }),
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) await base44.entities.PurchaseOrder.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      setSelectedIds([]);
+      toast.success('ההזמנות נמחקו');
+    },
+  });
+
   const supplierName = (id) => suppliers.find(s => s.id === id)?.name || '—';
   const projectName = (id) => projects.find(p => p.id === id)?.name || '—';
 
@@ -67,6 +85,9 @@ export default function PurchaseOrders() {
 
   const totalActive = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.amount || 0), 0);
 
+  const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = () => setSelectedIds(prev => prev.length === filtered.length ? [] : filtered.map(o => o.id));
+
   return (
     <div>
       <PageHeader title="הזמנות רכש" subtitle={`סה״כ פעיל: ₪${totalActive.toLocaleString()}`}>
@@ -79,12 +100,7 @@ export default function PurchaseOrders() {
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="חיפוש לפי תיאור, ספק, פרויקט..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pr-9"
-          />
+          <Input placeholder="חיפוש לפי תיאור, ספק, פרויקט..." value={search} onChange={e => setSearch(e.target.value)} className="pr-9" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -93,6 +109,8 @@ export default function PurchaseOrders() {
           </SelectContent>
         </Select>
       </div>
+
+      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="הזמנות" />}
 
       {filtered.length === 0 ? (
         <EmptyState icon={ShoppingCart} title="אין הזמנות רכש" description="הוסיפי הזמנת רכש ראשונה" />
@@ -103,6 +121,10 @@ export default function PurchaseOrders() {
           projectName={projectName}
           onEdit={(o) => { setEditing(o); setShowDialog(true); }}
           onDelete={(id) => deleteMutation.mutate(id)}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleAll={toggleAll}
+          isAdmin={isAdmin}
         />
       ) : (
         <div className="space-y-2">
@@ -110,24 +132,29 @@ export default function PurchaseOrders() {
             <Card key={order.id}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-medium text-sm">{order.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {projectName(order.project_id)} • {supplierName(order.supplier_id)} • {order.category || '—'} • ₪{(order.amount || 0).toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {order.order_date && `הזמנה: ${format(new Date(order.order_date), 'dd/MM/yyyy')}`}
-                      {order.delivery_date && ` • אספקה: ${format(new Date(order.delivery_date), 'dd/MM/yyyy')}`}
-                    </p>
+                  <div className="flex items-start gap-3">
+                    {isAdmin && (
+                      <div className="pt-0.5">
+                        <Checkbox checked={selectedIds.includes(order.id)} onCheckedChange={() => toggleSelect(order.id)} />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-sm">{order.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {projectName(order.project_id)} • {supplierName(order.supplier_id)} • {order.category || '—'} • ₪{(order.amount || 0).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {order.order_date && `הזמנה: ${format(new Date(order.order_date), 'dd/MM/yyyy')}`}
+                        {order.delivery_date && ` • אספקה: ${format(new Date(order.delivery_date), 'dd/MM/yyyy')}`}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusBadge status={order.status} />
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditing(order); setShowDialog(true); }}>
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(order.id)}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    {isAdmin && <DeleteButton onDelete={() => deleteMutation.mutate(order.id)} entityLabel="הזמנה" />}
                   </div>
                 </div>
               </CardContent>
