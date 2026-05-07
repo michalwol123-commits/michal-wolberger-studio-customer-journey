@@ -1,0 +1,127 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
+const MEETING_TYPE_LABELS = {
+  intro: 'פגישת היכרות',
+  qualifying: 'פגישת סינון',
+  stage_review: 'סקירת שלב',
+  site_visit: 'ביקור באתר',
+  zoom: 'פגישת זום',
+  design_approval: 'אישור עיצוב',
+};
+
+Deno.serve(async (req) => {
+  try {
+    const body = await req.json();
+    const { data, event } = body;
+
+    if (!data || event?.type !== 'create') {
+      return Response.json({ status: 'skipped', reason: 'not a create event' });
+    }
+
+    const base44 = createClientFromRequest(req);
+
+    // Get client details
+    const clients = await base44.asServiceRole.entities.Client.filter({ id: data.client_id });
+    const client = clients[0];
+    if (!client) {
+      return Response.json({ status: 'skipped', reason: 'client not found' });
+    }
+
+    const meetingLabel = MEETING_TYPE_LABELS[data.type] || data.type || 'פגישה';
+    const scheduledAt = new Date(data.scheduled_at);
+    const duration = data.duration || 45;
+    const endTime = new Date(scheduledAt.getTime() + duration * 60 * 1000);
+
+    // 1. Create Google Calendar event
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
+
+    const calendarEvent = {
+      summary: `${meetingLabel} — ${client.name}`,
+      description: `לקוח: ${client.name}\nטלפון: ${client.phone}${data.summary ? '\nהערות: ' + data.summary : ''}`,
+      start: {
+        dateTime: scheduledAt.toISOString(),
+        timeZone: 'Asia/Jerusalem',
+      },
+      end: {
+        dateTime: endTime.toISOString(),
+        timeZone: 'Asia/Jerusalem',
+      },
+    };
+
+    if (data.location) {
+      calendarEvent.location = data.location;
+    }
+
+    const calRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(calendarEvent),
+    });
+
+    const calData = await calRes.json();
+    console.log('Calendar event created:', calData.id);
+
+    // 2. Send email invitation to client (if email exists)
+    if (client.email) {
+      const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const timeStr = scheduledAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+      const emailBody = `
+        <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #8B6F47;">שלום ${client.name},</h2>
+          <p>נקבעה עבורך פגישה חדשה:</p>
+          <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+            <tr><td style="padding: 8px; font-weight: bold; color: #555;">סוג פגישה:</td><td style="padding: 8px;">${meetingLabel}</td></tr>
+            <tr><td style="padding: 8px; font-weight: bold; color: #555;">תאריך:</td><td style="padding: 8px;">${dateStr}</td></tr>
+            <tr><td style="padding: 8px; font-weight: bold; color: #555;">שעה:</td><td style="padding: 8px;">${timeStr}</td></tr>
+            <tr><td style="padding: 8px; font-weight: bold; color: #555;">משך:</td><td style="padding: 8px;">${duration} דקות</td></tr>
+            ${data.location ? `<tr><td style="padding: 8px; font-weight: bold; color: #555;">מיקום:</td><td style="padding: 8px;">${data.location}</td></tr>` : ''}
+          </table>
+          <p>נשמח לראות אותך! 😊</p>
+          <p style="color: #999; font-size: 12px; margin-top: 24px;">הודעה זו נשלחה אוטומטית מהסטודיו</p>
+        </div>
+      `;
+
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: client.email,
+        subject: `הזמנה ל${meetingLabel} — ${dateStr}`,
+        body: emailBody,
+      });
+
+      // 3. Log communication
+      await base44.asServiceRole.entities.Communication.create({
+        client_id: client.id,
+        project_id: data.project_id || undefined,
+        type: 'email',
+        direction: 'outbound',
+        content: `הזמנה ל${meetingLabel} נשלחה ללקוח — ${dateStr} בשעה ${timeStr}`,
+        sent_by: 'system',
+        status: 'sent',
+        channel: 'base44_native',
+      });
+    }
+
+    return Response.json({ status: 'ok', calendar_event_id: calData.id });
+  } catch (error) {
+    console.error('autoMeetingCreated error:', error.message);
+
+    try {
+      const base44 = createClientFromRequest(req);
+      const body = await req.json().catch(() => ({}));
+      await base44.asServiceRole.entities.Communication.create({
+        client_id: body.data?.client_id || '',
+        type: 'system_error',
+        direction: 'outbound',
+        content: `שגיאה באוטומציית יצירת פגישה: ${error.message}`,
+        sent_by: 'system',
+        status: 'failed',
+        channel: 'base44_native',
+      });
+    } catch (_) { /* ignore logging errors */ }
+
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+});
