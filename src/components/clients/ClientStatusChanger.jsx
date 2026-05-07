@@ -41,10 +41,7 @@ export default function ClientStatusChanger({ client }) {
     <Select value={client.status} onValueChange={(val) => {
       const allowed = ALLOWED_TRANSITIONS[client.status] || [];
       if (!allowed.includes(val)) {
-        toast.error(
-          `לא ניתן לעבור מ"${statusLabels[client.status]}" ל"${statusLabels[val]}"`,
-          { description: `מעברים מותרים: ${allowed.map(s => statusLabels[s]).join(', ')}` }
-        );
+        toast.error(`לא ניתן לעבור מ"${statusLabels[client.status]}" ל"${statusLabels[val]}"`);
         return;
       }
       mutation.mutate(val);
