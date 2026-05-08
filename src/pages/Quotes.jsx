@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, FileText, ExternalLink } from 'lucide-react';
+import { Plus, Search, FileText, ExternalLink, Link, Upload } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { format } from 'date-fns';
 import AddQuoteDialog from '@/components/quotes/AddQuoteDialog';
@@ -188,12 +188,27 @@ export default function Quotes() {
                   </div>
                   <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                     <span>{q.created_date ? format(new Date(q.created_date), 'dd/MM/yyyy') : ''}</span>
-                    {q.url && (
-                      <a href={q.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                        className="flex items-center gap-1 text-primary hover:underline">
-                        <ExternalLink className="w-3 h-3" />צפייה
-                      </a>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {q.quote_type && (
+                        <span className="flex items-center gap-0.5">
+                          {q.quote_type === 'generated' && <FileText className="w-3 h-3" />}
+                          {q.quote_type === 'link' && <Link className="w-3 h-3" />}
+                          {q.quote_type === 'uploaded' && <Upload className="w-3 h-3" />}
+                        </span>
+                      )}
+                      {q.url && (
+                        <a href={q.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                          className="flex items-center gap-1 text-primary hover:underline">
+                          <ExternalLink className="w-3 h-3" />לינק
+                        </a>
+                      )}
+                      {q.file_url && (
+                        <a href={q.file_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                          className="flex items-center gap-1 text-primary hover:underline">
+                          <FileText className="w-3 h-3" />PDF
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

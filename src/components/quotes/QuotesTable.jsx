@@ -3,9 +3,11 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import DeleteButton from '@/components/shared/DeleteButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, FileText, Upload, Link } from 'lucide-react';
 
 const packageLabels = { basic: 'בסיסי', mid: 'בינוני', premium: 'פרימיום' };
+const typeIcons = { generated: FileText, link: Link, uploaded: Upload };
+const typeLabels = { generated: 'מערכת', link: 'לינק', uploaded: 'PDF' };
 
 export default function QuotesTable({ quotes, clientMap, onEdit, onDelete, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
   return (
@@ -22,6 +24,7 @@ export default function QuotesTable({ quotes, clientMap, onEdit, onDelete, selec
               <th className="text-right px-4 py-3 font-medium">כותרת</th>
               <th className="text-right px-4 py-3 font-medium">לקוח</th>
               <th className="text-right px-4 py-3 font-medium">סכום</th>
+              <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">סוג</th>
               <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">חבילה</th>
               <th className="text-right px-4 py-3 font-medium hidden md:table-cell">גרסה</th>
               <th className="text-right px-4 py-3 font-medium hidden md:table-cell">תאריך</th>
@@ -47,6 +50,9 @@ export default function QuotesTable({ quotes, clientMap, onEdit, onDelete, selec
                   <td className="px-4 py-3 text-muted-foreground">{client?.name || '—'}</td>
                   <td className="px-4 py-3">₪{(q.total_amount || 0).toLocaleString()}</td>
                   <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground">
+                    {(() => { const Icon = typeIcons[q.quote_type]; return Icon ? <span className="flex items-center gap-1"><Icon className="w-3.5 h-3.5" />{typeLabels[q.quote_type]}</span> : '—'; })()}
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground">
                     {packageLabels[q.package_type] || '—'}
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">v{q.version || 1}</td>
@@ -56,8 +62,13 @@ export default function QuotesTable({ quotes, clientMap, onEdit, onDelete, selec
                   <td className="px-4 py-3"><StatusBadge status={q.status} /></td>
                   <td className="px-2 flex items-center gap-1" onClick={e => e.stopPropagation()}>
                     {q.url && (
-                      <a href={q.url} target="_blank" rel="noopener noreferrer">
+                      <a href={q.url} target="_blank" rel="noopener noreferrer" title="לינק">
                         <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                      </a>
+                    )}
+                    {q.file_url && (
+                      <a href={q.file_url} target="_blank" rel="noopener noreferrer" title="PDF">
+                        <FileText className="w-4 h-4 text-muted-foreground hover:text-primary" />
                       </a>
                     )}
                     {isAdmin && <DeleteButton onDelete={() => onDelete(q.id)} entityLabel="הצעה" />}

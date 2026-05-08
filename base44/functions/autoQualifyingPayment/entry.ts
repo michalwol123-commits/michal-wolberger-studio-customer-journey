@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       auto_generated: true,
     });
 
-    // Log communication
+    // Log internal communication
     await base44.asServiceRole.entities.Communication.create({
       client_id: clientId,
       type: 'note',
@@ -61,6 +61,32 @@ Deno.serve(async (req) => {
       status: 'sent',
       channel: 'base44_native',
     });
+
+    // Send payment reminder email to client
+    if (data.email) {
+      await base44.asServiceRole.entities.Communication.create({
+        client_id: clientId,
+        type: 'email',
+        direction: 'outbound',
+        content: `שלום ${clientName},\n\nתודה שבחרת בסטודיו מיכל וולברגר!\n\nלפני פגישת ההיכרות שלנו, יש לבצע תשלום של ₪250.\n\nתאריך יעד לתשלום: ${dueDate}\n\nנשמח לראותך!\nמיכל וולברגר - עיצוב פנים`,
+        sent_by: 'system',
+        status: 'pending',
+        channel: 'base44_native',
+      });
+    }
+
+    // Send WhatsApp reminder if phone exists
+    if (data.phone) {
+      await base44.asServiceRole.entities.Communication.create({
+        client_id: clientId,
+        type: 'whatsapp',
+        direction: 'outbound',
+        content: `שלום ${clientName} 👋\n\nתודה שבחרת בסטודיו מיכל וולברגר!\n\nלפני פגישת ההיכרות, נא לבצע תשלום של ₪250 עד ${dueDate}.\n\nנשמח לראותך! 🏡\nמיכל`,
+        sent_by: 'system',
+        status: 'pending',
+        channel: 'base44_native',
+      });
+    }
 
     return Response.json({ success: true, payment_due: dueDate });
   } catch (error) {
