@@ -94,7 +94,6 @@
   "required": [
     "client_id",
     "type",
-    "scheduled_at",
     "status"
   ]
 }

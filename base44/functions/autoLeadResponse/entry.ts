@@ -39,12 +39,11 @@ Deno.serve(async (req) => {
       channel: 'base44_native',
     });
 
-    // Create intro meeting (no calendar sync — will be synced when admin sets a real date)
+    // Create intro meeting without date (will be synced to calendar when admin sets a date)
     await base44.asServiceRole.entities.Meeting.create({
       client_id: clientId,
       type: 'intro',
       status: 'scheduled',
-      scheduled_at: new Date().toISOString(),
       duration: 45,
     });
 
