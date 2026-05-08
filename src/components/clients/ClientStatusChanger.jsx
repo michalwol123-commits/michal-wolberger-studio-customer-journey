@@ -19,7 +19,7 @@ const statusLabels = Object.fromEntries(CLIENT_STATUSES.map(s => [s.value, s.lab
 
 const ALLOWED_TRANSITIONS = {
   lead: ['qualified', 'archived'],
-  qualified: ['qualified_assessment', 'archived'],
+  qualified: ['qualified_assessment', 'lead', 'archived'],
   qualified_assessment: ['proposal_sent', 'archived'],
   proposal_sent: ['proposal_approved', 'qualified_assessment', 'archived'],
   proposal_approved: ['active_client', 'archived'],

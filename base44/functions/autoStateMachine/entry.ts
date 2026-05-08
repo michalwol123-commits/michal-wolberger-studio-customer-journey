@@ -6,7 +6,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const TRANSITIONS = {
   Client: {
     lead: ['qualified', 'archived'],
-    qualified: ['qualified_assessment', 'archived'],
+    qualified: ['qualified_assessment', 'lead', 'archived'],
     qualified_assessment: ['proposal_sent', 'archived'],
     proposal_sent: ['proposal_approved', 'qualified_assessment', 'archived'],
     proposal_approved: ['active_client', 'archived'],
