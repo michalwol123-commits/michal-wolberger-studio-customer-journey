@@ -2,6 +2,8 @@ import React from 'react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import DeleteButton from '@/components/shared/DeleteButton';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 const typeLabels = {
@@ -9,7 +11,7 @@ const typeLabels = {
   site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב'
 };
 
-export default function MeetingsTable({ meetings, clientMap, onEdit, onDelete, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
+export default function MeetingsTable({ meetings, clientMap, onEdit, onDelete, onComplete, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
   return (
     <div className="bg-card rounded-xl border overflow-hidden">
       <div className="overflow-x-auto">
@@ -28,7 +30,7 @@ export default function MeetingsTable({ meetings, clientMap, onEdit, onDelete, s
               <th className="text-right px-4 py-3 font-medium hidden md:table-cell">משך</th>
               <th className="text-right px-4 py-3 font-medium hidden md:table-cell">מיקום</th>
               <th className="text-right px-4 py-3 font-medium">סטטוס</th>
-              {isAdmin && <th className="w-10"></th>}
+              <th className="w-20"></th>
             </tr>
           </thead>
           <tbody>
@@ -52,11 +54,16 @@ export default function MeetingsTable({ meetings, clientMap, onEdit, onDelete, s
                   <td className="px-4 py-3 hidden md:table-cell">{m.duration} דק׳</td>
                   <td className="px-4 py-3 hidden md:table-cell text-muted-foreground truncate max-w-[150px]">{m.location || '—'}</td>
                   <td className="px-4 py-3"><StatusBadge status={m.status} /></td>
-                  {isAdmin && (
-                    <td className="px-2" onClick={e => e.stopPropagation()}>
-                      <DeleteButton onDelete={() => onDelete(m.id)} entityLabel="פגישה" />
-                    </td>
-                  )}
+                  <td className="px-2" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center gap-1">
+                      {m.status === 'scheduled' && onComplete && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => onComplete(m)} title="סמן כהושלם">
+                          <CheckCircle className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {isAdmin && <DeleteButton onDelete={() => onDelete(m.id)} entityLabel="פגישה" />}
+                    </div>
+                  </td>
                 </tr>
               );
             })}

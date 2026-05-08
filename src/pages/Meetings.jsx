@@ -10,7 +10,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar, Clock, MapPin, User, Plus } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Plus, CheckCircle } from 'lucide-react';
 import ViewToggle from '@/components/shared/ViewToggle';
 import MeetingsTable from '@/components/meetings/MeetingsTable';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
@@ -69,6 +69,31 @@ export default function Meetings() {
     dayGroups[day].push(m);
   });
 
+  const completeMutation = useMutation({
+    mutationFn: async (meeting) => {
+      await base44.entities.Meeting.update(meeting.id, { status: 'completed' });
+      // If intro meeting completed → move lead to "qualified"
+      if (meeting.type === 'intro' && meeting.client_id) {
+        const client = clientMap[meeting.client_id];
+        if (client && client.status === 'lead') {
+          await base44.entities.Client.update(meeting.client_id, { status: 'qualified' });
+        }
+      }
+      // If qualifying meeting completed → move client to "qualified_assessment"
+      if (meeting.type === 'qualifying' && meeting.client_id) {
+        const client = clientMap[meeting.client_id];
+        if (client && client.status === 'qualified') {
+          await base44.entities.Client.update(meeting.client_id, { status: 'qualified_assessment' });
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      toast.success('הפגישה סומנה כהושלמה');
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Meeting.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['meetings'] }),
@@ -116,6 +141,7 @@ export default function Meetings() {
           clientMap={clientMap}
           onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
           onDelete={(id) => deleteMutation.mutate(id)}
+          onComplete={(m) => completeMutation.mutate(m)}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
           onToggleAll={toggleAll}
@@ -154,11 +180,16 @@ export default function Meetings() {
                               {m.summary && <p className="text-sm mt-2 text-muted-foreground">{m.summary}</p>}
                             </div>
                           </div>
-                          {isAdmin && (
-                            <div onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                            {m.status === 'scheduled' && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => completeMutation.mutate(m)} title="סמן כהושלם">
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {isAdmin && (
                               <DeleteButton onDelete={() => deleteMutation.mutate(m.id)} entityLabel="פגישה" />
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
