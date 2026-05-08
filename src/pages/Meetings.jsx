@@ -7,12 +7,11 @@ import EmptyState from '@/components/shared/EmptyState';
 import BulkDeleteBar from '@/components/shared/BulkDeleteBar';
 import DeleteButton from '@/components/shared/DeleteButton';
 import useCurrentUser from '@/lib/useCurrentUser';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar, Clock, MapPin, User, Plus, CheckCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, LayoutGrid, List, Calendar } from 'lucide-react';
 import ViewToggle from '@/components/shared/ViewToggle';
 import MeetingsTable from '@/components/meetings/MeetingsTable';
+import MeetingsCards from '@/components/meetings/MeetingsCards';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 import { format, startOfWeek, endOfWeek, addWeeks, isWithinInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -26,7 +25,7 @@ const typeLabels = {
 export default function Meetings() {
   const { user, isAdmin } = useCurrentUser();
   const [weekOffset, setWeekOffset] = useState(0);
-  const [view, setView] = useState('cards');
+  const [view, setView] = useState('weekly');
   const [showAdd, setShowAdd] = useState(false);
   const [editMeeting, setEditMeeting] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -117,99 +116,100 @@ export default function Meetings() {
     },
   });
 
+  const viewOptions = [
+    { value: 'weekly', icon: CalendarIcon, title: 'לוח שבועי' },
+    { value: 'cards', icon: LayoutGrid, title: 'כרטיסים' },
+    { value: 'table', icon: List, title: 'טבלה' },
+  ];
+
+  // For non-weekly views, show all meetings (including those without dates)
+  const displayMeetings = view === 'weekly' ? weekMeetings : filtered;
+
   const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const toggleAll = () => setSelectedIds(prev => prev.length === weekMeetings.length ? [] : weekMeetings.map(m => m.id));
+  const toggleAll = () => setSelectedIds(prev => prev.length === displayMeetings.length ? [] : displayMeetings.map(m => m.id));
 
   return (
     <div>
-      <PageHeader title="פגישות" subtitle="לוח שנה שבועי">
+      <PageHeader title="פגישות" subtitle={view === 'weekly' ? 'לוח שנה שבועי' : `${filtered.length} פגישות`}>
         <div className="flex items-center gap-2">
-          <ViewToggle view={view} onViewChange={setView} />
-          <button onClick={() => setWeekOffset(w => w - 1)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted">הקודם</button>
-          <button onClick={() => setWeekOffset(0)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted font-medium">היום</button>
-          <button onClick={() => setWeekOffset(w => w + 1)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted">הבא</button>
+          <ViewToggle view={view} onViewChange={setView} options={viewOptions} />
+          {view === 'weekly' && (
+            <>
+              <button onClick={() => setWeekOffset(w => w - 1)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted">הקודם</button>
+              <button onClick={() => setWeekOffset(0)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted font-medium">היום</button>
+              <button onClick={() => setWeekOffset(w => w + 1)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted">הבא</button>
+            </>
+          )}
           <Button onClick={() => { setEditMeeting(null); setShowAdd(true); }} className="gap-1">
             <Plus className="w-4 h-4" />פגישה חדשה
           </Button>
         </div>
       </PageHeader>
 
-      <p className="text-sm text-muted-foreground mb-4">
-        {format(weekStart, 'dd/MM', { locale: he })} — {format(weekEnd, 'dd/MM/yyyy', { locale: he })}
-      </p>
+      {view === 'weekly' && (
+        <p className="text-sm text-muted-foreground mb-4">
+          {format(weekStart, 'dd/MM', { locale: he })} — {format(weekEnd, 'dd/MM/yyyy', { locale: he })}
+        </p>
+      )}
 
       {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="פגישות" />}
 
-      {weekMeetings.length === 0 ? (
-        <EmptyState icon={Calendar} title="אין פגישות השבוע" />
-      ) : view === 'table' ? (
-        <MeetingsTable
-          meetings={weekMeetings}
-          clientMap={clientMap}
-          quotesMap={quotesMap}
-          onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
-          onDelete={(id) => deleteMutation.mutate(id)}
-          onComplete={(m) => completeMutation.mutate(m)}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-          onToggleAll={toggleAll}
-          isAdmin={isAdmin}
-        />
-      ) : (
-        <div className="space-y-6">
-          {Object.entries(dayGroups).sort().map(([day, dayMeetings]) => (
-            <div key={day}>
-              <h3 className="text-sm font-semibold font-heading mb-2 text-muted-foreground">
-                {format(new Date(day), 'EEEE, dd בMMMM', { locale: he })}
-              </h3>
-              <div className="space-y-2">
-                {dayMeetings.map(m => {
-                  const client = clientMap[m.client_id];
-                  return (
-                    <Card key={m.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => { setEditMeeting(m); setShowAdd(true); }}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3 flex-1">
-                            {isAdmin && (
-                              <div onClick={e => e.stopPropagation()} className="pt-0.5">
-                                <Checkbox checked={selectedIds.includes(m.id)} onCheckedChange={() => toggleSelect(m.id)} />
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-sm">{typeLabels[m.type] || m.type}</span>
-                                <StatusBadge status={m.status} />
-                                {m.type === 'quote_presentation' && m.quote_id && (
-                                  <span className="text-[10px] bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">הצעה</span>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                {client && <span className="flex items-center gap-1"><User className="w-3 h-3" />{client.name}</span>}
-                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{format(new Date(m.scheduled_at), 'HH:mm')} • {m.duration} דק׳</span>
-                                {m.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{m.location}</span>}
-                              </div>
-                              {m.summary && <p className="text-sm mt-2 text-muted-foreground">{m.summary}</p>}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                            {m.status === 'scheduled' && (
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => completeMutation.mutate(m)} title="סמן כהושלם">
-                                <CheckCircle className="w-4 h-4" />
-                              </Button>
-                            )}
-                            {isAdmin && (
-                              <DeleteButton onDelete={() => deleteMutation.mutate(m.id)} entityLabel="פגישה" />
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+      {view === 'weekly' ? (
+        weekMeetings.length === 0 ? (
+          <EmptyState icon={Calendar} title="אין פגישות השבוע" />
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(dayGroups).sort().map(([day, dayMeetings]) => (
+              <div key={day}>
+                <h3 className="text-sm font-semibold font-heading mb-2 text-muted-foreground">
+                  {format(new Date(day), 'EEEE, dd בMMMM', { locale: he })}
+                </h3>
+                <MeetingsCards
+                  meetings={dayMeetings}
+                  clientMap={clientMap}
+                  onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
+                  onDelete={(id) => deleteMutation.mutate(id)}
+                  onComplete={(m) => completeMutation.mutate(m)}
+                  selectedIds={selectedIds}
+                  onToggleSelect={toggleSelect}
+                  isAdmin={isAdmin}
+                />
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
+      ) : view === 'table' ? (
+        displayMeetings.length === 0 ? (
+          <EmptyState icon={Calendar} title="אין פגישות" />
+        ) : (
+          <MeetingsTable
+            meetings={displayMeetings}
+            clientMap={clientMap}
+            quotesMap={quotesMap}
+            onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
+            onDelete={(id) => deleteMutation.mutate(id)}
+            onComplete={(m) => completeMutation.mutate(m)}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleAll={toggleAll}
+            isAdmin={isAdmin}
+          />
+        )
+      ) : (
+        displayMeetings.length === 0 ? (
+          <EmptyState icon={Calendar} title="אין פגישות" />
+        ) : (
+          <MeetingsCards
+            meetings={displayMeetings}
+            clientMap={clientMap}
+            onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
+            onDelete={(id) => deleteMutation.mutate(id)}
+            onComplete={(m) => completeMutation.mutate(m)}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            isAdmin={isAdmin}
+          />
+        )
       )}
 
       <AddMeetingDialog
