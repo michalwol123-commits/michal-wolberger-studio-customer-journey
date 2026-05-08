@@ -18,6 +18,11 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'skipped', reason: 'not a create event' });
     }
 
+    // Skip meetings without a scheduled date (e.g. auto-generated placeholders)
+    if (!data.scheduled_at) {
+      return Response.json({ status: 'skipped', reason: 'no scheduled_at set' });
+    }
+
     const base44 = createClientFromRequest(req);
 
     // Skip sync for auto-generated meetings (created by automation, not by admin)
