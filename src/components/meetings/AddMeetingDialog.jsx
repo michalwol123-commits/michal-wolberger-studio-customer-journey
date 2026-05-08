@@ -58,13 +58,13 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
   }, [initialData, open]);
 
   const mutation = useMutation({
-    mutationFn: (data) => initialData
+    mutationFn: (data) => initialData?.id
       ? base44.entities.Meeting.update(initialData.id, data)
       : base44.entities.Meeting.create(data),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       onOpenChange(false);
-      if (onCreated && !initialData) onCreated(result);
+      if (onCreated && !initialData?.id) onCreated(result);
     },
   });
 
@@ -86,7 +86,7 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Skip conflict check on edit
-    if (initialData) {
+    if (initialData?.id) {
       doCreate();
       return;
     }
