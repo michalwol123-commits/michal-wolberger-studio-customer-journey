@@ -7,14 +7,17 @@ import EmptyState from '@/components/shared/EmptyState';
 import StatsCard from '@/components/shared/StatsCard';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CreditCard, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CreditCard, AlertTriangle, CheckCircle, Clock, Pencil } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
+import EditPaymentDialog from '@/components/payments/EditPaymentDialog';
 import { format } from 'date-fns';
 import { Navigate } from 'react-router-dom';
 
 export default function Payments() {
   const { isAdmin, loading } = useCurrentUser();
   const [statusFilter, setStatusFilter] = useState('all');
+  const [editPayment, setEditPayment] = useState(null);
 
   const { data: payments = [] } = useQuery({
     queryKey: ['payments'],
@@ -51,7 +54,7 @@ export default function Payments() {
         <ExportCSVButton
           data={filtered}
           columns={[
-            { label: 'לקוח', format: r => { const p = projectMap[r.project_id]; return p ? (clientMap[p.client_id]?.name || '') : ''; } },
+            { label: 'לקוח', format: r => { const c = clientMap[r.client_id]; if (c) return c.name; const p = projectMap[r.project_id]; return p ? (clientMap[p.client_id]?.name || '') : ''; } },
             { label: 'פרויקט', format: r => projectMap[r.project_id]?.name || '' },
             { key: 'milestone', label: 'אבן דרך' },
             { key: 'amount', label: 'סכום' },
@@ -94,12 +97,13 @@ export default function Payments() {
                 <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">שולם</th>
                 <th className="text-right px-4 py-3 font-medium hidden md:table-cell">תאריך יעד</th>
                 <th className="text-right px-4 py-3 font-medium">סטטוס</th>
+                <th className="w-12"></th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(pay => {
                 const proj = projectMap[pay.project_id];
-                const client = proj ? clientMap[proj.client_id] : null;
+                const client = clientMap[pay.client_id] || (proj ? clientMap[proj.client_id] : null);
                 return (
                   <tr key={pay.id} className="border-b last:border-0 hover:bg-muted/30">
                     <td className="px-4 py-3">{client?.name || '—'}</td>
@@ -109,6 +113,11 @@ export default function Payments() {
                     <td className="px-4 py-3 hidden sm:table-cell">₪{(pay.amount_paid || 0).toLocaleString()}</td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{pay.due_date ? format(new Date(pay.due_date), 'dd/MM/yyyy') : '—'}</td>
                     <td className="px-4 py-3"><StatusBadge status={pay.status} /></td>
+                    <td className="px-2">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditPayment(pay)}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                    </td>
                   </tr>
                 );
               })}
@@ -117,6 +126,8 @@ export default function Payments() {
         </div>
         {filtered.length === 0 && <EmptyState icon={CreditCard} title="אין תשלומים" />}
       </div>
+
+      <EditPaymentDialog open={!!editPayment} onOpenChange={(open) => { if (!open) setEditPayment(null); }} payment={editPayment} />
     </div>
   );
 }
