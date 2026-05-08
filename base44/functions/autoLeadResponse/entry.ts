@@ -39,6 +39,15 @@ Deno.serve(async (req) => {
       channel: 'base44_native',
     });
 
+    // Create intro meeting (no calendar sync — will be synced when admin sets a real date)
+    await base44.asServiceRole.entities.Meeting.create({
+      client_id: clientId,
+      type: 'intro',
+      status: 'scheduled',
+      scheduled_at: new Date().toISOString(),
+      duration: 45,
+    });
+
     // Update first_response_at
     await base44.asServiceRole.entities.Client.update(clientId, {
       first_response_at: new Date().toISOString(),
