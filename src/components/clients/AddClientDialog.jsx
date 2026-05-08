@@ -76,8 +76,8 @@ export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'l
             </div>
           </div>
           <div>
-            <Label>אימייל</Label>
-            <Input value={form.email} onChange={e => update('email', e.target.value)} type="email" dir="ltr" />
+            <Label>אימייל *</Label>
+            <Input value={form.email} onChange={e => update('email', e.target.value)} type="email" dir="ltr" required />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

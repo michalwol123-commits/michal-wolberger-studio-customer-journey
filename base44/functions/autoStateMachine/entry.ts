@@ -5,15 +5,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const TRANSITIONS = {
   Client: {
-    lead: ['qualified', 'archived'],
-    qualified: ['qualified_assessment', 'lead', 'archived'],
-    qualified_assessment: ['proposal_presented', 'proposal_sent', 'archived'],
-    proposal_presented: ['proposal_sent', 'qualified_assessment', 'archived'],
-    proposal_sent: ['proposal_approved', 'proposal_presented', 'archived'],
-    proposal_approved: ['active_client', 'archived'],
-    active_client: ['completed_client', 'archived'],
-    completed_client: ['active_client', 'archived'],
-    archived: ['lead'],
+    lead: ['qualified', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
+    qualified: ['lead', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'completed_client', 'archived'],
+    qualified_assessment: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
+    proposal_presented: ['lead', 'qualified', 'qualified_assessment', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
+    proposal_sent: ['lead', 'qualified', 'qualified_assessment', 'proposal_presented', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
+    proposal_approved: ['lead', 'qualified', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'active_client', 'completed_client', 'archived'],
+    active_client: ['lead', 'qualified', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'completed_client', 'archived'],
+    completed_client: ['lead', 'qualified', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'archived'],
+    archived: ['lead', 'qualified', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client'],
   },
   Project: {
     active: ['on_hold', 'completed', 'cancelled'],
