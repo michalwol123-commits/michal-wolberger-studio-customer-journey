@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, FileText, ExternalLink, Link, Upload } from 'lucide-react';
+import { Plus, Search, FileText, ExternalLink, Link, Upload, Calendar } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { format } from 'date-fns';
 import AddQuoteDialog from '@/components/quotes/AddQuoteDialog';
@@ -42,8 +42,15 @@ export default function Quotes() {
     queryFn: () => base44.entities.Client.list('-created_date', 200),
   });
 
+  const { data: meetings = [] } = useQuery({
+    queryKey: ['meetings'],
+    queryFn: () => base44.entities.Meeting.list('-created_date', 200),
+  });
+
   const clientMap = {};
   clients.forEach(c => { clientMap[c.id] = c; });
+  const meetingsMap = {};
+  meetings.forEach(m => { meetingsMap[m.id] = m; });
 
   const filtered = quotes
     .filter(q => isAdmin || q.owner === user?.email)
@@ -144,6 +151,7 @@ export default function Quotes() {
         <QuotesTable
           quotes={filtered}
           clientMap={clientMap}
+          meetingsMap={meetingsMap}
           onEdit={handleEdit}
           onDelete={(id) => deleteMutation.mutate(id)}
           selectedIds={selectedIds}
@@ -189,6 +197,11 @@ export default function Quotes() {
                   <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                     <span>{q.created_date ? format(new Date(q.created_date), 'dd/MM/yyyy') : ''}</span>
                     <div className="flex items-center gap-2">
+                      {q.meeting_id && meetingsMap[q.meeting_id] && (
+                        <span className="flex items-center gap-0.5 text-violet-500" title="פגישה נקבעה">
+                          <Calendar className="w-3 h-3" />
+                        </span>
+                      )}
                       {q.quote_type && (
                         <span className="flex items-center gap-0.5">
                           {q.quote_type === 'generated' && <FileText className="w-3 h-3" />}

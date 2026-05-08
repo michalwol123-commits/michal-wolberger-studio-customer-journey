@@ -12,6 +12,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 const typeOptions = [
   { value: 'intro', label: 'היכרות' },
   { value: 'qualifying', label: 'אפיון' },
+  { value: 'quote_presentation', label: 'הצגת הצעת מחיר' },
   { value: 'stage_review', label: 'סקירת שלב' },
   { value: 'site_visit', label: 'ביקור אתר' },
   { value: 'zoom', label: 'Zoom' },
@@ -19,12 +20,12 @@ const typeOptions = [
 ];
 
 const defaultForm = {
-  client_id: '', project_id: '', type: 'intro',
+  client_id: '', project_id: '', quote_id: '', type: 'intro',
   scheduled_at: '', duration: 45, location: '',
   status: 'scheduled', summary: ''
 };
 
-export default function AddMeetingDialog({ open, onOpenChange, initialData }) {
+export default function AddMeetingDialog({ open, onOpenChange, initialData, onCreated }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(defaultForm);
 
@@ -43,6 +44,7 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData }) {
       setForm({
         client_id: initialData.client_id || '',
         project_id: initialData.project_id || '',
+        quote_id: initialData.quote_id || '',
         type: initialData.type || 'intro',
         scheduled_at: initialData.scheduled_at ? initialData.scheduled_at.slice(0, 16) : '',
         duration: initialData.duration || 45,
@@ -59,9 +61,10 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData }) {
     mutationFn: (data) => initialData
       ? base44.entities.Meeting.update(initialData.id, data)
       : base44.entities.Meeting.create(data),
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       onOpenChange(false);
+      if (onCreated && !initialData) onCreated(result);
     },
   });
 
@@ -75,6 +78,7 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData }) {
       scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : undefined,
     };
     if (!payload.project_id) delete payload.project_id;
+    if (!payload.quote_id) delete payload.quote_id;
     setConflictWarning(null);
     mutation.mutate(payload);
   };

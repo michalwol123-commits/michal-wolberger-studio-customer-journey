@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Link, Upload, Loader2 } from 'lucide-react';
+import { FileText, Link, Upload, Loader2, Calendar } from 'lucide-react';
+import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 
 const packageOptions = [
   { value: 'basic', label: 'בסיסי' },
@@ -32,6 +33,8 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
   const [form, setForm] = useState(defaultForm);
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [showMeetingDialog, setShowMeetingDialog] = useState(false);
+  const [meetingId, setMeetingId] = useState(initialData?.meeting_id || null);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
@@ -40,6 +43,7 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
 
   useEffect(() => {
     if (initialData) {
+      setMeetingId(initialData.meeting_id || null);
       setForm({
         client_id: initialData.client_id || '',
         title: initialData.title || '',
@@ -56,16 +60,25 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
         version: initialData.version || 1,
       });
     } else {
+      setMeetingId(null);
       setForm(defaultForm);
     }
   }, [initialData, open]);
 
   const mutation = useMutation({
-    mutationFn: (data) => initialData
-      ? base44.entities.Quote.update(initialData.id, data)
-      : base44.entities.Quote.create(data),
+    mutationFn: async (data) => {
+      const result = initialData
+        ? await base44.entities.Quote.update(initialData.id, data)
+        : await base44.entities.Quote.create(data);
+      // If meeting was created, link the quote to it
+      if (meetingId && result?.id) {
+        await base44.entities.Meeting.update(meetingId, { quote_id: result.id });
+      }
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['meetings'] });
       onOpenChange(false);
     },
   });
@@ -100,6 +113,7 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
       ...form,
       total_amount: Number(form.total_amount) || 0,
       version: Number(form.version) || 1,
+      meeting_id: meetingId || undefined,
     };
     // Remove irrelevant fields based on quote_type
     if (form.quote_type === 'generated' || form.quote_type === 'uploaded') {
@@ -274,6 +288,23 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
             </div>
           </div>
 
+          {/* Schedule meeting */}
+          <div className="border-t pt-3">
+            <Label className="mb-2 block">פגישת הצגת הצעה</Label>
+            {meetingId ? (
+              <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                <Calendar className="w-4 h-4" />
+                <span>פגישה נקבעה</span>
+                <Button type="button" variant="ghost" size="sm" className="mr-auto text-xs" onClick={() => { setMeetingId(null); }}>הסר</Button>
+              </div>
+            ) : (
+              <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setShowMeetingDialog(true)} disabled={!form.client_id}>
+                <Calendar className="w-3.5 h-3.5" />
+                קבע פגישה
+              </Button>
+            )}
+          </div>
+
           {/* Notes */}
           <div>
             <Label>הערות</Label>
@@ -288,6 +319,18 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
           </div>
         </form>
       </DialogContent>
+
+      <AddMeetingDialog
+        open={showMeetingDialog}
+        onOpenChange={setShowMeetingDialog}
+        initialData={{
+          client_id: form.client_id,
+          type: 'quote_presentation',
+        }}
+        onCreated={(meeting) => {
+          if (meeting?.id) setMeetingId(meeting.id);
+        }}
+      />
     </Dialog>
   );
 }

@@ -3,13 +3,13 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import DeleteButton from '@/components/shared/DeleteButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
-import { ExternalLink, FileText, Upload, Link } from 'lucide-react';
+import { ExternalLink, FileText, Upload, Link, Calendar } from 'lucide-react';
 
 const packageLabels = { basic: 'בסיסי', mid: 'בינוני', premium: 'פרימיום' };
 const typeIcons = { generated: FileText, link: Link, uploaded: Upload };
 const typeLabels = { generated: 'מערכת', link: 'לינק', uploaded: 'PDF' };
 
-export default function QuotesTable({ quotes, clientMap, onEdit, onDelete, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
+export default function QuotesTable({ quotes, clientMap, meetingsMap, onEdit, onDelete, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
   return (
     <div className="bg-card rounded-xl border overflow-hidden">
       <div className="overflow-x-auto">
@@ -61,6 +61,11 @@ export default function QuotesTable({ quotes, clientMap, onEdit, onDelete, selec
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={q.status} /></td>
                   <td className="px-2 flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                    {q.meeting_id && meetingsMap?.[q.meeting_id] && (
+                      <span title={`פגישה: ${meetingsMap[q.meeting_id].scheduled_at ? new Date(meetingsMap[q.meeting_id].scheduled_at).toLocaleDateString('he-IL') : ''}`}>
+                        <Calendar className="w-4 h-4 text-violet-500" />
+                      </span>
+                    )}
                     {q.url && (
                       <a href={q.url} target="_blank" rel="noopener noreferrer" title="לינק">
                         <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-primary" />

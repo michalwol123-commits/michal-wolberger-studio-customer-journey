@@ -7,8 +7,9 @@ const TRANSITIONS = {
   Client: {
     lead: ['qualified', 'archived'],
     qualified: ['qualified_assessment', 'lead', 'archived'],
-    qualified_assessment: ['proposal_sent', 'archived'],
-    proposal_sent: ['proposal_approved', 'qualified_assessment', 'archived'],
+    qualified_assessment: ['proposal_presented', 'proposal_sent', 'archived'],
+    proposal_presented: ['proposal_sent', 'qualified_assessment', 'archived'],
+    proposal_sent: ['proposal_approved', 'proposal_presented', 'archived'],
     proposal_approved: ['active_client', 'archived'],
     active_client: ['completed_client', 'archived'],
     completed_client: ['active_client', 'archived'],
@@ -78,6 +79,7 @@ Deno.serve(async (req) => {
         const timestampMap = {
           qualified: { qualified_at: new Date().toISOString() },
           qualified_assessment: { qualified_assessment_at: new Date().toISOString() },
+          proposal_presented: { proposal_presented_at: new Date().toISOString() },
           proposal_sent: { proposal_sent_at: new Date().toISOString() },
           completed_client: { completed_at: new Date().toISOString() },
         };

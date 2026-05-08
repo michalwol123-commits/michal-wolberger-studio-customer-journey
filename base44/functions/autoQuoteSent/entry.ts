@@ -92,6 +92,29 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Create Document record for the quote file
+    if (data.file_url || data.url) {
+      await base44.asServiceRole.entities.Document.create({
+        client_id: clientId,
+        name: `הצעת מחיר — ${title}`,
+        file_url: data.file_url || data.url,
+        type: 'quote',
+        approval_status: 'pending',
+        visible_to_client: false,
+      });
+    }
+
+    // Update client status to proposal_sent
+    const clientsList = await base44.asServiceRole.entities.Client.filter({ id: clientId });
+    if (clientsList.length > 0) {
+      const currentStatus = clientsList[0].status;
+      if (['qualified_assessment', 'proposal_presented'].includes(currentStatus)) {
+        await base44.asServiceRole.entities.Client.update(clientId, {
+          status: 'proposal_sent',
+        });
+      }
+    }
+
     // Log internal note
     await base44.asServiceRole.entities.Communication.create({
       client_id: clientId,

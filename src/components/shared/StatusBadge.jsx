@@ -6,6 +6,7 @@ const statusConfig = {
   lead: { label: 'ליד', variant: 'outline', className: 'border-blue-300 text-blue-700 bg-blue-50' },
   qualified: { label: 'מתעניין', variant: 'outline', className: 'border-purple-300 text-purple-700 bg-purple-50' },
   qualified_assessment: { label: 'אפיון הושלם', variant: 'outline', className: 'border-indigo-300 text-indigo-700 bg-indigo-50' },
+  proposal_presented: { label: 'הוגשה בפגישה', variant: 'outline', className: 'border-violet-300 text-violet-700 bg-violet-50' },
   proposal_sent: { label: 'הצעה נשלחה', variant: 'outline', className: 'border-amber-300 text-amber-700 bg-amber-50' },
   proposal_approved: { label: 'הצעה אושרה', variant: 'outline', className: 'border-green-300 text-green-700 bg-green-50' },
   active_client: { label: 'לקוח פעיל', variant: 'outline', className: 'border-emerald-300 text-emerald-700 bg-emerald-50' },

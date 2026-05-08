@@ -19,8 +19,8 @@ import { he } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 const typeLabels = {
-  intro: 'היכרות', qualifying: 'אפיון', stage_review: 'סקירת שלב',
-  site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב'
+  intro: 'היכרות', qualifying: 'אפיון', quote_presentation: 'הצגת הצעה',
+  stage_review: 'סקירת שלב', site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב'
 };
 
 export default function Meetings() {
@@ -42,8 +42,15 @@ export default function Meetings() {
     queryFn: () => base44.entities.Client.list('-created_date', 200),
   });
 
+  const { data: quotes = [] } = useQuery({
+    queryKey: ['quotes'],
+    queryFn: () => base44.entities.Quote.list('-created_date', 200),
+  });
+
   const clientMap = {};
   clients.forEach(c => { clientMap[c.id] = c; });
+  const quotesMap = {};
+  quotes.forEach(q => { quotesMap[q.id] = q; });
 
   const filtered = isAdmin
     ? meetings
@@ -139,6 +146,7 @@ export default function Meetings() {
         <MeetingsTable
           meetings={weekMeetings}
           clientMap={clientMap}
+          quotesMap={quotesMap}
           onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
           onDelete={(id) => deleteMutation.mutate(id)}
           onComplete={(m) => completeMutation.mutate(m)}
@@ -171,6 +179,9 @@ export default function Meetings() {
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="font-medium text-sm">{typeLabels[m.type] || m.type}</span>
                                 <StatusBadge status={m.status} />
+                                {m.type === 'quote_presentation' && m.quote_id && (
+                                  <span className="text-[10px] bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded">הצעה</span>
+                                )}
                               </div>
                               <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                                 {client && <span className="flex items-center gap-1"><User className="w-3 h-3" />{client.name}</span>}
