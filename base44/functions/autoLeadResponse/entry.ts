@@ -16,6 +16,12 @@ Deno.serve(async (req) => {
     const clientId = event.entity_id;
     const clientName = data.name || 'לקוח חדש';
 
+    // Idempotency: check if we already created records for this client
+    const existingTasks = await base44.asServiceRole.entities.Task.filter({ client_id: clientId, type: 'followup', auto_generated: true });
+    if (existingTasks.length > 0) {
+      return Response.json({ skipped: true, reason: 'already processed (idempotency check)' });
+    }
+
     // Create follow-up task
     await base44.asServiceRole.entities.Task.create({
       title: `פנייה ראשונית — ${clientName}`,
