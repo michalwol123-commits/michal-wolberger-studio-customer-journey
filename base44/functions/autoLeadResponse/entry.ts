@@ -16,7 +16,19 @@ Deno.serve(async (req) => {
     const clientId = event.entity_id;
     const clientName = data.name || 'לקוח חדש';
 
-    // Idempotency: check if we already created records for this client
+    // Atomic idempotency: use first_response_at as a lock.
+    // If already set (by a parallel run), skip this execution.
+    if (data.first_response_at) {
+      return Response.json({ skipped: true, reason: 'first_response_at already set (race guard)' });
+    }
+
+    // Set first_response_at FIRST as an atomic lock before creating records
+    await base44.asServiceRole.entities.Client.update(clientId, {
+      first_response_at: new Date().toISOString(),
+    });
+
+    // Double-check: re-fetch and verify we were the one who set it
+    const [freshClient] = await base44.asServiceRole.entities.Client.filter({ id: clientId });
     const existingTasks = await base44.asServiceRole.entities.Task.filter({ client_id: clientId, type: 'followup', auto_generated: true });
     if (existingTasks.length > 0) {
       return Response.json({ skipped: true, reason: 'already processed (idempotency check)' });
@@ -51,11 +63,6 @@ Deno.serve(async (req) => {
       type: 'intro',
       status: 'scheduled',
       duration: 45,
-    });
-
-    // Update first_response_at
-    await base44.asServiceRole.entities.Client.update(clientId, {
-      first_response_at: new Date().toISOString(),
     });
 
     return Response.json({ success: true, automation: 'A', client: clientName });

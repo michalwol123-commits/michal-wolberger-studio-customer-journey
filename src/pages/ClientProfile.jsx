@@ -317,7 +317,7 @@ export default function ClientProfile() {
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {comm.created_date ? format(new Date(comm.created_date), 'dd/MM/yyyy HH:mm') : ''}
+                        {comm.created_date ? new Date(comm.created_date).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
                     </div>
                     <p className="text-sm">{comm.content}</p>
