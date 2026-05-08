@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,12 +14,19 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function BulkDeleteBar({ selectedIds, onDelete, entityLabel = 'פריטים' }) {
+  const [open, setOpen] = React.useState(false);
+
   if (selectedIds.length === 0) return null;
+
+  const handleConfirm = () => {
+    setOpen(false);
+    onDelete();
+  };
 
   return (
     <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-2 mb-4">
       <span className="text-sm font-medium">{selectedIds.length} {entityLabel} נבחרו</span>
-      <AlertDialog>
+      <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogTrigger asChild>
           <Button variant="destructive" size="sm" className="gap-1">
             <Trash2 className="w-4 h-4" />
@@ -34,9 +41,9 @@ export default function BulkDeleteBar({ selectedIds, onDelete, entityLabel = 'פ
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse gap-2">
-            <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <Button variant="destructive" onClick={handleConfirm}>
               מחק
-            </AlertDialogAction>
+            </Button>
             <AlertDialogCancel>ביטול</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
