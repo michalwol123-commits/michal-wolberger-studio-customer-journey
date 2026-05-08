@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -8,6 +8,9 @@ import StatsCard from '@/components/shared/StatsCard';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import DeleteButton from '@/components/shared/DeleteButton';
+import BulkDeleteBar from '@/components/shared/BulkDeleteBar';
 import { CreditCard, AlertTriangle, CheckCircle, Clock, Pencil } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import EditPaymentDialog from '@/components/payments/EditPaymentDialog';
@@ -18,6 +21,26 @@ export default function Payments() {
   const { isAdmin, loading } = useCurrentUser();
   const [statusFilter, setStatusFilter] = useState('all');
   const [editPayment, setEditPayment] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Payment.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payments'] }),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) await base44.entities.Payment.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      setSelectedIds([]);
+    },
+  });
+
+  const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = () => setSelectedIds(prev => prev.length === filtered.length ? [] : filtered.map(p => p.id));
 
   const { data: payments = [] } = useQuery({
     queryKey: ['payments'],
@@ -85,11 +108,16 @@ export default function Payments() {
         </Select>
       </div>
 
+      <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="תשלומים" />
+
       <div className="bg-card rounded-xl border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
+                <th className="px-3 py-3 w-10">
+                  <Checkbox checked={selectedIds.length === filtered.length && filtered.length > 0} onCheckedChange={toggleAll} />
+                </th>
                 <th className="text-right px-4 py-3 font-medium">לקוח</th>
                 <th className="text-right px-4 py-3 font-medium">פרויקט</th>
                 <th className="text-right px-4 py-3 font-medium">אבן דרך</th>
@@ -106,6 +134,9 @@ export default function Payments() {
                 const client = clientMap[pay.client_id] || (proj ? clientMap[proj.client_id] : null);
                 return (
                   <tr key={pay.id} className="border-b last:border-0 hover:bg-muted/30">
+                    <td className="px-3 py-3">
+                      <Checkbox checked={selectedIds.includes(pay.id)} onCheckedChange={() => toggleSelect(pay.id)} />
+                    </td>
                     <td className="px-4 py-3">{client?.name || '—'}</td>
                     <td className="px-4 py-3">{proj?.name || '—'}</td>
                     <td className="px-4 py-3">{pay.milestone}</td>
@@ -114,9 +145,12 @@ export default function Payments() {
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{pay.due_date ? format(new Date(pay.due_date), 'dd/MM/yyyy') : '—'}</td>
                     <td className="px-4 py-3"><StatusBadge status={pay.status} /></td>
                     <td className="px-2">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditPayment(pay)}>
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditPayment(pay)}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <DeleteButton onDelete={() => deleteMutation.mutate(pay.id)} entityLabel="תשלום" />
+                      </div>
                     </td>
                   </tr>
                 );
