@@ -6,8 +6,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const TRANSITIONS = {
   Client: {
     lead: ['qualified', 'archived'],
-    qualified: ['proposal_sent', 'archived'],
-    proposal_sent: ['proposal_approved', 'qualified', 'archived'],
+    qualified: ['qualified_assessment', 'archived'],
+    qualified_assessment: ['proposal_sent', 'archived'],
+    proposal_sent: ['proposal_approved', 'qualified_assessment', 'archived'],
     proposal_approved: ['active_client', 'archived'],
     active_client: ['completed_client', 'archived'],
     completed_client: ['active_client', 'archived'],
@@ -76,6 +77,7 @@ Deno.serve(async (req) => {
       if (entityName === 'Client') {
         const timestampMap = {
           qualified: { qualified_at: new Date().toISOString() },
+          qualified_assessment: { qualified_assessment_at: new Date().toISOString() },
           proposal_sent: { proposal_sent_at: new Date().toISOString() },
           completed_client: { completed_at: new Date().toISOString() },
         };

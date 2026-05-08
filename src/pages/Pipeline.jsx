@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 const columns = [
   { id: 'lead', label: 'ליד' },
   { id: 'qualified', label: 'מתעניין' },
+  { id: 'qualified_assessment', label: 'אפיון הושלם' },
   { id: 'proposal_sent', label: 'הצעה נשלחה' },
   { id: 'proposal_approved', label: 'הצעה אושרה' },
   { id: 'active_client', label: 'לקוח פעיל' },
