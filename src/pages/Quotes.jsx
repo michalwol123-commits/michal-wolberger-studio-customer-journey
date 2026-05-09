@@ -143,7 +143,7 @@ export default function Quotes() {
         </Select>
       </div>
 
-      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="הצעות" />}
+      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={(ids) => bulkDeleteMutation.mutate(ids || selectedIds)} entityLabel="הצעות" />}
 
       {filtered.length === 0 ? (
         <EmptyState icon={FileText} title="אין הצעות מחיר" description="צרי הצעה ראשונה" />

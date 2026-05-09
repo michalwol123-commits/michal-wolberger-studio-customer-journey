@@ -108,7 +108,7 @@ export default function Payments() {
         </Select>
       </div>
 
-      <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="תשלומים" />
+      <BulkDeleteBar selectedIds={selectedIds} onDelete={(ids) => bulkDeleteMutation.mutate(ids || selectedIds)} entityLabel="תשלומים" />
 
       <div className="bg-card rounded-xl border overflow-hidden">
         <div className="overflow-x-auto">

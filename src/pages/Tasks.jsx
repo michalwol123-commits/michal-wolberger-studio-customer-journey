@@ -97,7 +97,7 @@ export default function Tasks() {
         </Button>
       </PageHeader>
 
-      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="משימות" />}
+      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={(ids) => bulkDeleteMutation.mutate(ids || selectedIds)} entityLabel="משימות" />}
 
       {view === 'table' ? (
         <TasksTable

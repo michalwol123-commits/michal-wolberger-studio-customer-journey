@@ -152,7 +152,7 @@ export default function Meetings() {
         </p>
       )}
 
-      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="פגישות" />}
+      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={(ids) => bulkDeleteMutation.mutate(ids || selectedIds)} entityLabel="פגישות" />}
 
       {view === 'weekly' ? (
         weekMeetings.length === 0 ? (
