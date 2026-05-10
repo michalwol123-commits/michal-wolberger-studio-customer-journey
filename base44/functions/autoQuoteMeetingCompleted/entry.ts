@@ -27,8 +27,8 @@ Deno.serve(async (req) => {
     if (clients.length === 0) return Response.json({ error: 'Client not found' }, { status: 404 });
     const client = clients[0];
 
-    // Only update if client is in qualified_assessment status
-    if (client.status === 'qualified_assessment') {
+    // Only update if client is in qualified status
+    if (client.status === 'qualified') {
       await base44.asServiceRole.entities.Client.update(clientId, {
         status: 'proposal_presented',
       });

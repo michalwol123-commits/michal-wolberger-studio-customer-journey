@@ -6,7 +6,7 @@ const statusConfig = {
   lead: { label: 'ליד', variant: 'outline', className: 'border-blue-300 text-blue-700 bg-blue-50' },
   qualified: { label: 'מתעניין', variant: 'outline', className: 'border-purple-300 text-purple-700 bg-purple-50' },
 
-  proposal_presented: { label: 'הוגשה בפגישה', variant: 'outline', className: 'border-violet-300 text-violet-700 bg-violet-50' },
+  proposal_presented: { label: 'הוגשה הצעה בפגישה', variant: 'outline', className: 'border-violet-300 text-violet-700 bg-violet-50' },
   proposal_sent: { label: 'הצעה נשלחה', variant: 'outline', className: 'border-amber-300 text-amber-700 bg-amber-50' },
   proposal_approved: { label: 'הצעה אושרה', variant: 'outline', className: 'border-green-300 text-green-700 bg-green-50' },
   active_client: { label: 'לקוח פעיל', variant: 'outline', className: 'border-emerald-300 text-emerald-700 bg-emerald-50' },
@@ -19,7 +19,7 @@ const statusConfig = {
   cancelled: { label: 'בוטל', variant: 'outline', className: 'border-red-300 text-red-600 bg-red-50' },
   // Quote statuses
   draft: { label: 'טיוטה', variant: 'outline', className: 'border-gray-300 text-gray-500 bg-gray-50' },
-  sent: { label: 'נשלח', variant: 'outline', className: 'border-blue-300 text-blue-700 bg-blue-50' },
+  sent: { label: 'נשלחה', variant: 'outline', className: 'border-blue-300 text-blue-700 bg-blue-50' },
   viewed: { label: 'נצפה', variant: 'outline', className: 'border-purple-300 text-purple-700 bg-purple-50' },
   approved: { label: 'מאושר', variant: 'outline', className: 'border-green-300 text-green-700 bg-green-50' },
   rejected: { label: 'נדחה', variant: 'outline', className: 'border-red-300 text-red-600 bg-red-50' },

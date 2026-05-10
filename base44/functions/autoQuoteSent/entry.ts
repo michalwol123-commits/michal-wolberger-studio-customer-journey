@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     const clientsList = await base44.asServiceRole.entities.Client.filter({ id: clientId });
     if (clientsList.length > 0) {
       const currentStatus = clientsList[0].status;
-      if (['qualified_assessment', 'proposal_presented'].includes(currentStatus)) {
+      if (['qualified', 'proposal_presented'].includes(currentStatus)) {
         await base44.asServiceRole.entities.Client.update(clientId, {
           status: 'proposal_sent',
         });
