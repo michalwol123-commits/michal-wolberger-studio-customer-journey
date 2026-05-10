@@ -362,7 +362,12 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
           type: 'quote_presentation',
         }}
         onCreated={(meeting) => {
-          if (meeting?.id) setMeetingId(meeting.id);
+          if (meeting?.id) {
+            setMeetingId(meeting.id);
+            if (meeting.scheduled_at) {
+              setForm(p => ({ ...p, meeting_date: meeting.scheduled_at.split('T')[0] }));
+            }
+          }
         }}
       />
     </Dialog>

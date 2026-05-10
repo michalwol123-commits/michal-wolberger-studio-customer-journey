@@ -50,7 +50,7 @@ export default function Leads() {
   });
 
   const leads = clients
-    .filter(c => ['lead', 'qualified', 'qualified_assessment', 'proposal_sent'].includes(c.status))
+    .filter(c => ['lead', 'qualified', 'proposal_presented', 'proposal_sent'].includes(c.status))
     .filter(c => isAdmin || c.assigned_to === user?.email || c.owner === user?.email)
     .filter(c => !search || c.name?.includes(search) || c.phone?.includes(search) || c.email?.includes(search));
 
