@@ -1,6 +1,5 @@
 // Automation A — Auto Lead Response
 // Trigger: Client record_created with status=lead
-// Action: Create Task for follow-up + Communication record (pending WhatsApp)
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -8,7 +7,6 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const { data, event } = await req.json();
 
-    // Only trigger for new leads
     if (!data || data.status !== 'lead') {
       return Response.json({ skipped: true, reason: 'not a lead' });
     }
@@ -16,25 +14,34 @@ Deno.serve(async (req) => {
     const clientId = event.entity_id;
     const clientName = data.name || 'לקוח חדש';
 
-    // Atomic idempotency: use first_response_at as a lock.
-    // If already set (by a parallel run), skip this execution.
-    if (data.first_response_at) {
-      return Response.json({ skipped: true, reason: 'first_response_at already set (race guard)' });
+    // jitter — מפזר ריצות מקביליות
+    await new Promise(r => setTimeout(r, Math.floor(Math.random() * 400)));
+
+    // קריאה מה-DB (לא מה-snapshot של האירוע)
+    const [currentClient] = await base44.asServiceRole.entities.Client.filter({ id: clientId });
+    if (!currentClient) {
+      return Response.json({ skipped: true, reason: 'client not found' });
+    }
+    if (currentClient.first_response_at) {
+      return Response.json({ skipped: true, reason: 'already processed' });
     }
 
-    // Set first_response_at FIRST as an atomic lock before creating records
+    // כותבים token ייחודי כ-lock
+    const myToken = new Date().toISOString();
     await base44.asServiceRole.entities.Client.update(clientId, {
-      first_response_at: new Date().toISOString(),
+      first_response_at: myToken,
     });
 
-    // Double-check: re-fetch and verify we were the one who set it
-    const [freshClient] = await base44.asServiceRole.entities.Client.filter({ id: clientId });
-    const existingTasks = await base44.asServiceRole.entities.Task.filter({ client_id: clientId, type: 'followup', auto_generated: true });
-    if (existingTasks.length > 0) {
-      return Response.json({ skipped: true, reason: 'already processed (idempotency check)' });
+    // ממתינים לריצה מקבילה
+    await new Promise(r => setTimeout(r, 300));
+
+    // בודקים שה-token שלנו עדיין שם
+    const [lockedClient] = await base44.asServiceRole.entities.Client.filter({ id: clientId });
+    if (!lockedClient || lockedClient.first_response_at !== myToken) {
+      return Response.json({ skipped: true, reason: 'race condition — parallel run handled this' });
     }
 
-    // Create follow-up task
+    // יוצרים את כל הרשומות
     await base44.asServiceRole.entities.Task.create({
       title: `פנייה ראשונית — ${clientName}`,
       description: `ליד חדש נכנס. יש ליצור קשר תוך 30 דקות.`,
@@ -46,7 +53,6 @@ Deno.serve(async (req) => {
       auto_generated: true,
     });
 
-    // Create pending WhatsApp communication (will be sent in Stage 5)
     await base44.asServiceRole.entities.Communication.create({
       client_id: clientId,
       type: 'whatsapp',
@@ -57,7 +63,6 @@ Deno.serve(async (req) => {
       channel: 'base44_native',
     });
 
-    // Create intro meeting without date (will be synced to calendar when admin sets a date)
     await base44.asServiceRole.entities.Meeting.create({
       client_id: clientId,
       type: 'intro',
@@ -67,22 +72,6 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, automation: 'A', client: clientName });
   } catch (error) {
-    // Log error to Communication
-    try {
-      const base44 = createClientFromRequest(req);
-      const { event } = await req.json().catch(() => ({ event: {} }));
-      await base44.asServiceRole.entities.Communication.create({
-        client_id: event?.entity_id || '',
-        type: 'system_error',
-        direction: 'outbound',
-        content: `Automation A (Auto Lead Response) failed: ${error.message}`,
-        sent_by: 'system',
-        status: 'failed',
-        channel: 'base44_native',
-        error_detail: error.message,
-        retry_count: 0,
-      });
-    } catch (_) { /* silent */ }
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
