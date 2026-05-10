@@ -1,5 +1,5 @@
-// Automation: Create payment + reminder + prep tasks when client moves to qualified_assessment (after intro meeting)
-// Trigger: Client entity — update event, status changed to "qualified_assessment"
+// Automation: Create payment + reminder + prep tasks when client moves to qualified (after intro meeting)
+// Trigger: Client entity — update event, status changed to "qualified"
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -9,9 +9,9 @@ Deno.serve(async (req) => {
 
     if (!data || !old_data || !event) return Response.json({ skipped: true });
 
-    // Only fire when status changed TO qualified_assessment
-    if (data.status !== 'qualified_assessment' || old_data.status === 'qualified_assessment') {
-      return Response.json({ skipped: true, reason: 'not a transition to qualified_assessment' });
+    // Only fire when status changed TO qualified
+    if (data.status !== 'qualified' || old_data.status === 'qualified') {
+      return Response.json({ skipped: true, reason: 'not a transition to qualified' });
     }
 
     const clientId = event.entity_id;

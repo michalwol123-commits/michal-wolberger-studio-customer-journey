@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 const CLIENT_STATUSES = [
   { value: 'lead', label: 'ליד' },
   { value: 'qualified', label: 'מתעניין' },
-  { value: 'qualified_assessment', label: 'אפיון הושלם' },
+
   { value: 'proposal_presented', label: 'הוגשה בפגישה' },
   { value: 'proposal_sent', label: 'הצעה נשלחה' },
   { value: 'proposal_approved', label: 'הצעה אושרה' },
@@ -20,9 +20,8 @@ const statusLabels = Object.fromEntries(CLIENT_STATUSES.map(s => [s.value, s.lab
 
 const ALLOWED_TRANSITIONS = {
   lead: ['qualified', 'archived'],
-  qualified: ['qualified_assessment', 'lead', 'archived'],
-  qualified_assessment: ['proposal_presented', 'proposal_sent', 'archived'],
-  proposal_presented: ['proposal_sent', 'qualified_assessment', 'archived'],
+  qualified: ['proposal_presented', 'lead', 'archived'],
+  proposal_presented: ['proposal_sent', 'qualified', 'archived'],
   proposal_sent: ['proposal_approved', 'proposal_presented', 'archived'],
   proposal_approved: ['active_client', 'archived'],
   active_client: ['completed_client', 'archived'],

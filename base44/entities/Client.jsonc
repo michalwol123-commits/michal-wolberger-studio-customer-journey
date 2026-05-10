@@ -19,7 +19,6 @@
       "enum": [
         "lead",
         "qualified",
-        "qualified_assessment",
         "proposal_presented",
         "proposal_sent",
         "proposal_approved",
@@ -154,11 +153,6 @@
       "type": "string",
       "format": "date-time",
       "description": "\u05de\u05ea\u05d9 \u05d4\u05e4\u05da \u05de\u05ea\u05e2\u05e0\u05d9\u05d9\u05df"
-    },
-    "qualified_assessment_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "\u05de\u05ea\u05d9 \u05d4\u05d5\u05e9\u05dc\u05dd \u05d0\u05e4\u05d9\u05d5\u05df"
     },
     "proposal_presented_at": {
       "type": "string",

@@ -80,13 +80,7 @@ export default function Meetings() {
   const completeMutation = useMutation({
     mutationFn: async (meeting) => {
       await base44.entities.Meeting.update(meeting.id, { status: 'completed' });
-      // If qualifying meeting completed → move client to "qualified_assessment"
-      if (meeting.type === 'qualifying' && meeting.client_id) {
-        const client = clientMap[meeting.client_id];
-        if (client && client.status === 'qualified') {
-          await base44.entities.Client.update(meeting.client_id, { status: 'qualified_assessment' });
-        }
-      }
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });

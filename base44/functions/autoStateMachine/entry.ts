@@ -5,15 +5,14 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const TRANSITIONS = {
   Client: {
-    lead: ['qualified', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
-    qualified: ['lead', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'completed_client', 'archived'],
-    qualified_assessment: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
-    proposal_presented: ['lead', 'qualified', 'qualified_assessment', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
-    proposal_sent: ['lead', 'qualified', 'qualified_assessment', 'proposal_presented', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
-    proposal_approved: ['lead', 'qualified', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'active_client', 'completed_client', 'archived'],
-    active_client: ['lead', 'qualified', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'completed_client', 'archived'],
-    completed_client: ['lead', 'qualified', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'archived'],
-    archived: ['lead', 'qualified', 'qualified_assessment', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client'],
+    lead: ['qualified', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
+    qualified: ['lead', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'completed_client', 'archived'],
+    proposal_presented: ['lead', 'qualified', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
+    proposal_sent: ['lead', 'qualified', 'proposal_presented', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
+    proposal_approved: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'active_client', 'completed_client', 'archived'],
+    active_client: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'completed_client', 'archived'],
+    completed_client: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'archived'],
+    archived: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client'],
   },
   Project: {
     active: ['on_hold', 'completed', 'cancelled'],
@@ -78,7 +77,6 @@ Deno.serve(async (req) => {
       if (entityName === 'Client') {
         const timestampMap = {
           qualified: { qualified_at: new Date().toISOString() },
-          qualified_assessment: { qualified_assessment_at: new Date().toISOString() },
           proposal_presented: { proposal_presented_at: new Date().toISOString() },
           proposal_sent: { proposal_sent_at: new Date().toISOString() },
           completed_client: { completed_at: new Date().toISOString() },
