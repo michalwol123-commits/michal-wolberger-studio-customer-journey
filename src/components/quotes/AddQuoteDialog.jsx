@@ -46,6 +46,7 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
     queryFn: () => base44.entities.Meeting.list('-created_date', 200),
   });
 
+  // When dialog opens: populate form from initialData or reset
   useEffect(() => {
     if (initialData) {
       const mid = initialData.meeting_id || null;
@@ -80,6 +81,23 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
       setForm(defaultForm);
     }
   }, [initialData, open, meetings]);
+
+  // Auto-link existing quote_presentation meeting when client changes (new quote only)
+  useEffect(() => {
+    if (initialData || !form.client_id || meetings.length === 0) return;
+    const pending = meetings.find(
+      m => m.client_id === form.client_id && m.type === 'quote_presentation' && m.status === 'scheduled' && !m.quote_id
+    );
+    if (pending) {
+      setMeetingId(pending.id);
+      if (pending.scheduled_at) {
+        setForm(p => ({ ...p, meeting_date: pending.scheduled_at.split('T')[0] }));
+      }
+    } else {
+      setMeetingId(null);
+      setForm(p => ({ ...p, meeting_date: '' }));
+    }
+  }, [form.client_id, meetings, initialData]);
 
   const mutation = useMutation({
     mutationFn: async (data) => {
