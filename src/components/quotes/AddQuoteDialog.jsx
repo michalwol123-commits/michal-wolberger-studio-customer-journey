@@ -41,9 +41,25 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
     queryFn: () => base44.entities.Client.list('-created_date', 200),
   });
 
+  const { data: meetings = [] } = useQuery({
+    queryKey: ['meetings'],
+    queryFn: () => base44.entities.Meeting.list('-created_date', 200),
+  });
+
   useEffect(() => {
     if (initialData) {
-      setMeetingId(initialData.meeting_id || null);
+      const mid = initialData.meeting_id || null;
+      setMeetingId(mid);
+
+      // If meeting_date is empty but linked meeting has scheduled_at, use it
+      let meetingDate = initialData.meeting_date || '';
+      if (!meetingDate && mid && meetings.length > 0) {
+        const linkedMeeting = meetings.find(m => m.id === mid);
+        if (linkedMeeting?.scheduled_at) {
+          meetingDate = linkedMeeting.scheduled_at.split('T')[0];
+        }
+      }
+
       setForm({
         client_id: initialData.client_id || '',
         title: initialData.title || '',
@@ -53,7 +69,7 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
         scope: initialData.scope || '',
         url: initialData.url || '',
         file_url: initialData.file_url || '',
-        meeting_date: initialData.meeting_date || '',
+        meeting_date: meetingDate,
         send_via: initialData.send_via || 'email',
         status: initialData.status || 'draft',
         notes: initialData.notes || '',
@@ -63,14 +79,14 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
       setMeetingId(null);
       setForm(defaultForm);
     }
-  }, [initialData, open]);
+  }, [initialData, open, meetings]);
 
   const mutation = useMutation({
     mutationFn: async (data) => {
       const result = initialData
         ? await base44.entities.Quote.update(initialData.id, data)
         : await base44.entities.Quote.create(data);
-      // If meeting was created, link the quote to it
+      // If meeting exists, link quote to it
       if (meetingId && result?.id) {
         await base44.entities.Meeting.update(meetingId, { quote_id: result.id });
       }

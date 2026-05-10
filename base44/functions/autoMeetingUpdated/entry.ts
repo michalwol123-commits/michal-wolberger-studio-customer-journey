@@ -139,6 +139,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Sync meeting date to linked Quote (if quote_presentation with quote_id)
+    if (data.type === 'quote_presentation' && data.quote_id) {
+      const meetingDate = scheduledAt.toISOString().split('T')[0];
+      await base44.asServiceRole.entities.Quote.update(data.quote_id, {
+        meeting_date: meetingDate,
+      });
+      console.log('Quote meeting_date synced:', data.quote_id, meetingDate);
+    }
+
     return Response.json({ status: 'ok', google_event_id: googleEventId });
   } catch (error) {
     console.error('autoMeetingUpdated error:', error.message);
