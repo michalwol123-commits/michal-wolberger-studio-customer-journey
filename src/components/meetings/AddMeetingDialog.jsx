@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertTriangle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const typeOptions = [
   { value: 'intro', label: 'היכרות' },
@@ -72,6 +73,9 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
   const [checking, setChecking] = useState(false);
 
   const doCreate = () => {
+    if (!form.scheduled_at) {
+      toast.warning('שימי לב — הפגישה נוצרת ללא תאריך ושעה');
+    }
     const payload = {
       ...form,
       duration: Number(form.duration),
@@ -196,7 +200,7 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
-            <Button type="submit" disabled={!form.client_id || !form.scheduled_at || mutation.isPending || checking}>
+            <Button type="submit" disabled={!form.client_id || mutation.isPending || checking}>
               {checking && <Loader2 className="w-4 h-4 animate-spin" />}
               {initialData ? 'עדכון' : 'צור פגישה'}
             </Button>
