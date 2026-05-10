@@ -13,6 +13,7 @@ import ViewToggle from '@/components/shared/ViewToggle';
 import MeetingsTable from '@/components/meetings/MeetingsTable';
 import MeetingsCards from '@/components/meetings/MeetingsCards';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
+import IntroCompletedDialog from '@/components/meetings/IntroCompletedDialog';
 import { format, startOfWeek, endOfWeek, addWeeks, isWithinInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ export default function Meetings() {
   const [showAdd, setShowAdd] = useState(false);
   const [editMeeting, setEditMeeting] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [introDialogMeeting, setIntroDialogMeeting] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: meetings = [] } = useQuery({
@@ -78,13 +80,6 @@ export default function Meetings() {
   const completeMutation = useMutation({
     mutationFn: async (meeting) => {
       await base44.entities.Meeting.update(meeting.id, { status: 'completed' });
-      // If intro meeting completed → move lead to "qualified"
-      if (meeting.type === 'intro' && meeting.client_id) {
-        const client = clientMap[meeting.client_id];
-        if (client && client.status === 'lead') {
-          await base44.entities.Client.update(meeting.client_id, { status: 'qualified' });
-        }
-      }
       // If qualifying meeting completed → move client to "qualified_assessment"
       if (meeting.type === 'qualifying' && meeting.client_id) {
         const client = clientMap[meeting.client_id];
@@ -99,6 +94,31 @@ export default function Meetings() {
       toast.success('הפגישה סומנה כהושלמה');
     },
   });
+
+  const introActionMutation = useMutation({
+    mutationFn: async ({ meetingId, action }) => {
+      const res = await base44.functions.invoke('autoIntroCompleted', { meetingId, action });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      setIntroDialogMeeting(null);
+      if (data.action === 'continue') {
+        toast.success(`${data.clientName} ממשיך — נפתחה פגישת הצעת מחיר`);
+      } else {
+        toast.success(`${data.clientName} הועבר לארכיון`);
+      }
+    },
+  });
+
+  const handleComplete = (meeting) => {
+    if (meeting.type === 'intro') {
+      setIntroDialogMeeting(meeting);
+    } else {
+      completeMutation.mutate(meeting);
+    }
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Meeting.delete(id),
@@ -169,7 +189,7 @@ export default function Meetings() {
                   clientMap={clientMap}
                   onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
                   onDelete={(id) => deleteMutation.mutate(id)}
-                  onComplete={(m) => completeMutation.mutate(m)}
+                  onComplete={handleComplete}
                   selectedIds={selectedIds}
                   onToggleSelect={toggleSelect}
                   isAdmin={isAdmin}
@@ -188,7 +208,7 @@ export default function Meetings() {
             quotesMap={quotesMap}
             onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
             onDelete={(id) => deleteMutation.mutate(id)}
-            onComplete={(m) => completeMutation.mutate(m)}
+            onComplete={handleComplete}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
             onToggleAll={toggleAll}
@@ -204,7 +224,7 @@ export default function Meetings() {
             clientMap={clientMap}
             onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
             onDelete={(id) => deleteMutation.mutate(id)}
-            onComplete={(m) => completeMutation.mutate(m)}
+            onComplete={handleComplete}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
             isAdmin={isAdmin}
@@ -216,6 +236,14 @@ export default function Meetings() {
         open={showAdd}
         onOpenChange={(open) => { setShowAdd(open); if (!open) setEditMeeting(null); }}
         initialData={editMeeting}
+      />
+
+      <IntroCompletedDialog
+        open={!!introDialogMeeting}
+        onOpenChange={(open) => { if (!open) setIntroDialogMeeting(null); }}
+        onContinue={() => introActionMutation.mutate({ meetingId: introDialogMeeting.id, action: 'continue' })}
+        onNotInterested={() => introActionMutation.mutate({ meetingId: introDialogMeeting.id, action: 'not_interested' })}
+        loading={introActionMutation.isPending}
       />
     </div>
   );
