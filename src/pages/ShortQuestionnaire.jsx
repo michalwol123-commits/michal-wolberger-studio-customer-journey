@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,10 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Send, CheckCircle2, Copy, Link as LinkIcon, ArrowRight, ClipboardList } from 'lucide-react';
+import { Loader2, Send, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
 
 const SPACE_OPTIONS = [
   { value: 'up_to_80', label: 'עד 80 מ"ר' },
@@ -51,91 +49,38 @@ const STYLE_PHILOSOPHY = [
 ];
 
 export default function ShortQuestionnaire() {
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState(null);
-  const [questionnaire, setQuestionnaire] = useState(null);
-  const [clientName, setClientName] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [formLink, setFormLink] = useState('');
 
   const [form, setForm] = useState({
+    name: '', phone: '', email: '',
     birth_date: '', wedding_date: '', household: '', space_type: '',
     space_type_other: '', property_size_age: '', design_style: '',
     why_renovate: '', expectations: '', expectations_other: '',
     budget: '', gift: '', style_philosophy: '', style_philosophy_other: '',
   });
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
-
-  useEffect(() => {
-    init();
-  }, []);
-
-  const init = async () => {
-    // If token is in URL, load questionnaire for filling
-    if (token) {
-      await loadQuestionnaire();
-      return;
-    }
-
-    // No token — check if admin to show link management
-    try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (isAuth) {
-        const user = await base44.auth.me();
-        if (user?.role === 'admin') {
-          setIsAdmin(true);
-          setFormLink(`${window.location.origin}/q`);
-        }
-      }
-    } catch {}
-    setLoading(false);
-  };
-
-  const loadQuestionnaire = async () => {
-    const results = await base44.entities.Questionnaire.filter({ token });
-    if (results.length === 0) { setError('שאלון לא נמצא'); setLoading(false); return; }
-    const q = results[0];
-    if (q.status === 'submitted') { setSubmitted(true); setLoading(false); return; }
-    setQuestionnaire(q);
-
-    const clients = await base44.entities.Client.filter({ id: q.client_id });
-    if (clients.length > 0) setClientName(clients[0].name);
-    setLoading(false);
-  };
-
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const handleSubmit = async () => {
+    if (!form.name || !form.phone) return;
     setSubmitting(true);
-    await base44.entities.Questionnaire.update(questionnaire.id, {
+
+    const { name, phone, email, ...responses } = form;
+    await base44.entities.Questionnaire.create({
+      type: 'short',
       status: 'submitted',
-      responses: JSON.stringify(form),
+      name,
+      phone,
+      email,
+      responses: JSON.stringify(responses),
       submitted_at: new Date().toISOString(),
+      stage: 1,
     });
+
     setSubmitted(true);
     setSubmitting(false);
   };
-
-  if (loading) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <Loader2 className="w-8 h-8 text-primary animate-spin" />
-    </div>
-  );
-
-  // Admin view — show preview of form + link at bottom
-  // (fall through to render the form below, with admin bar)
-
-  if (error) return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
-      <Card className="max-w-md w-full"><CardContent className="p-8 text-center">
-        <p className="text-lg font-heading text-destructive">{error}</p>
-      </CardContent></Card>
-    </div>
-  );
 
   if (submitted) return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
@@ -150,73 +95,19 @@ export default function ShortQuestionnaire() {
     </div>
   );
 
-  // No token and not admin — show error
-  if (!token && !isAdmin) return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
-      <Card className="max-w-md w-full"><CardContent className="p-8 text-center">
-        <p className="text-lg font-heading text-destructive">קישור לא תקין</p>
-        <p className="text-sm text-muted-foreground mt-2">נא להשתמש בקישור שקיבלת מהסטודיו</p>
-      </CardContent></Card>
-    </div>
-  );
-
-  // Admin preview mode (no token) — disable submit
-  const isPreviewMode = isAdmin && !token;
-
   return (
     <div className="min-h-screen bg-background py-8 px-4" dir="rtl">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Admin link bar */}
-        {isPreviewMode && (
-          <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <LinkIcon className="w-4 h-4 text-primary" />
-              <span>קישור לשאלון (מנהל בלבד):</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              הקישור נשלח אוטומטית ללקוח עם יצירת הליד. ניתן גם להעתיק ולשלוח ידנית מכרטיס הלקוח.
-            </p>
-            <div className="flex items-center gap-2">
-              <code className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-lg flex-1 truncate" dir="ltr">
-                {formLink}
-              </code>
-              <Button
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(formLink);
-                  toast.success('הקישור הועתק!');
-                }}
-                className="gap-1 shrink-0"
-              >
-                <Copy className="w-3 h-3" />
-                העתק
-              </Button>
-            </div>
-            <div className="text-center pt-2">
-              <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                <ArrowRight className="w-4 h-4" />
-                חזרה ללוח הבקרה
-              </Link>
-            </div>
-          </div>
-        )}
-
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
           <Card>
             <CardContent className="p-8 text-center space-y-3">
               <h1 className="font-heading text-2xl font-bold">שאלון טרום שיחת היכרות</h1>
-              {isPreviewMode && (
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium mb-2">
-                  👁 תצוגה מקדימה — כך הלקוחות יראו את השאלון
-                </div>
-              )}
               <p className="text-muted-foreground leading-relaxed">
-                {clientName && <>שלום {clientName}! 👋<br/></>}
                 אשמח שתקחו מספר דקות לענות על השאלון הבא, כדי שנוכל לדייק ולמקד את שיחת הטלפון שלנו.
               </p>
               <p className="text-sm text-muted-foreground">
-                נעים מאוד, מיכל. אם פניתם אליי כנראה שאתם נמצאים לפני רגע גדול ומרגש בחייכם, 
-                ומחפשים מישהי שתלווה אתכם יד ביד במסע המרגש הזה. 
+                נעים מאוד, מיכל. אם פניתם אליי כנראה שאתם נמצאים לפני רגע גדול ומרגש בחייכם,
+                ומחפשים מישהי שתלווה אתכם יד ביד במסע המרגש הזה.
                 אני יותר מאשמח לשתף פעולה יחד וליצור חיבורים מרגשים שלכם.
               </p>
               <p className="text-xs text-muted-foreground">כוכבית (*) מציינת שאלה שאי אפשר לדלג עליה</p>
@@ -225,6 +116,18 @@ export default function ShortQuestionnaire() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="space-y-4">
+          <QuestionCard title="שם מלא *">
+            <Input placeholder="שם מלא" value={form.name} onChange={e => updateField('name', e.target.value)} />
+          </QuestionCard>
+
+          <QuestionCard title="טלפון *">
+            <Input type="tel" placeholder="050-1234567" value={form.phone} onChange={e => updateField('phone', e.target.value)} dir="ltr" />
+          </QuestionCard>
+
+          <QuestionCard title="מייל">
+            <Input type="email" placeholder="your@email.com" value={form.email} onChange={e => updateField('email', e.target.value)} dir="ltr" />
+          </QuestionCard>
+
           <QuestionCard title="תאריך לידה">
             <Input type="date" value={form.birth_date} onChange={e => updateField('birth_date', e.target.value)} />
           </QuestionCard>
@@ -321,9 +224,9 @@ export default function ShortQuestionnaire() {
           <Card>
             <CardContent className="p-6 text-center space-y-4">
               <p className="text-sm text-muted-foreground">תודה על הזמן! 💛 נשמח לדבר בקרוב.</p>
-              <Button size="lg" className="gap-2 w-full max-w-xs" onClick={handleSubmit} disabled={submitting || isPreviewMode}>
+              <Button size="lg" className="gap-2 w-full max-w-xs" onClick={handleSubmit} disabled={submitting || !form.name || !form.phone}>
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                {isPreviewMode ? 'תצוגה מקדימה — לא ניתן לשלוח' : 'שליחה'}
+                שליחה
               </Button>
               <p className="text-xs text-muted-foreground">מיכל וולברגר — עיצוב פנים</p>
             </CardContent>

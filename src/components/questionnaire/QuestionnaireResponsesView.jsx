@@ -58,6 +58,12 @@ function QuestionnaireCard({ questionnaire }) {
   let responses = {};
   try { responses = JSON.parse(q.responses || '{}'); } catch {}
 
+  const contactRows = [
+    { label: 'שם', value: q.name },
+    { label: 'טלפון', value: q.phone },
+    { label: 'מייל', value: q.email },
+  ].filter(r => r.value);
+
   const rows = [
     { label: 'תאריך לידה', value: responses.birth_date },
     { label: 'תאריך נישואין', value: responses.wedding_date },
@@ -94,10 +100,16 @@ function QuestionnaireCard({ questionnaire }) {
           <p className="text-sm text-muted-foreground text-center py-4">
             השאלון נשלח ללקוח וטרם מולא
           </p>
-        ) : rows.length === 0 ? (
+        ) : rows.length === 0 && contactRows.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">אין תשובות</p>
         ) : (
           <div className="space-y-2">
+            {contactRows.map((row, i) => (
+              <div key={`c-${i}`} className="flex gap-2 text-sm py-1.5 border-b border-border">
+                <span className="font-medium text-primary w-32 shrink-0">{row.label}</span>
+                <span className="text-foreground" dir={row.label === 'שם' ? 'rtl' : 'ltr'}>{row.value}</span>
+              </div>
+            ))}
             {rows.map((row, i) => (
               <div key={i} className="flex gap-2 text-sm py-1.5 border-b border-border last:border-0">
                 <span className="font-medium text-muted-foreground w-32 shrink-0">{row.label}</span>

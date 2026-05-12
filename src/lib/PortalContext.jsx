@@ -36,12 +36,7 @@ export function PortalProvider({ children }) {
       return;
     }
 
-    // Check if token is expired
-    if (c.portal_token_expires_at && new Date(c.portal_token_expires_at) < new Date()) {
-      setError(true);
-      setLoading(false);
-      return;
-    }
+    // Token expiry check removed — no expiration
 
     setClient(c);
     setLoading(false);

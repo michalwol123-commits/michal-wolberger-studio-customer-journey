@@ -30,11 +30,8 @@ export default function ClientProfile() {
   const generateTokenMutation = useMutation({
     mutationFn: async (clientObj) => {
       const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 8);
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 90);
       await base44.entities.Client.update(clientObj.id, {
         portal_token: token,
-        portal_token_expires_at: expiresAt.toISOString(),
         portal_token_revoked: false,
       });
       return token;
@@ -105,7 +102,18 @@ export default function ClientProfile() {
 
   const { data: clientQuestionnaires = [] } = useQuery({
     queryKey: ['questionnaires', clientId],
-    queryFn: () => base44.entities.Questionnaire.filter({ client_id: clientId }),
+    queryFn: async () => {
+      // חיפוש לפי client_id ישיר
+      const byId = await base44.entities.Questionnaire.filter({ client_id: clientId });
+      // חיפוש לפי טלפון/מייל (שאלונים גנריים ללא client_id)
+      const byPhone = client?.phone ? await base44.entities.Questionnaire.filter({ phone: client.phone }) : [];
+      const byEmail = client?.email ? await base44.entities.Questionnaire.filter({ email: client.email }) : [];
+      // מאחד ומסיר כפילויות
+      const all = [...byId, ...byPhone, ...byEmail];
+      const unique = Array.from(new Map(all.map(q => [q.id, q])).values());
+      return unique;
+    },
+    enabled: !!client,
   });
 
   if (!client) {
