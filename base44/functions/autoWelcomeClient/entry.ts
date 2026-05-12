@@ -5,15 +5,31 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { data, old_data, event } = await req.json();
+    const body = await req.json();
 
-    if (!data || !old_data) return Response.json({ skipped: true });
-    if (data.s4_status !== 'completed' || old_data.s4_status === 'completed') {
-      return Response.json({ skipped: true, reason: 's4 not newly completed' });
+    let projectId, clientId, projectName;
+
+    // Support two invocation modes:
+    // 1. Manual (from checklist button): { client_id, project_id }
+    // 2. Automation (entity trigger): { data, old_data, event }
+    if (body.client_id && body.project_id) {
+      // Manual invocation from checklist
+      clientId = body.client_id;
+      projectId = body.project_id;
+      const projects = await base44.asServiceRole.entities.Project.filter({ id: projectId });
+      if (!projects[0]) return Response.json({ skipped: true, reason: 'project not found' });
+      projectName = projects[0].name;
+    } else {
+      // Automation invocation
+      const { data, old_data, event } = body;
+      if (!data || !old_data) return Response.json({ skipped: true });
+      if (data.s4_status !== 'completed' || old_data.s4_status === 'completed') {
+        return Response.json({ skipped: true, reason: 's4 not newly completed' });
+      }
+      projectId = event.entity_id;
+      clientId = data.client_id;
+      projectName = data.name;
     }
-
-    const projectId = event.entity_id;
-    const clientId = data.client_id;
 
     // Get client details
     const clients = await base44.asServiceRole.entities.Client.filter({ id: clientId });
@@ -36,7 +52,7 @@ Deno.serve(async (req) => {
         <div dir="rtl" style="font-family: 'Heebo', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #8B6F47;">ברוכים הבאים! 🎉</h1>
           <p>שלום ${client.name},</p>
-          <p>שמחים לבשר לך שהפרויקט <strong>"${data.name}"</strong> נסגר רשמית ואנחנו מתחילים לעבוד!</p>
+          <p>שמחים לבשר לך שהפרויקט <strong>"${projectName}"</strong> נסגר רשמית ואנחנו מתחילים לעבוד!</p>
           <h3>מה הלאה?</h3>
           <ul>
             <li>📋 שאלון מפורט — כדי שנבין בדיוק מה את/ה צריכ/ה</li>
@@ -54,7 +70,7 @@ Deno.serve(async (req) => {
 
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: client.email,
-        subject: `ברוכים הבאים לפרויקט "${data.name}" 🎉`,
+        subject: `ברוכים הבאים לפרויקט "${projectName}" 🎉`,
         body: emailBody,
       });
     }
@@ -65,7 +81,7 @@ Deno.serve(async (req) => {
       project_id: projectId,
       type: 'email',
       direction: 'outbound',
-      content: `הודעת ברוכים הבאים נשלחה ל-${client.name} (${client.email || 'ללא מייל'}) לאחר סגירת פרויקט "${data.name}"`,
+      content: `הודעת ברוכים הבאים נשלחה ל-${client.name} (${client.email || 'ללא מייל'}) לאחר סגירת פרויקט "${projectName}"`,
       sent_by: 'system',
       status: client.email ? 'sent' : 'failed',
       channel: 'base44_native',
