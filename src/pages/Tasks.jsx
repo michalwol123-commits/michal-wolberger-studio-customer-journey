@@ -16,6 +16,7 @@ import ViewToggle from '@/components/shared/ViewToggle';
 import TasksTable from '@/components/tasks/TasksTable';
 import { format } from 'date-fns';
 import AddTaskDialog from '@/components/tasks/AddTaskDialog';
+import AddQuoteDialog from '@/components/quotes/AddQuoteDialog';
 import { toast } from 'sonner';
 
 const columns = [
@@ -34,6 +35,7 @@ export default function Tasks() {
   const [editTask, setEditTask] = useState(null);
   const [view, setView] = useState('cards');
   const [selectedIds, setSelectedIds] = useState([]);
+  const [quoteForClient, setQuoteForClient] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: tasks = [] } = useQuery({
@@ -109,6 +111,7 @@ export default function Tasks() {
           onToggleSelect={toggleSelect}
           onToggleAll={toggleAll}
           isAdmin={isAdmin}
+          onPrepareQuote={(clientId) => setQuoteForClient(clientId)}
         />
       ) : (
       <div className="flex gap-4 overflow-x-auto pb-4">
@@ -152,6 +155,12 @@ export default function Tasks() {
                           <span className={`text-xs font-medium ${priorityColors[task.priority] || ''}`}>
                             {priorityLabels[task.priority] || task.priority}
                           </span>
+                          {task.status === 'open' && task.title?.includes('הצעת מחיר') && task.client_id && (
+                            <button
+                              onClick={() => setQuoteForClient(task.client_id)}
+                              className="text-xs text-accent font-medium hover:underline"
+                            >הכן</button>
+                          )}
                           {task.status === 'open' && (
                             <button
                               onClick={() => updateMutation.mutate({ id: task.id, data: { status: 'in_progress' } })}
@@ -180,6 +189,12 @@ export default function Tasks() {
       )}
 
       <AddTaskDialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) setEditTask(null); }} initialData={editTask} />
+
+      <AddQuoteDialog
+        open={!!quoteForClient}
+        onOpenChange={(open) => { if (!open) setQuoteForClient(null); }}
+        initialData={quoteForClient ? { client_id: quoteForClient } : null}
+      />
     </div>
   );
 }

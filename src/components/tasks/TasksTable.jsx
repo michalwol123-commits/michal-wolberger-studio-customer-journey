@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 const priorityLabels = { low: 'נמוך', normal: 'רגיל', high: 'גבוה', urgent: 'דחוף' };
 const priorityColors = { low: 'text-gray-500', normal: 'text-blue-500', high: 'text-orange-500', urgent: 'text-red-500' };
 
-export default function TasksTable({ tasks, clientMap, onStatusChange, onDelete, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
+export default function TasksTable({ tasks, clientMap, onStatusChange, onDelete, selectedIds, onToggleSelect, onToggleAll, isAdmin, onPrepareQuote }) {
   return (
     <div className="bg-card rounded-xl border overflow-hidden">
       <div className="overflow-x-auto">
@@ -51,6 +51,9 @@ export default function TasksTable({ tasks, clientMap, onStatusChange, onDelete,
                   <td className="px-4 py-3 hidden md:table-cell text-muted-foreground text-xs">{t.assigned_to || '—'}</td>
                   <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
                   <td className="px-4 py-2 text-xs flex items-center gap-1">
+                    {t.status === 'open' && t.title?.includes('הצעת מחיר') && t.client_id && onPrepareQuote && (
+                      <button onClick={() => onPrepareQuote(t.client_id)} className="text-accent hover:underline">הכן</button>
+                    )}
                     {t.status === 'open' && (
                       <button onClick={() => onStatusChange(t.id, 'in_progress')} className="text-primary hover:underline">התחל</button>
                     )}
