@@ -5,7 +5,11 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { format } from 'date-fns';
 
 export default function PortalStagePayments({ payments, stageNum }) {
-  const stagePayments = payments.filter(p => p.milestone_stage === stageNum);
+  // Stage 3 shows all payments (quote payment + advance + mid + final)
+  // Other stages show only payments with matching milestone_stage
+  const stagePayments = stageNum === 3
+    ? payments
+    : payments.filter(p => p.milestone_stage === stageNum);
 
   if (stagePayments.length === 0) return null;
 

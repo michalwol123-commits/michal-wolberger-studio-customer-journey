@@ -9,21 +9,39 @@ import PortalStageMeetings from './PortalStageMeetings';
 import PortalStagePayments from './PortalStagePayments';
 import PortalQuestionnaireView from './PortalQuestionnaireView';
 
+// Define what content each stage shows in the portal
+const STAGE_CONTENT = {
+  1: { questionnaire: 'short' },                    // שלב 1: רק שאלון קצר
+  2: { meetings: true },                             // שלב 2: פגישת היכרות + סיכום
+  3: { meetings: true, payments: true, docs: true },  // שלב 3: פגישה + תשלומים + מסמכים
+  4: { docs: true },                                  // שלב 4: חוזה (מסמכים)
+  5: { questionnaire: 'detailed', docs: true },       // שלב 5: שאלון מפורט + מסמכים
+};
+// שלבים 6-13: פגישות + מסמכים + תשלומים (ברירת מחדל)
+
+function getStageContent(stageNum) {
+  return STAGE_CONTENT[stageNum] || { meetings: true, docs: true, payments: true };
+}
+
 export default function PortalStageView({ project, stageNum, meetings, payments, questionnaires }) {
   const stage = getStageByNum(stageNum);
   const status = project[stage?.key] || 'pending';
+  const content = getStageContent(stageNum);
 
   const { data: documents = [] } = useQuery({
     queryKey: ['portal-stage-docs', project.id, stageNum],
     queryFn: () => base44.entities.Document.filter({ project_id: project.id }),
+    enabled: !!content.docs,
   });
 
-  const stageDocs = documents.filter(d => d.visible_to_client && d.is_current !== false && d.stage === stageNum);
+  const stageDocs = content.docs 
+    ? documents.filter(d => d.visible_to_client && d.is_current !== false && d.stage === stageNum)
+    : [];
 
   const statusLabel = status === 'completed' ? 'הושלם ✅' : status === 'in_progress' ? 'בביצוע 🔄' : 'ממתין ⏳';
   const StatusIcon = status === 'completed' ? Check : status === 'in_progress' ? Loader2 : Circle;
 
-  // Find relevant questionnaire for this stage
+  // Find relevant questionnaire
   const shortQ = questionnaires?.find(q => q.type === 'short');
   const detailedQ = questionnaires?.find(q => q.type === 'detailed');
 
@@ -57,82 +75,72 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
         </div>
       </div>
 
-      {/* Stage 1: Short questionnaire */}
-      {stageNum === 1 && shortQ && (
+      {/* Questionnaire (stage 1 or 5) */}
+      {content.questionnaire === 'short' && (
         <PortalQuestionnaireView questionnaire={shortQ} />
       )}
-
-      {/* Stage 2: Meeting (intro/qualifying) */}
-      {stageNum === 2 && (
-        <PortalStageMeetings meetings={meetings} stageNum={2} />
-      )}
-
-      {/* Stage 3: Quote meeting + quote document + payment */}
-      {stageNum === 3 && (
-        <>
-          <PortalStageMeetings meetings={meetings} stageNum={3} />
-        </>
-      )}
-
-      {/* Stage 5: Detailed questionnaire (future) */}
-      {stageNum === 5 && detailedQ && (
+      {content.questionnaire === 'detailed' && (
         <PortalQuestionnaireView questionnaire={detailedQ} />
       )}
 
-      {/* Meetings for stages 4+ (if explicitly assigned via stage_ref) */}
-      {stageNum >= 4 && stageNum !== 5 && (
+      {/* Meetings */}
+      {content.meetings && (
         <PortalStageMeetings meetings={meetings} stageNum={stageNum} />
       )}
 
-      {/* Documents for this stage */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-heading flex items-center gap-2">
-            <FileText className="w-5 h-5 text-primary" />
-            מסמכים בשלב זה
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {stageDocs.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">
-                {status === 'pending' ? 'השלב עוד לא התחיל — המסמכים יופיעו כאן כשנגיע אליו' :
-                 'אין מסמכים זמינים בשלב זה כרגע'}
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-2">
-              {stageDocs.map(doc => (
-                <a
-                  key={doc.id}
-                  href={doc.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 rounded-xl border border-border hover:bg-muted/50 hover:border-primary/30 transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <FileText className="w-5 h-5 text-primary" />
+      {/* Documents */}
+      {content.docs && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-heading flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              מסמכים בשלב זה
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stageDocs.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  {status === 'pending' ? 'השלב עוד לא התחיל — המסמכים יופיעו כאן כשנגיע אליו' :
+                   'אין מסמכים זמינים בשלב זה כרגע'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                {stageDocs.map(doc => (
+                  <a
+                    key={doc.id}
+                    href={doc.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 rounded-xl border border-border hover:bg-muted/50 hover:border-primary/30 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <FileText className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{doc.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {doc.type && <span className="capitalize">{doc.type}</span>}
+                          {doc.version_number > 1 && ` • גרסה ${doc.version_number}`}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{doc.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {doc.type && <span className="capitalize">{doc.type}</span>}
-                        {doc.version_number > 1 && ` • גרסה ${doc.version_number}`}
-                      </p>
-                    </div>
-                  </div>
-                  <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                </a>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </a>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Payments for this stage */}
-      <PortalStagePayments payments={payments} stageNum={stageNum} />
+      {/* Payments */}
+      {content.payments && (
+        <PortalStagePayments payments={payments} stageNum={stageNum} />
+      )}
     </motion.div>
   );
 }
