@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Send, CheckCircle2 } from 'lucide-react';
+import { Loader2, Send, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const SPACE_OPTIONS = [
@@ -232,6 +233,12 @@ export default function ShortQuestionnaire() {
                 שליחה
               </Button>
               <p className="text-xs text-muted-foreground">מיכל וולברגר — עיצוב פנים</p>
+              <Link to="/">
+                <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+                  <ArrowRight className="w-4 h-4" />
+                  חזרה למערכת
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </motion.div>
