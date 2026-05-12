@@ -7,6 +7,7 @@ import { Upload, FileText, Download, Eye } from 'lucide-react';
 import { getStageByNum } from '@/lib/stageConfig';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import StageGallery from './StageGallery';
+import StageAdvanceButton from './StageAdvanceButton';
 
 const VISUAL_STAGES = [8]; // stages that get gallery view
 
@@ -51,6 +52,12 @@ export default function StagePanel({ project, stageNum }) {
               {statusLabels[stageStatus]}
             </span>
           </div>
+          {/* Advance button — only shown on current stage */}
+          {stageNum === project.stage_current && stageNum < 13 && (
+            <div className="mt-4 flex justify-end">
+              <StageAdvanceButton project={project} />
+            </div>
+          )}
         </CardContent>
       </Card>
 

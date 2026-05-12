@@ -21,6 +21,7 @@ import GanttChart from '@/components/projects/GanttChart';
 import BudgetOverview from '@/components/projects/BudgetOverview';
 import ProjectPurchaseOrders from '@/components/purchases/ProjectPurchaseOrders';
 import QuestionnaireResponsesView from '@/components/questionnaire/QuestionnaireResponsesView';
+import DetailedQuestionnairePreview from '@/components/questionnaire/DetailedQuestionnairePreview';
 
 export default function ProjectDetail() {
   const pathParts = window.location.pathname.split('/');
@@ -71,8 +72,16 @@ export default function ProjectDetail() {
   const clientId = project?.client_id;
   const { data: projectQuestionnaires = [] } = useQuery({
     queryKey: ['questionnaires', clientId],
-    queryFn: () => base44.entities.Questionnaire.filter({ client_id: clientId }),
-    enabled: !!clientId,
+    queryFn: async () => {
+      const byClientId = await base44.entities.Questionnaire.filter({ client_id: clientId });
+      // Also fetch by phone/email for generic questionnaires
+      const c = client;
+      const byPhone = c?.phone ? await base44.entities.Questionnaire.filter({ phone: c.phone }) : [];
+      const byEmail = c?.email ? await base44.entities.Questionnaire.filter({ email: c.email }) : [];
+      const all = [...byClientId, ...byPhone, ...byEmail];
+      return Array.from(new Map(all.map(q => [q.id, q])).values());
+    },
+    enabled: !!clientId && !!client,
   });
 
   if (!project) {
@@ -228,7 +237,10 @@ export default function ProjectDetail() {
         </TabsContent>
 
         <TabsContent value="questionnaires">
-          <QuestionnaireResponsesView questionnaires={projectQuestionnaires} />
+          <div className="space-y-4">
+            <DetailedQuestionnairePreview questionnaires={projectQuestionnaires} projectId={projectId} clientId={clientId} />
+            <QuestionnaireResponsesView questionnaires={projectQuestionnaires} />
+          </div>
         </TabsContent>
 
         <TabsContent value="communications">

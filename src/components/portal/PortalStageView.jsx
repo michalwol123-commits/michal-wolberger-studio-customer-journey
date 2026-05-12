@@ -14,7 +14,7 @@ import DetailedQuestionnaireResults from './DetailedQuestionnaireResults';
 // Define what content each stage shows in the portal
 const STAGE_CONTENT = {
   1: { questionnaire: 'short' },                    // שלב 1: רק שאלון קצר
-  2: { meetings: true },                             // שלב 2: פגישת היכרות + סיכום
+  2: { meetings: true, docs: true },                  // שלב 2: פגישת היכרות + סיכום + מסמכים
   3: { meetings: true, payments: true, docs: true },  // שלב 3: פגישה + תשלומים + מסמכים
   4: { docs: true },                                  // שלב 4: חוזה (מסמכים)
   5: { questionnaire: 'detailed', docs: true },       // שלב 5: שאלון מפורט + מסמכים
