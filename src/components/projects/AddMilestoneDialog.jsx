@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,13 +8,27 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import STAGES from '@/lib/stageConfig';
 
+const EMPTY_FORM = { title: '', stage: '', start_date: '', end_date: '', status: 'pending', assigned_to: '', notes: '' };
+
 export default function AddMilestoneDialog({ open, onOpenChange, projectId, initialData }) {
   const queryClient = useQueryClient();
   const isEdit = !!initialData;
 
-  const [form, setForm] = useState(initialData || {
-    title: '', stage: '', start_date: '', end_date: '', status: 'pending', assigned_to: '', notes: '',
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
+
+  useEffect(() => {
+    if (open) {
+      setForm(initialData ? {
+        title: initialData.title || '',
+        stage: initialData.stage || '',
+        start_date: initialData.start_date || '',
+        end_date: initialData.end_date || '',
+        status: initialData.status || 'pending',
+        assigned_to: initialData.assigned_to || '',
+        notes: initialData.notes || '',
+      } : EMPTY_FORM);
+    }
+  }, [open, initialData]);
 
   const mutation = useMutation({
     mutationFn: (data) => isEdit

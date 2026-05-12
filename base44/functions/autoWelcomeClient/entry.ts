@@ -42,10 +42,62 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.Client.update(clientId, statusUpdate);
     }
 
+    // Create default milestones for the Gantt chart
+    const existingMilestones = await base44.asServiceRole.entities.ProjectMilestone.filter({ project_id: projectId });
+    if (existingMilestones.length === 0) {
+      const startDate = new Date();
+      const defaultDurations = [3, 5, 7, 7, 7, 14, 14, 14, 10, 10, 30, 14, 7];
+      const stageLabels = [
+        'קשר ראשוני', 'שיחת היכרות', 'הצעת מחיר', 'סגירת פרויקט',
+        'שאלון מפורט', 'תכנית + גאנט/תקציב', 'תכניות עבודה',
+        'קונספט עיצובי + רנדרים', 'ימי קניות', 'תמחור קבלנים + ספקים',
+        'ביצוע בשטח + פיקוח', 'התקנה + ספקים', 'סיום ומסירה',
+      ];
+      const stageColors = [
+        '#9CA3AF','#9CA3AF','#9CA3AF','#9CA3AF',
+        '#3B82F6','#8B5CF6','#8B5CF6','#EC4899',
+        '#F59E0B','#F59E0B','#EF4444','#EF4444','#10B981',
+      ];
+
+      let cursor = new Date(startDate);
+      // Stages 1-4 already passed — set them before project start
+      const fmt = (d) => d.toISOString().split('T')[0];
+      const milestonesToCreate = [];
+
+      for (let i = 0; i < 13; i++) {
+        const stageNum = i + 1;
+        const duration = defaultDurations[i];
+        const msStart = new Date(cursor);
+        const msEnd = new Date(cursor);
+        msEnd.setDate(msEnd.getDate() + duration - 1);
+
+        let status = 'pending';
+        if (stageNum <= 4) status = 'completed';
+        else if (stageNum === 5) status = 'in_progress';
+
+        milestonesToCreate.push({
+          project_id: projectId,
+          title: stageLabels[i],
+          stage: stageNum,
+          start_date: fmt(msStart),
+          end_date: fmt(msEnd),
+          status,
+          color: stageColors[i],
+        });
+
+        cursor = new Date(msEnd);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+
+      await base44.asServiceRole.entities.ProjectMilestone.bulkCreate(milestonesToCreate);
+    }
+
     // Send welcome email
     if (client.email) {
+      const appId = Deno.env.get('BASE44_APP_ID') || '';
+      const baseUrl = appId ? `https://${appId}.base44app.com` : '';
       const portalUrl = client.portal_token
-        ? `${Deno.env.get('BASE44_APP_URL') || ''}/portal?token=${client.portal_token}`
+        ? `${baseUrl}/portal?token=${client.portal_token}`
         : '';
 
       const emailBody = `
