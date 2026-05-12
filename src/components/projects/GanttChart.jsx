@@ -2,10 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Wand2 } from 'lucide-react';
 import { format, differenceInDays, parseISO, min as minDate, max as maxDate } from 'date-fns';
 import EmptyState from '@/components/shared/EmptyState';
 import AddMilestoneDialog from './AddMilestoneDialog';
+import { toast } from 'sonner';
 
 const STATUS_COLORS = {
   pending: 'bg-gray-300',
@@ -21,10 +22,24 @@ const STATUS_LABELS = {
   delayed: 'מעוכב',
 };
 
-export default function GanttChart({ projectId }) {
+const DEFAULT_DURATIONS = [3, 5, 7, 7, 7, 14, 14, 14, 10, 10, 30, 14, 7];
+const STAGE_LABELS = [
+  'קשר ראשוני', 'שיחת היכרות', 'הצעת מחיר', 'סגירת פרויקט',
+  'שאלון מפורט', 'תכנית + גאנט/תקציב', 'תכניות עבודה',
+  'קונספט עיצובי + רנדרים', 'ימי קניות', 'תמחור קבלנים + ספקים',
+  'ביצוע בשטח + פיקוח', 'התקנה + ספקים', 'סיום ומסירה',
+];
+const STAGE_COLORS = [
+  '#9CA3AF','#9CA3AF','#9CA3AF','#9CA3AF',
+  '#3B82F6','#8B5CF6','#8B5CF6','#EC4899',
+  '#F59E0B','#F59E0B','#EF4444','#EF4444','#10B981',
+];
+
+export default function GanttChart({ projectId, project }) {
   const queryClient = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
   const [editMilestone, setEditMilestone] = useState(null);
+  const [generating, setGenerating] = useState(false);
 
   const { data: milestones = [] } = useQuery({
     queryKey: ['milestones', projectId],
@@ -35,6 +50,45 @@ export default function GanttChart({ projectId }) {
     mutationFn: (id) => base44.entities.ProjectMilestone.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['milestones', projectId] }),
   });
+
+  const handleGenerateDefaults = async () => {
+    setGenerating(true);
+    const stageCurrent = project?.stage_current || 1;
+    const startDate = project?.start_date ? new Date(project.start_date) : new Date();
+    const fmt = (d) => d.toISOString().split('T')[0];
+    let cursor = new Date(startDate);
+
+    const batch = [];
+    for (let i = 0; i < 13; i++) {
+      const stageNum = i + 1;
+      const duration = DEFAULT_DURATIONS[i];
+      const msStart = new Date(cursor);
+      const msEnd = new Date(cursor);
+      msEnd.setDate(msEnd.getDate() + duration - 1);
+
+      let status = 'pending';
+      if (stageNum < stageCurrent) status = 'completed';
+      else if (stageNum === stageCurrent) status = 'in_progress';
+
+      batch.push({
+        project_id: projectId,
+        title: STAGE_LABELS[i],
+        stage: stageNum,
+        start_date: fmt(msStart),
+        end_date: fmt(msEnd),
+        status,
+        color: STAGE_COLORS[i],
+      });
+
+      cursor = new Date(msEnd);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    await base44.entities.ProjectMilestone.bulkCreate(batch);
+    queryClient.invalidateQueries({ queryKey: ['milestones', projectId] });
+    toast.success('נוצרו 13 אבני דרך בהצלחה');
+    setGenerating(false);
+  };
 
   // Calculate chart boundaries
   const { chartStart, chartEnd, totalDays } = useMemo(() => {
@@ -87,7 +141,17 @@ export default function GanttChart({ projectId }) {
       </div>
 
       {milestones.length === 0 ? (
-        <EmptyState title="אין אבני דרך" description="הוסיפי אבני דרך לפרויקט" />
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <EmptyState title="אין אבני דרך" description="צרי אבני דרך ברירת מחדל או הוסיפי ידנית" />
+          <Button
+            onClick={handleGenerateDefaults}
+            disabled={generating}
+            className="gap-2 mt-4"
+          >
+            {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+            צור 13 אבני דרך ברירת מחדל
+          </Button>
+        </div>
       ) : (
         <div className="bg-card border rounded-xl overflow-hidden">
           {/* Month headers */}

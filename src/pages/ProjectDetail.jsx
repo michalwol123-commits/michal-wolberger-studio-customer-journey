@@ -234,7 +234,7 @@ export default function ProjectDetail() {
         </TabsContent>
 
         <TabsContent value="gantt">
-          <GanttChart projectId={projectId} />
+          <GanttChart projectId={projectId} project={project} />
         </TabsContent>
 
         <TabsContent value="budget">
