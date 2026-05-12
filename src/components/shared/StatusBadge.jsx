@@ -8,7 +8,7 @@ const statusConfig = {
 
   proposal_presented: { label: 'הוגשה הצעה בפגישה', variant: 'outline', className: 'border-violet-300 text-violet-700 bg-violet-50' },
   proposal_sent: { label: 'הצעה נשלחה', variant: 'outline', className: 'border-amber-300 text-amber-700 bg-amber-50' },
-  proposal_approved: { label: 'הצעה אושרה', variant: 'outline', className: 'border-green-300 text-green-700 bg-green-50' },
+
   active_client: { label: 'לקוח פעיל', variant: 'outline', className: 'border-emerald-300 text-emerald-700 bg-emerald-50' },
   completed_client: { label: 'הושלם', variant: 'outline', className: 'border-slate-300 text-slate-600 bg-slate-50' },
   archived: { label: 'ארכיון', variant: 'outline', className: 'border-gray-300 text-gray-500 bg-gray-50' },

@@ -7,10 +7,8 @@ import { toast } from 'sonner';
 const CLIENT_STATUSES = [
   { value: 'lead', label: 'ליד' },
   { value: 'qualified', label: 'מתעניין' },
-
   { value: 'proposal_presented', label: 'הוגשה בפגישה' },
   { value: 'proposal_sent', label: 'הצעה נשלחה' },
-  { value: 'proposal_approved', label: 'הצעה אושרה' },
   { value: 'active_client', label: 'לקוח פעיל' },
   { value: 'completed_client', label: 'הושלם' },
   { value: 'archived', label: 'ארכיון' },
@@ -19,14 +17,13 @@ const CLIENT_STATUSES = [
 const statusLabels = Object.fromEntries(CLIENT_STATUSES.map(s => [s.value, s.label]));
 
 const ALLOWED_TRANSITIONS = {
-  lead: ['qualified', 'archived'],
-  qualified: ['proposal_presented', 'lead', 'archived'],
-  proposal_presented: ['proposal_sent', 'qualified', 'archived'],
-  proposal_sent: ['proposal_approved', 'proposal_presented', 'archived'],
-  proposal_approved: ['active_client', 'archived'],
-  active_client: ['completed_client', 'archived'],
-  completed_client: ['active_client', 'archived'],
-  archived: ['lead'],
+  lead: ['qualified', 'proposal_presented', 'proposal_sent', 'active_client', 'completed_client', 'archived'],
+  qualified: ['lead', 'proposal_presented', 'proposal_sent', 'active_client', 'completed_client', 'archived'],
+  proposal_presented: ['lead', 'qualified', 'proposal_sent', 'active_client', 'completed_client', 'archived'],
+  proposal_sent: ['lead', 'qualified', 'proposal_presented', 'active_client', 'completed_client', 'archived'],
+  active_client: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'completed_client', 'archived'],
+  completed_client: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'active_client', 'archived'],
+  archived: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'active_client', 'completed_client'],
 };
 
 export default function ClientStatusChanger({ client }) {

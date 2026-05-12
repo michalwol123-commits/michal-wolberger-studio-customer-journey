@@ -5,14 +5,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const TRANSITIONS = {
   Client: {
-    lead: ['qualified', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
-    qualified: ['lead', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'completed_client', 'archived'],
-    proposal_presented: ['lead', 'qualified', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
-    proposal_sent: ['lead', 'qualified', 'proposal_presented', 'proposal_approved', 'active_client', 'completed_client', 'archived'],
-    proposal_approved: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'active_client', 'completed_client', 'archived'],
-    active_client: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'completed_client', 'archived'],
-    completed_client: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'archived'],
-    archived: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'proposal_approved', 'active_client', 'completed_client'],
+    lead: ['qualified', 'proposal_presented', 'proposal_sent', 'active_client', 'completed_client', 'archived'],
+    qualified: ['lead', 'proposal_presented', 'proposal_sent', 'active_client', 'completed_client', 'archived'],
+    proposal_presented: ['lead', 'qualified', 'proposal_sent', 'active_client', 'completed_client', 'archived'],
+    proposal_sent: ['lead', 'qualified', 'proposal_presented', 'active_client', 'completed_client', 'archived'],
+    active_client: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'completed_client', 'archived'],
+    completed_client: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'active_client', 'archived'],
+    archived: ['lead', 'qualified', 'proposal_presented', 'proposal_sent', 'active_client', 'completed_client'],
   },
   Project: {
     active: ['on_hold', 'completed', 'cancelled'],
@@ -21,12 +20,12 @@ const TRANSITIONS = {
     cancelled: ['active'],
   },
   Quote: {
-    draft: ['sent'],
-    sent: ['viewed', 'expired'],
-    viewed: ['approved', 'rejected', 'expired'],
-    approved: [],
-    rejected: ['draft'],
-    expired: ['draft'],
+    draft: ['sent', 'viewed', 'approved', 'rejected', 'expired'],
+    sent: ['draft', 'viewed', 'approved', 'rejected', 'expired'],
+    viewed: ['draft', 'sent', 'approved', 'rejected', 'expired'],
+    approved: ['draft', 'sent', 'viewed', 'rejected', 'expired'],
+    rejected: ['draft', 'sent', 'viewed', 'approved', 'expired'],
+    expired: ['draft', 'sent', 'viewed', 'approved', 'rejected'],
   },
   Task: {
     open: ['in_progress', 'done', 'cancelled'],

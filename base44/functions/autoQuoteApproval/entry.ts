@@ -53,12 +53,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update client status step by step to respect state machine
-    // First: move to proposal_approved if currently in proposal_sent
-    if (client.status === 'proposal_sent') {
-      await base44.asServiceRole.entities.Client.update(clientId, { status: 'proposal_approved' });
-    }
-    // Then: move to active_client + generate portal token if missing
+    // Move client directly to active_client + generate portal token if missing
     const clientUpdates = { status: 'active_client' };
     if (!client.portal_token) {
       clientUpdates.portal_token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 8);

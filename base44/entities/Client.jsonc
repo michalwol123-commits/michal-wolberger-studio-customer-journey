@@ -21,7 +21,6 @@
         "qualified",
         "proposal_presented",
         "proposal_sent",
-        "proposal_approved",
         "active_client",
         "completed_client",
         "archived"

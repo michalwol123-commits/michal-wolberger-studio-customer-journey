@@ -34,6 +34,7 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [showMeetingDialog, setShowMeetingDialog] = useState(false);
+  const [editMeetingId, setEditMeetingId] = useState(null);
   const [meetingId, setMeetingId] = useState(initialData?.meeting_id || null);
 
   const { data: clients = [] } = useQuery({
@@ -231,16 +232,10 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
             </div>
           </div>
 
-          {/* Meeting date */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>תאריך פגישה</Label>
-              <Input type="date" value={form.meeting_date} onChange={e => setForm(p => ({ ...p, meeting_date: e.target.value }))} />
-            </div>
-            <div>
-              <Label>גרסה</Label>
-              <Input type="number" value={form.version} onChange={e => setForm(p => ({ ...p, version: e.target.value }))} />
-            </div>
+          {/* Version */}
+          <div>
+            <Label>גרסה</Label>
+            <Input type="number" value={form.version} onChange={e => setForm(p => ({ ...p, version: e.target.value }))} className="w-32" />
           </div>
 
           {/* Conditional fields based on quote_type */}
@@ -327,9 +322,11 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
             <Label className="mb-2 block">פגישת הצגת הצעה</Label>
             {meetingId ? (
               <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                <Calendar className="w-4 h-4" />
-                <span>פגישה נקבעה</span>
-                <Button type="button" variant="ghost" size="sm" className="mr-auto text-xs" onClick={() => { setMeetingId(null); }}>הסר</Button>
+                <button type="button" className="flex items-center gap-2 flex-1 hover:underline" onClick={() => { setEditMeetingId(meetingId); setShowMeetingDialog(true); }}>
+                  <Calendar className="w-4 h-4" />
+                  <span>פגישה נקבעה</span>
+                </button>
+                <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => { setMeetingId(null); }}>הסר</Button>
               </div>
             ) : (
               <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setShowMeetingDialog(true)} disabled={!form.client_id}>
@@ -356,18 +353,16 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
 
       <AddMeetingDialog
         open={showMeetingDialog}
-        onOpenChange={setShowMeetingDialog}
-        initialData={{
+        onOpenChange={(open) => { setShowMeetingDialog(open); if (!open) setEditMeetingId(null); }}
+        initialData={editMeetingId ? meetings.find(m => m.id === editMeetingId) : {
           client_id: form.client_id,
           type: 'quote_presentation',
         }}
         onCreated={(meeting) => {
           if (meeting?.id) {
             setMeetingId(meeting.id);
-            if (meeting.scheduled_at) {
-              setForm(p => ({ ...p, meeting_date: meeting.scheduled_at.split('T')[0] }));
-            }
           }
+          setEditMeetingId(null);
         }}
       />
     </Dialog>
