@@ -104,6 +104,10 @@ export default function Meetings() {
         toast.success(`${data.clientName} הועבר לארכיון`);
       }
     },
+    onError: (error) => {
+      console.error('introActionMutation error:', error);
+      toast.error('שגיאה — נסי שוב');
+    },
   });
 
   const handleComplete = (meeting) => {
