@@ -126,59 +126,8 @@ export default function ShortQuestionnaire() {
     </div>
   );
 
-  // Admin view — show form link
-  if (isAdmin && !token) {
-    return (
-      <div className="min-h-screen bg-background py-8 px-4" dir="rtl">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <Card>
-            <CardContent className="p-8 space-y-6">
-              <div className="text-center space-y-2">
-                <ClipboardList className="w-12 h-12 text-primary mx-auto" />
-                <h1 className="font-heading text-2xl font-bold">שאלון טרום שיחה</h1>
-                <p className="text-muted-foreground">
-                  שאלון קצר שנשלח ללקוחות חדשים לפני שיחת ההיכרות
-                </p>
-              </div>
-
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <LinkIcon className="w-4 h-4 text-primary" />
-                  <span>קישור לשאלון (מנהל בלבד):</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  הקישור נשלח אוטומטית ללקוח עם יצירת הליד. ניתן גם להעתיק ולשלוח ידנית מכרטיס הלקוח.
-                </p>
-                <div className="flex items-center gap-2">
-                  <code className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-lg flex-1 truncate" dir="ltr">
-                    {formLink}?token=[token]
-                  </code>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(formLink);
-                      toast.success('הקישור הועתק!');
-                    }}
-                    className="gap-1 shrink-0"
-                  >
-                    <Copy className="w-3 h-3" />
-                    העתק
-                  </Button>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                  <ArrowRight className="w-4 h-4" />
-                  חזרה ללוח הבקרה
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  // Admin view — show preview of form + link at bottom
+  // (fall through to render the form below, with admin bar)
 
   if (error) return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
@@ -211,13 +160,56 @@ export default function ShortQuestionnaire() {
     </div>
   );
 
+  // Admin preview mode (no token) — disable submit
+  const isPreviewMode = isAdmin && !token;
+
   return (
     <div className="min-h-screen bg-background py-8 px-4" dir="rtl">
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Admin link bar */}
+        {isPreviewMode && (
+          <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <LinkIcon className="w-4 h-4 text-primary" />
+              <span>קישור לשאלון (מנהל בלבד):</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              הקישור נשלח אוטומטית ללקוח עם יצירת הליד. ניתן גם להעתיק ולשלוח ידנית מכרטיס הלקוח.
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-lg flex-1 truncate" dir="ltr">
+                {formLink}
+              </code>
+              <Button
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(formLink);
+                  toast.success('הקישור הועתק!');
+                }}
+                className="gap-1 shrink-0"
+              >
+                <Copy className="w-3 h-3" />
+                העתק
+              </Button>
+            </div>
+            <div className="text-center pt-2">
+              <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+                <ArrowRight className="w-4 h-4" />
+                חזרה ללוח הבקרה
+              </Link>
+            </div>
+          </div>
+        )}
+
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
           <Card>
             <CardContent className="p-8 text-center space-y-3">
               <h1 className="font-heading text-2xl font-bold">שאלון טרום שיחת היכרות</h1>
+              {isPreviewMode && (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium mb-2">
+                  👁 תצוגה מקדימה — כך הלקוחות יראו את השאלון
+                </div>
+              )}
               <p className="text-muted-foreground leading-relaxed">
                 {clientName && <>שלום {clientName}! 👋<br/></>}
                 אשמח שתקחו מספר דקות לענות על השאלון הבא, כדי שנוכל לדייק ולמקד את שיחת הטלפון שלנו.
@@ -329,9 +321,9 @@ export default function ShortQuestionnaire() {
           <Card>
             <CardContent className="p-6 text-center space-y-4">
               <p className="text-sm text-muted-foreground">תודה על הזמן! 💛 נשמח לדבר בקרוב.</p>
-              <Button size="lg" className="gap-2 w-full max-w-xs" onClick={handleSubmit} disabled={submitting}>
+              <Button size="lg" className="gap-2 w-full max-w-xs" onClick={handleSubmit} disabled={submitting || isPreviewMode}>
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                שליחה
+                {isPreviewMode ? 'תצוגה מקדימה — לא ניתן לשלוח' : 'שליחה'}
               </Button>
               <p className="text-xs text-muted-foreground">מיכל וולברגר — עיצוב פנים</p>
             </CardContent>
