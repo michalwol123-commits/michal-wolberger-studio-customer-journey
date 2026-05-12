@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList } from 'lucide-react';
+import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList, CalendarDays } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
@@ -22,6 +22,7 @@ import BudgetOverview from '@/components/projects/BudgetOverview';
 import ProjectPurchaseOrders from '@/components/purchases/ProjectPurchaseOrders';
 import QuestionnaireResponsesView from '@/components/questionnaire/QuestionnaireResponsesView';
 import DetailedQuestionnairePreview from '@/components/questionnaire/DetailedQuestionnairePreview';
+import MeetingsList from '@/components/meetings/MeetingsList';
 
 export default function ProjectDetail() {
   const pathParts = window.location.pathname.split('/');
@@ -29,6 +30,7 @@ export default function ProjectDetail() {
   const { isAdmin } = useCurrentUser();
   const [showUploadDoc, setShowUploadDoc] = React.useState(false);
   const [selectedStage, setSelectedStage] = React.useState(null);
+  const [activeTab, setActiveTab] = React.useState('overview');
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
@@ -68,6 +70,12 @@ export default function ProjectDetail() {
   const projectComms = communications
     .filter(c => c.project_id === projectId)
     .filter(c => isAdmin || c.type !== 'system_error');
+
+  const { data: meetings = [] } = useQuery({
+    queryKey: ['meetings'],
+    queryFn: () => base44.entities.Meeting.list('-created_date', 500),
+  });
+  const projectMeetings = meetings.filter(m => m.project_id === projectId);
 
   const clientId = project?.client_id;
   const { data: projectQuestionnaires = [] } = useQuery({
@@ -117,15 +125,16 @@ export default function ProjectDetail() {
       {/* Stage detail panel */}
       {selectedStage && (
         <div className="mb-6">
-          <StagePanel project={project} stageNum={selectedStage} />
+          <StagePanel project={project} stageNum={selectedStage} onNavigateTab={(tab) => { setSelectedStage(null); setActiveTab(tab); }} />
         </div>
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" dir="rtl">
+      <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
         <TabsList className="mb-4 flex-wrap">
           <TabsTrigger value="overview">סקירה</TabsTrigger>
           {isAdmin && <TabsTrigger value="payments">תשלומים</TabsTrigger>}
+          <TabsTrigger value="meetings">פגישות</TabsTrigger>
           <TabsTrigger value="documents">מסמכים</TabsTrigger>
           <TabsTrigger value="tasks">משימות</TabsTrigger>
           <TabsTrigger value="gantt">גאנט</TabsTrigger>
@@ -176,6 +185,10 @@ export default function ProjectDetail() {
             )}
           </TabsContent>
         )}
+
+        <TabsContent value="meetings">
+          <MeetingsList meetings={projectMeetings} clientId={project.client_id} projectId={projectId} />
+        </TabsContent>
 
         <TabsContent value="documents">
           <div className="flex justify-end mb-3">

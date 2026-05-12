@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban, Clock, Trash2, ClipboardList } from 'lucide-react';
+import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban, Clock, Trash2, ClipboardList, CalendarDays } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -17,6 +17,7 @@ import ClientStatusChanger from '@/components/clients/ClientStatusChanger';
 import ClientTimeline from '@/components/clients/ClientTimeline';
 import DeleteButton from '@/components/shared/DeleteButton';
 import QuestionnaireResponsesView from '@/components/questionnaire/QuestionnaireResponsesView';
+import MeetingsList from '@/components/meetings/MeetingsList';
 
 export default function ClientProfile() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -99,6 +100,11 @@ export default function ClientProfile() {
     queryFn: () => base44.entities.Communication.filter({ client_id: clientId }, '-created_date', 200),
   });
   const clientComms = allComms.filter(c => isAdmin || c.type !== 'system_error');
+
+  const { data: clientMeetings = [] } = useQuery({
+    queryKey: ['meetings', clientId],
+    queryFn: () => base44.entities.Meeting.filter({ client_id: clientId }, '-created_date', 200),
+  });
 
   const { data: clientQuestionnaires = [] } = useQuery({
     queryKey: ['questionnaires', clientId],
@@ -216,6 +222,7 @@ export default function ClientProfile() {
         <TabsList className="mb-4">
           <TabsTrigger value="projects" className="gap-1"><Briefcase className="w-4 h-4" />פרויקטים</TabsTrigger>
           {isAdmin && <TabsTrigger value="payments" className="gap-1"><CreditCard className="w-4 h-4" />תשלומים</TabsTrigger>}
+          <TabsTrigger value="meetings" className="gap-1"><CalendarDays className="w-4 h-4" />פגישות</TabsTrigger>
           <TabsTrigger value="documents" className="gap-1"><FileText className="w-4 h-4" />מסמכים</TabsTrigger>
           <TabsTrigger value="communications" className="gap-1"><MessageSquare className="w-4 h-4" />תקשורת</TabsTrigger>
           <TabsTrigger value="questionnaires" className="gap-1"><ClipboardList className="w-4 h-4" />שאלונים</TabsTrigger>
@@ -276,6 +283,10 @@ export default function ClientProfile() {
             )}
           </TabsContent>
         )}
+
+        <TabsContent value="meetings">
+          <MeetingsList meetings={clientMeetings} clientId={clientId} />
+        </TabsContent>
 
         <TabsContent value="documents">
           <div className="flex justify-end mb-3">

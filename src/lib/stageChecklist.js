@@ -1,0 +1,142 @@
+/**
+ * Stage Checklist Configuration (Stages 4-13)
+ * Each item has: id, label, type (manual|button|auto), required, action
+ * 
+ * action types:
+ *  - upload_doc: opens UploadDocumentDialog with docType + stage
+ *  - navigate_tab: switches to a tab in ProjectDetail
+ *  - add_meeting: opens AddMeetingDialog with meetingType
+ *  - run_function: invokes a backend function
+ *  - auto_check_questionnaire: auto-checked when detailed questionnaire is submitted
+ *  - auto_check_payments: auto-checked when all payments are paid
+ */
+
+const STAGE_CHECKLISTS = {
+  4: {
+    title: 'סגירת פרויקט',
+    items: [
+      { id: 's4_1', label: 'אישור לקוח — בחירת חבילה', type: 'manual', required: true },
+      { id: 's4_2', label: 'העלאת חוזה חתום', type: 'button', required: true, action: { type: 'upload_doc', docType: 'contract', stage: 4 } },
+      { id: 's4_3', label: 'תשלום ראשון — מקדמה', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'payments' } },
+      { id: 's4_4', label: 'הגדרת פריסת תשלומים עתידית', type: 'manual', required: false },
+      { id: 's4_5', label: 'הזנת Timeline ראשוני', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'gantt' } },
+      { id: 's4_6', label: 'שליחת "ברוכים הבאים" + פרטי גישה לפורטל', type: 'button', required: false, action: { type: 'run_function', functionName: 'autoWelcomeClient' } },
+      { id: 's4_7', label: 'תיאום פגישה ראשונה', type: 'button', required: false, action: { type: 'add_meeting', meetingType: 'stage_review' } },
+    ]
+  },
+  5: {
+    title: 'שאלון מפורט',
+    items: [
+      { id: 's5_1', label: 'שליחת שאלון מפורט ללקוח', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'questionnaires' } },
+      { id: 's5_2', label: 'מילוי השאלון ע"י הלקוח', type: 'auto', required: true, action: { type: 'auto_check_questionnaire' } },
+      { id: 's5_3', label: 'סיכום תשובות ב-CRM', type: 'manual', required: false },
+      { id: 's5_4', label: 'הכנה לפגישת תכנית', type: 'manual', required: false },
+    ]
+  },
+  6: {
+    title: 'פגישת תכנית + גאנט/תקציב',
+    items: [
+      { id: 's6_1', label: 'הצגת אלטרנטיבות עיצוביות', type: 'manual', required: false },
+      { id: 's6_2', label: 'העלאת קונספט / מצגת', type: 'button', required: false, action: { type: 'upload_doc', docType: 'concept', stage: 6 } },
+      { id: 's6_3', label: 'עדכון גאנט', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'gantt' } },
+      { id: 's6_4', label: 'עדכון תקציב', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'budget' } },
+      { id: 's6_5', label: 'אישור קונספט ע"י הלקוח', type: 'manual', required: true },
+      { id: 's6_6', label: 'פגישת סקירה', type: 'button', required: false, action: { type: 'add_meeting', meetingType: 'stage_review' } },
+    ]
+  },
+  7: {
+    title: 'תכניות עבודה',
+    items: [
+      { id: 's7_1', label: 'תכנית חשמל', type: 'button', required: true, action: { type: 'upload_doc', docType: 'electrical', stage: 7 } },
+      { id: 's7_2', label: 'תכנית אינסטלציה', type: 'button', required: true, action: { type: 'upload_doc', docType: 'plumbing', stage: 7 } },
+      { id: 's7_3', label: 'תכנית תאורה', type: 'button', required: false, action: { type: 'upload_doc', docType: 'lighting', stage: 7 } },
+      { id: 's7_4', label: 'תכנית מיזוג', type: 'button', required: false, action: { type: 'upload_doc', docType: 'hvac', stage: 7 } },
+      { id: 's7_5', label: 'תכנית נגרות', type: 'button', required: false, action: { type: 'upload_doc', docType: 'carpentry', stage: 7 } },
+      { id: 's7_6', label: 'אישור לקוח על התכניות', type: 'manual', required: true },
+    ]
+  },
+  8: {
+    title: 'קונספט עיצובי + רנדרים',
+    items: [
+      { id: 's8_1', label: 'יצירת מודבורד', type: 'button', required: true, action: { type: 'upload_doc', docType: 'concept', stage: 8 } },
+      { id: 's8_2', label: 'הדמיות / רנדרים', type: 'button', required: true, action: { type: 'upload_doc', docType: 'render', stage: 8 } },
+      { id: 's8_3', label: 'אישור קונספט ע"י הלקוח', type: 'manual', required: true },
+      { id: 's8_4', label: 'פגישת אישור עיצוב', type: 'button', required: false, action: { type: 'add_meeting', meetingType: 'design_approval' } },
+    ]
+  },
+  9: {
+    title: 'ימי קניות',
+    items: [
+      { id: 's9_1', label: 'תכנון ימי קניות', type: 'manual', required: true },
+      { id: 's9_shopping_1', label: 'יום קניות 1', type: 'manual', required: false, shoppingDay: 1 },
+      { id: 's9_shopping_2', label: 'יום קניות 2', type: 'manual', required: false, shoppingDay: 2 },
+      { id: 's9_shopping_3', label: 'יום קניות 3', type: 'manual', required: false, shoppingDay: 3 },
+      { id: 's9_shopping_4', label: 'יום קניות 4', type: 'manual', required: false, shoppingDay: 4 },
+      { id: 's9_shopping_5', label: 'יום קניות 5', type: 'manual', required: false, shoppingDay: 5 },
+      { id: 's9_7', label: 'מעקב תקציב קניות', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'budget' } },
+    ]
+  },
+  10: {
+    title: 'תמחור קבלנים ובחירת ספקים',
+    items: [
+      { id: 's10_1', label: 'קבלת הצעות מחיר מספקים', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'suppliers' } },
+      { id: 's10_2', label: 'השוואה ובחירת ספקים', type: 'manual', required: true },
+      { id: 's10_3', label: 'אישור תקציב ספקים', type: 'manual', required: false },
+      { id: 's10_4', label: 'יצירת הזמנות רכש', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'purchases' } },
+    ]
+  },
+  11: {
+    title: 'ביצוע בשטח + ימי פיקוח',
+    items: [
+      { id: 's11_1', label: 'תיאום ימי פיקוח', type: 'button', required: true, action: { type: 'add_meeting', meetingType: 'site_visit' } },
+      { id: 's11_2', label: 'תיעוד ליקויים / חריגות', type: 'button', required: false, action: { type: 'upload_doc', docType: 'inspection_report', stage: 11 } },
+      { id: 's11_3', label: 'עדכון גאנט ותקציב', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'gantt' } },
+      { id: 's11_4', label: 'דיווח ללקוח', type: 'manual', required: false },
+    ]
+  },
+  12: {
+    title: 'ימי התקנה ותיאום ספקים',
+    items: [
+      { id: 's12_1', label: 'תיאום התקנות', type: 'button', required: true, action: { type: 'add_meeting', meetingType: 'site_visit' } },
+      { id: 's12_2', label: 'ביצוע התקנה — עבודה בשטח', type: 'manual', required: true },
+      { id: 's12_3', label: 'בדיקות איכות — בקרת גמר', type: 'manual', required: true },
+      { id: 's12_4', label: 'העלאת דוח פיקוח', type: 'button', required: false, action: { type: 'upload_doc', docType: 'inspection_report', stage: 12 } },
+      { id: 's12_5', label: 'קבלת לקוח — אישור סופי', type: 'manual', required: true },
+    ]
+  },
+  13: {
+    title: 'סיום פרויקט ומסירה',
+    items: [
+      { id: 's13_1', label: 'צ\'קליסט מסירה סופי', type: 'manual', required: true },
+      { id: 's13_2', label: 'סגירה פיננסית — כל התשלומים שולמו', type: 'auto', required: true, action: { type: 'auto_check_payments' } },
+      { id: 's13_3', label: 'סקר שביעות רצון (NPS)', type: 'manual', required: false },
+      { id: 's13_4', label: 'תיעוד לקחים', type: 'manual', required: false },
+      { id: 's13_5', label: 'אישור סיום ע"י לקוח', type: 'manual', required: true },
+    ]
+  }
+};
+
+export default STAGE_CHECKLISTS;
+
+export function getStageChecklist(stageNum) {
+  return STAGE_CHECKLISTS[stageNum] || null;
+}
+
+export function getChecklistCompletion(stageNum, checklistData) {
+  const config = STAGE_CHECKLISTS[stageNum];
+  if (!config) return { total: 0, completed: 0, percent: 0, requiredMet: true };
+  
+  const data = checklistData?.[stageNum] || {};
+  const total = config.items.length;
+  const completed = config.items.filter(item => data[item.id]).length;
+  const requiredMet = config.items
+    .filter(item => item.required)
+    .every(item => data[item.id]);
+  
+  return {
+    total,
+    completed,
+    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+    requiredMet,
+  };
+}

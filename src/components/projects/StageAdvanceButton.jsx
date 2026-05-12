@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import STAGES, { TOTAL_STAGES } from '@/lib/stageConfig';
+import { getChecklistCompletion } from '@/lib/stageChecklist';
 import { toast } from 'sonner';
 
 export default function StageAdvanceButton({ project }) {
@@ -41,10 +42,17 @@ export default function StageAdvanceButton({ project }) {
 
   if (currentStage >= TOTAL_STAGES) return null;
 
+  // Check if required checklist items are completed (stages 4+)
+  let checklistData = {};
+  try { checklistData = JSON.parse(project.stage_checklist_data || '{}'); } catch {}
+  const { requiredMet } = getChecklistCompletion(currentStage, checklistData);
+  const hasChecklist = currentStage >= 4;
+  const blocked = hasChecklist && !requiredMet;
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className="gap-2" disabled={blocked} title={blocked ? 'יש להשלים את כל פריטי החובה בצ\'קליסט' : ''}>
           <ArrowLeft className="w-4 h-4" />
           קדמי לשלב {nextStage} — {nextStageConfig?.shortLabel}
         </Button>
