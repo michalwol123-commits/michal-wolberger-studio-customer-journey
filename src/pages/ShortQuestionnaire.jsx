@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Send, CheckCircle2, Heart } from 'lucide-react';
+import { Loader2, Send, CheckCircle2, Copy, Link as LinkIcon, ArrowRight, ClipboardList } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const SPACE_OPTIONS = [
   { value: 'up_to_80', label: 'עד 80 מ"ר' },
@@ -55,31 +57,43 @@ export default function ShortQuestionnaire() {
   const [error, setError] = useState(null);
   const [questionnaire, setQuestionnaire] = useState(null);
   const [clientName, setClientName] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [formLink, setFormLink] = useState('');
 
   const [form, setForm] = useState({
-    birth_date: '',
-    wedding_date: '',
-    household: '',
-    space_type: '',
-    space_type_other: '',
-    property_size_age: '',
-    design_style: '',
-    why_renovate: '',
-    expectations: '',
-    expectations_other: '',
-    budget: '',
-    gift: '',
-    style_philosophy: '',
-    style_philosophy_other: '',
+    birth_date: '', wedding_date: '', household: '', space_type: '',
+    space_type_other: '', property_size_age: '', design_style: '',
+    why_renovate: '', expectations: '', expectations_other: '',
+    budget: '', gift: '', style_philosophy: '', style_philosophy_other: '',
   });
 
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
 
   useEffect(() => {
-    if (!token) { setError('קישור לא תקין'); setLoading(false); return; }
-    loadQuestionnaire();
+    init();
   }, []);
+
+  const init = async () => {
+    // If token is in URL, load questionnaire for filling
+    if (token) {
+      await loadQuestionnaire();
+      return;
+    }
+
+    // No token — check if admin to show link management
+    try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (isAuth) {
+        const user = await base44.auth.me();
+        if (user?.role === 'admin') {
+          setIsAdmin(true);
+          setFormLink(`${window.location.origin}/q`);
+        }
+      }
+    } catch {}
+    setLoading(false);
+  };
 
   const loadQuestionnaire = async () => {
     const results = await base44.entities.Questionnaire.filter({ token });
@@ -112,8 +126,62 @@ export default function ShortQuestionnaire() {
     </div>
   );
 
+  // Admin view — show form link
+  if (isAdmin && !token) {
+    return (
+      <div className="min-h-screen bg-background py-8 px-4" dir="rtl">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <Card>
+            <CardContent className="p-8 space-y-6">
+              <div className="text-center space-y-2">
+                <ClipboardList className="w-12 h-12 text-primary mx-auto" />
+                <h1 className="font-heading text-2xl font-bold">שאלון טרום שיחה</h1>
+                <p className="text-muted-foreground">
+                  שאלון קצר שנשלח ללקוחות חדשים לפני שיחת ההיכרות
+                </p>
+              </div>
+
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <LinkIcon className="w-4 h-4 text-primary" />
+                  <span>קישור לשאלון (מנהל בלבד):</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  הקישור נשלח אוטומטית ללקוח עם יצירת הליד. ניתן גם להעתיק ולשלוח ידנית מכרטיס הלקוח.
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-lg flex-1 truncate" dir="ltr">
+                    {formLink}?token=[token]
+                  </code>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(formLink);
+                      toast.success('הקישור הועתק!');
+                    }}
+                    className="gap-1 shrink-0"
+                  >
+                    <Copy className="w-3 h-3" />
+                    העתק
+                  </Button>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+                  <ArrowRight className="w-4 h-4" />
+                  חזרה ללוח הבקרה
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (error) return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
       <Card className="max-w-md w-full"><CardContent className="p-8 text-center">
         <p className="text-lg font-heading text-destructive">{error}</p>
       </CardContent></Card>
@@ -133,10 +201,19 @@ export default function ShortQuestionnaire() {
     </div>
   );
 
+  // No token and not admin — show error
+  if (!token && !isAdmin) return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
+      <Card className="max-w-md w-full"><CardContent className="p-8 text-center">
+        <p className="text-lg font-heading text-destructive">קישור לא תקין</p>
+        <p className="text-sm text-muted-foreground mt-2">נא להשתמש בקישור שקיבלת מהסטודיו</p>
+      </CardContent></Card>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background py-8 px-4" dir="rtl">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
           <Card>
             <CardContent className="p-8 text-center space-y-3">
@@ -155,9 +232,7 @@ export default function ShortQuestionnaire() {
           </Card>
         </motion.div>
 
-        {/* Questions */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="space-y-4">
-          
           <QuestionCard title="תאריך לידה">
             <Input type="date" value={form.birth_date} onChange={e => updateField('birth_date', e.target.value)} />
           </QuestionCard>
@@ -166,11 +241,11 @@ export default function ShortQuestionnaire() {
             <Input type="date" value={form.wedding_date} onChange={e => updateField('wedding_date', e.target.value)} />
           </QuestionCard>
 
-          <QuestionCard title="מספר הנפשות בבית וגילם *" required>
+          <QuestionCard title="מספר הנפשות בבית וגילם *">
             <Textarea placeholder="לדוגמה: 2 מבוגרים, 3 ילדים (8, 5, 2)" value={form.household} onChange={e => updateField('household', e.target.value)} />
           </QuestionCard>
 
-          <QuestionCard title="איזה חלל תרצו שנעצב? *" required>
+          <QuestionCard title="איזה חלל תרצו שנעצב? *">
             <RadioGroup value={form.space_type} onValueChange={v => updateField('space_type', v)} className="space-y-2">
               {SPACE_OPTIONS.map(opt => (
                 <div key={opt.value} className="flex items-center gap-3">
@@ -184,11 +259,11 @@ export default function ShortQuestionnaire() {
             )}
           </QuestionCard>
 
-          <QuestionCard title="מה שטח הנכס? בן כמה שנים? *" required>
+          <QuestionCard title="מה שטח הנכס? בן כמה שנים? *">
             <Textarea placeholder="לדוגמה: 120 מ״ר, בניין בן 15 שנה" value={form.property_size_age} onChange={e => updateField('property_size_age', e.target.value)} />
           </QuestionCard>
 
-          <QuestionCard title="לאיזה סגנון עיצובי אתם מתחברים? *" required>
+          <QuestionCard title="לאיזה סגנון עיצובי אתם מתחברים? *">
             <RadioGroup value={form.design_style} onValueChange={v => updateField('design_style', v)} className="space-y-3">
               {STYLE_OPTIONS.map(opt => (
                 <div key={opt.value} className="flex items-start gap-3">
@@ -202,11 +277,11 @@ export default function ShortQuestionnaire() {
             </RadioGroup>
           </QuestionCard>
 
-          <QuestionCard title="מדוע החלטתם לשפץ כרגע? מה נותן לכם הרגשה לא טובה בביתכם? *" required>
+          <QuestionCard title="מדוע החלטתם לשפץ כרגע? מה נותן לכם הרגשה לא טובה בביתכם? *">
             <Textarea placeholder="ספרו לנו..." value={form.why_renovate} onChange={e => updateField('why_renovate', e.target.value)} className="min-h-24" />
           </QuestionCard>
 
-          <QuestionCard title="בוא נתאם ציפיות, מה הכי חשוב לכם לקבל ממני? *" required>
+          <QuestionCard title="בוא נתאם ציפיות, מה הכי חשוב לכם לקבל ממני? *">
             <RadioGroup value={form.expectations} onValueChange={v => updateField('expectations', v)} className="space-y-2">
               {EXPECTATION_OPTIONS.map(opt => (
                 <div key={opt.value} className="flex items-start gap-3">
@@ -220,7 +295,7 @@ export default function ShortQuestionnaire() {
             )}
           </QuestionCard>
 
-          <QuestionCard title="כמה חשבתם להשקיע בשיפוץ? *" required>
+          <QuestionCard title="כמה חשבתם להשקיע בשיפוץ? *">
             <Input placeholder="לדוגמה: 200,000-300,000 ₪" value={form.budget} onChange={e => updateField('budget', e.target.value)} />
           </QuestionCard>
 
@@ -238,7 +313,7 @@ export default function ShortQuestionnaire() {
             )}
           </QuestionCard>
 
-          <QuestionCard title="עבור שי קטן — אשמח לדעת, האם אתם אנשים של: *" required>
+          <QuestionCard title="עבור שי קטן — אשמח לדעת, האם אתם אנשים של: *">
             <RadioGroup value={form.gift} onValueChange={v => updateField('gift', v)} className="space-y-2">
               {GIFT_OPTIONS.map(opt => (
                 <div key={opt.value} className="flex items-center gap-3">
@@ -250,7 +325,6 @@ export default function ShortQuestionnaire() {
           </QuestionCard>
         </motion.div>
 
-        {/* Submit */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
           <Card>
             <CardContent className="p-6 text-center space-y-4">
@@ -268,7 +342,7 @@ export default function ShortQuestionnaire() {
   );
 }
 
-function QuestionCard({ title, required, children }) {
+function QuestionCard({ title, children }) {
   return (
     <Card>
       <CardContent className="p-5 space-y-3">

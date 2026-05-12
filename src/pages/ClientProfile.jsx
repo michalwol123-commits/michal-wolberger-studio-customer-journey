@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban, Clock, Trash2 } from 'lucide-react';
+import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban, Clock, Trash2, ClipboardList } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -16,6 +16,7 @@ import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import ClientStatusChanger from '@/components/clients/ClientStatusChanger';
 import ClientTimeline from '@/components/clients/ClientTimeline';
 import DeleteButton from '@/components/shared/DeleteButton';
+import QuestionnaireResponsesView from '@/components/questionnaire/QuestionnaireResponsesView';
 
 export default function ClientProfile() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -101,6 +102,11 @@ export default function ClientProfile() {
     queryFn: () => base44.entities.Communication.filter({ client_id: clientId }, '-created_date', 200),
   });
   const clientComms = allComms.filter(c => isAdmin || c.type !== 'system_error');
+
+  const { data: clientQuestionnaires = [] } = useQuery({
+    queryKey: ['questionnaires', clientId],
+    queryFn: () => base44.entities.Questionnaire.filter({ client_id: clientId }),
+  });
 
   if (!client) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">טוען...</div>;
@@ -204,6 +210,7 @@ export default function ClientProfile() {
           {isAdmin && <TabsTrigger value="payments" className="gap-1"><CreditCard className="w-4 h-4" />תשלומים</TabsTrigger>}
           <TabsTrigger value="documents" className="gap-1"><FileText className="w-4 h-4" />מסמכים</TabsTrigger>
           <TabsTrigger value="communications" className="gap-1"><MessageSquare className="w-4 h-4" />תקשורת</TabsTrigger>
+          <TabsTrigger value="questionnaires" className="gap-1"><ClipboardList className="w-4 h-4" />שאלונים</TabsTrigger>
           <TabsTrigger value="history" className="gap-1"><Clock className="w-4 h-4" />היסטוריה</TabsTrigger>
         </TabsList>
 
@@ -304,6 +311,10 @@ export default function ClientProfile() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="questionnaires">
+          <QuestionnaireResponsesView questionnaires={clientQuestionnaires} />
         </TabsContent>
 
         <TabsContent value="history">

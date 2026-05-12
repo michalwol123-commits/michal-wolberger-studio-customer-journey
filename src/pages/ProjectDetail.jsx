@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart } from 'lucide-react';
+import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
@@ -20,6 +20,7 @@ import ProjectSuppliersTab from '@/components/suppliers/ProjectSuppliersTab';
 import GanttChart from '@/components/projects/GanttChart';
 import BudgetOverview from '@/components/projects/BudgetOverview';
 import ProjectPurchaseOrders from '@/components/purchases/ProjectPurchaseOrders';
+import QuestionnaireResponsesView from '@/components/questionnaire/QuestionnaireResponsesView';
 
 export default function ProjectDetail() {
   const pathParts = window.location.pathname.split('/');
@@ -66,6 +67,13 @@ export default function ProjectDetail() {
   const projectComms = communications
     .filter(c => c.project_id === projectId)
     .filter(c => isAdmin || c.type !== 'system_error');
+
+  const clientId = project?.client_id;
+  const { data: projectQuestionnaires = [] } = useQuery({
+    queryKey: ['questionnaires', clientId],
+    queryFn: () => base44.entities.Questionnaire.filter({ client_id: clientId }),
+    enabled: !!clientId,
+  });
 
   if (!project) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">טוען...</div>;
@@ -115,6 +123,7 @@ export default function ProjectDetail() {
           <TabsTrigger value="budget">תקציב</TabsTrigger>
           <TabsTrigger value="suppliers">ספקים</TabsTrigger>
           <TabsTrigger value="purchases">רכש</TabsTrigger>
+          <TabsTrigger value="questionnaires">שאלונים</TabsTrigger>
           <TabsTrigger value="communications">תקשורת</TabsTrigger>
         </TabsList>
 
@@ -216,6 +225,10 @@ export default function ProjectDetail() {
 
         <TabsContent value="purchases">
           <ProjectPurchaseOrders projectId={projectId} />
+        </TabsContent>
+
+        <TabsContent value="questionnaires">
+          <QuestionnaireResponsesView questionnaires={projectQuestionnaires} />
         </TabsContent>
 
         <TabsContent value="communications">

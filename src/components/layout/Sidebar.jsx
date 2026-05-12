@@ -16,6 +16,7 @@ import {
   BarChart3,
   Settings,
   BookOpen,
+  ClipboardList,
   ChevronRight,
   X
 } from 'lucide-react';
@@ -35,6 +36,7 @@ const navItems = [
   { path: '/suppliers', label: 'ספקים', icon: Truck, adminOnly: false },
   { path: '/purchase-orders', label: 'הזמנות רכש', icon: FileText, adminOnly: false },
   { path: '/reports', label: 'דוחות', icon: BarChart3, adminOnly: false },
+  { path: '/q', label: 'שאלון קצר', icon: ClipboardList, adminOnly: true },
   { path: '/settings', label: 'הגדרות', icon: Settings, adminOnly: true },
   { path: '/user-guide', label: 'מדריך למשתמשת', icon: BookOpen, adminOnly: true },
 ];
