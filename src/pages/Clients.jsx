@@ -18,7 +18,7 @@ import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
-const activeStatuses = ['proposal_approved', 'active_client', 'completed_client'];
+const activeStatuses = ['proposal_approved', 'active_client', 'completed_client', 'archived'];
 
 export default function Clients() {
   const { user, isAdmin } = useCurrentUser();
@@ -87,6 +87,7 @@ export default function Clients() {
             <SelectItem value="proposal_approved">הצעה אושרה</SelectItem>
             <SelectItem value="active_client">לקוח פעיל</SelectItem>
             <SelectItem value="completed_client">הושלם</SelectItem>
+            <SelectItem value="archived">ארכיון</SelectItem>
           </SelectContent>
         </Select>
       </div>
