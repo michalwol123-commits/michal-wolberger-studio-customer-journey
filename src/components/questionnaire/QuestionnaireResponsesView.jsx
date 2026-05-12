@@ -5,6 +5,7 @@ import { ClipboardList, CheckCircle2, Clock } from 'lucide-react';
 const STYLE_LABELS = {
   modern: 'מודרני', country: 'כפרי', industrial: 'תעשייתי',
   eclectic: 'אקלקטי', minimalist: 'מרדי',
+  elegant: 'אלגנטי', colorful: 'צבעוני', dont_know: 'לא יודעים',
 };
 
 const SPACE_LABELS = {
@@ -64,7 +65,10 @@ function QuestionnaireCard({ questionnaire }) {
     { label: 'מייל', value: q.email },
   ].filter(r => r.value);
 
-  const rows = [
+  const isDetailed = q.type === 'detailed';
+
+  // שאלון קצר
+  const shortRows = [
     { label: 'תאריך לידה', value: responses.birth_date },
     { label: 'תאריך נישואין', value: responses.wedding_date },
     { label: 'נפשות בבית', value: responses.household },
@@ -77,6 +81,39 @@ function QuestionnaireCard({ questionnaire }) {
     { label: 'פילוסופיית סגנון', value: PHILOSOPHY_LABELS[responses.style_philosophy] || (responses.style_philosophy === 'other' ? responses.style_philosophy_other : responses.style_philosophy) },
     { label: 'שי קטן', value: GIFT_LABELS[responses.gift] || responses.gift },
   ].filter(r => r.value);
+
+  // שאלון מפורט
+  const SEATING_LABELS = { sofa_3_2: 'ספה 3+2', l_shape: 'ספה בצורת ר', long_armchairs: 'ספה ארוכה וכורסאות' };
+  const DINING_LABELS = { round_table: 'שולחן עגול/אליפטי', rectangular_table: 'שולחן מלבני', library_vitrine: 'ספריה/ויטרינה', candle_corner: 'פינת הדלקת נרות' };
+  const TIME_LABELS = { living_room: 'סלון', family_corner: 'פינת משפחה', kitchen: 'מטבח', garden: 'גינה', each_in_room: 'כל אחד בחדר' };
+
+  const detailedRows = isDetailed ? {
+    general: [
+      { label: 'דיירים + גילאים', value: responses.residents },
+      { label: 'תאריכי לידה', value: responses.birth_dates },
+      { label: 'מבלים רוב הזמן ב-', value: TIME_LABELS[responses.time_area] || responses.time_area_other },
+      { label: 'סגנון עיצובי', value: STYLE_LABELS[responses.design_style] },
+      { label: 'הבית ישדר', value: responses.home_feeling },
+      { label: 'צבעים מועדפים', value: responses.preferred_colors },
+      { label: 'צבעים שלא', value: responses.disliked_colors },
+    ].filter(r => r.value),
+    living: [
+      { label: 'פריטים', value: responses.living_items?.length ? responses.living_items.join(', ') : null },
+      { label: 'גודל טלוויזיה', value: responses.tv_size },
+      { label: 'קיר כח', value: responses.accent_wall === 'yes' ? 'כן' : responses.accent_wall === 'no' ? 'לא' : responses.accent_wall === 'maybe' ? 'אולי' : null },
+      { label: 'סוג ישיבה', value: SEATING_LABELS[responses.seating_type] || responses.seating_other },
+      { label: 'רהיטים קיימים', value: responses.existing_furniture },
+      { label: 'הערות', value: responses.living_notes },
+    ].filter(r => r.value),
+    dining: [
+      { label: 'פריטים', value: responses.dining_items?.map(v => DINING_LABELS[v] || v).join(', ') || null },
+      { label: 'מספר סועדים', value: responses.table_seats },
+      { label: 'סגנון אירוח', value: responses.hosting_style },
+      { label: 'הערות', value: responses.dining_notes },
+    ].filter(r => r.value),
+  } : null;
+
+  const rows = isDetailed ? [] : shortRows;
 
   return (
     <Card>
@@ -110,15 +147,36 @@ function QuestionnaireCard({ questionnaire }) {
                 <span className="text-foreground" dir={row.label === 'שם' ? 'rtl' : 'ltr'}>{row.value}</span>
               </div>
             ))}
-            {rows.map((row, i) => (
+            {!isDetailed && rows.map((row, i) => (
               <div key={i} className="flex gap-2 text-sm py-1.5 border-b border-border last:border-0">
                 <span className="font-medium text-muted-foreground w-32 shrink-0">{row.label}</span>
                 <span className="text-foreground">{row.value}</span>
               </div>
             ))}
+            {isDetailed && detailedRows && (
+              <>
+                {detailedRows.general.length > 0 && <SectionBlock title="🏠 כללי" rows={detailedRows.general} />}
+                {detailedRows.living.length > 0 && <SectionBlock title="🛋️ סלון" rows={detailedRows.living} />}
+                {detailedRows.dining.length > 0 && <SectionBlock title="🍽️ פינת אוכל" rows={detailedRows.dining} />}
+              </>
+            )}
           </div>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function SectionBlock({ title, rows }) {
+  return (
+    <div className="mt-3">
+      <h4 className="text-sm font-heading font-semibold text-primary mb-1">{title}</h4>
+      {rows.map((row, i) => (
+        <div key={i} className="flex gap-2 text-sm py-1.5 border-b border-border last:border-0">
+          <span className="font-medium text-muted-foreground w-32 shrink-0">{row.label}</span>
+          <span className="text-foreground">{row.value}</span>
+        </div>
+      ))}
+    </div>
   );
 }

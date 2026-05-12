@@ -8,6 +8,8 @@ import { motion } from 'framer-motion';
 import PortalStageMeetings from './PortalStageMeetings';
 import PortalStagePayments from './PortalStagePayments';
 import PortalQuestionnaireView from './PortalQuestionnaireView';
+import DetailedQuestionnaireForm from './DetailedQuestionnaireForm';
+import DetailedQuestionnaireResults from './DetailedQuestionnaireResults';
 
 // Define what content each stage shows in the portal
 const STAGE_CONTENT = {
@@ -80,7 +82,15 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
         <PortalQuestionnaireView questionnaire={shortQ} />
       )}
       {content.questionnaire === 'detailed' && (
-        <PortalQuestionnaireView questionnaire={detailedQ} />
+        detailedQ?.status === 'submitted' ? (
+          <DetailedQuestionnaireResults questionnaire={detailedQ} />
+        ) : (
+          <DetailedQuestionnaireForm
+            questionnaire={detailedQ}
+            projectId={project.id}
+            clientId={project.client_id}
+          />
+        )
       )}
 
       {/* Meetings */}
