@@ -92,16 +92,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create Document record for the quote file
+    // Create Document record for the quote file (skip if already exists)
     if (data.file_url || data.url) {
-      await base44.asServiceRole.entities.Document.create({
-        client_id: clientId,
-        name: `הצעת מחיר — ${title}`,
-        file_url: data.file_url || data.url,
-        type: 'quote',
-        approval_status: 'pending',
-        visible_to_client: false,
-      });
+      const fileUrl = data.file_url || data.url;
+      const existingDocs = await base44.asServiceRole.entities.Document.filter({ client_id: clientId });
+      const alreadyExists = existingDocs.some(d => d.type === 'quote' && d.file_url === fileUrl);
+      if (!alreadyExists) {
+        await base44.asServiceRole.entities.Document.create({
+          client_id: clientId,
+          name: `הצעת מחיר — ${title}`,
+          file_url: fileUrl,
+          type: 'quote',
+          approval_status: 'pending',
+          visible_to_client: false,
+        });
+      }
     }
 
     // Update client status to proposal_sent

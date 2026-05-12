@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban, Clock } from 'lucide-react';
+import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban, Clock, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -15,6 +15,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import ClientStatusChanger from '@/components/clients/ClientStatusChanger';
 import ClientTimeline from '@/components/clients/ClientTimeline';
+import DeleteButton from '@/components/shared/DeleteButton';
 
 export default function ClientProfile() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -84,13 +85,11 @@ export default function ClientProfile() {
   const projectIds = clientProjects.map(p => p.id);
 
   const { data: allPayments = [] } = useQuery({
-    queryKey: ['payments', clientId, projectIds],
-    queryFn: () => base44.entities.Payment.list('-created_date', 200),
-    enabled: isAdmin && projectIds.length > 0,
+    queryKey: ['payments', clientId],
+    queryFn: () => base44.entities.Payment.filter({ client_id: clientId }, '-created_date', 200),
+    enabled: isAdmin,
   });
-  const projectPayments = isAdmin
-    ? allPayments.filter(p => projectIds.includes(p.project_id))
-    : [];
+  const projectPayments = isAdmin ? allPayments : [];
 
   const { data: clientDocs = [] } = useQuery({
     queryKey: ['documents', clientId],
@@ -285,11 +284,21 @@ export default function ClientProfile() {
                         {doc.stage ? ` • שלב ${doc.stage}` : ''}
                       </p>
                     </div>
-                    {doc.file_url && (
-                      <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">
-                        צפה
-                      </a>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {doc.file_url && (
+                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">
+                          צפה
+                        </a>
+                      )}
+                      <DeleteButton
+                        entityLabel="מסמך"
+                        onDelete={async () => {
+                          await base44.entities.Document.delete(doc.id);
+                          queryClient.invalidateQueries({ queryKey: ['documents', clientId] });
+                        }}
+                        size="sm"
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               ))}

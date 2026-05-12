@@ -21,15 +21,18 @@ Deno.serve(async (req) => {
     if (clients.length === 0) return Response.json({ skipped: true, reason: 'client not found' });
     const client = clients[0];
 
-    // Create project
+    // Create project with stages 1-3 already completed (intro, qualifying, quote)
     const project = await base44.asServiceRole.entities.Project.create({
       client_id: clientId,
       name: data.title || `פרויקט — ${client.name}`,
       status: 'active',
-      stage_current: 1,
+      stage_current: 4,
       progress: 0,
       total_budget: data.total_amount || 0,
       start_date: new Date().toISOString().split('T')[0],
+      s1_status: 'completed',
+      s2_status: 'completed',
+      s3_status: 'completed',
     });
 
     // Create default payment milestones (3 payments: advance 40%, mid 30%, final 30%)
@@ -53,14 +56,52 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Link existing orphan records (docs, payments, tasks, meetings) to the new project
+    const [orphanDocs, orphanPayments, orphanTasks, orphanMeetings] = await Promise.all([
+      base44.asServiceRole.entities.Document.filter({ client_id: clientId }),
+      base44.asServiceRole.entities.Payment.filter({ client_id: clientId }),
+      base44.asServiceRole.entities.Task.filter({ client_id: clientId }),
+      base44.asServiceRole.entities.Meeting.filter({ client_id: clientId }),
+    ]);
+
+    const linkPromises = [];
+    for (const doc of orphanDocs.filter(d => !d.project_id)) {
+      linkPromises.push(base44.asServiceRole.entities.Document.update(doc.id, { project_id: project.id }));
+    }
+    for (const pay of orphanPayments.filter(p => !p.project_id)) {
+      linkPromises.push(base44.asServiceRole.entities.Payment.update(pay.id, { project_id: project.id }));
+    }
+    for (const task of orphanTasks.filter(t => !t.project_id)) {
+      linkPromises.push(base44.asServiceRole.entities.Task.update(task.id, { project_id: project.id }));
+    }
+    for (const meeting of orphanMeetings.filter(m => !m.project_id)) {
+      linkPromises.push(base44.asServiceRole.entities.Meeting.update(meeting.id, { project_id: project.id }));
+    }
+    await Promise.all(linkPromises);
+
     // Move client directly to active_client + generate portal token if missing
     const clientUpdates = { status: 'active_client' };
     if (!client.portal_token) {
       clientUpdates.portal_token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 90);
+      clientUpdates.portal_token_expires_at = expires.toISOString();
     }
     await base44.asServiceRole.entities.Client.update(clientId, clientUpdates);
 
-    // Notify client
+    // Log "became active client" event
+    await base44.asServiceRole.entities.Communication.create({
+      client_id: clientId,
+      project_id: project.id,
+      type: 'note',
+      direction: 'outbound',
+      content: `הלקוחה הפכה ללקוח פעיל — הצעה אושרה, פרויקט "${project.name}" נפתח.`,
+      sent_by: 'system',
+      status: 'sent',
+      channel: 'base44_native',
+    });
+
+    // Notify client via WhatsApp
     await base44.asServiceRole.entities.Communication.create({
       client_id: clientId,
       project_id: project.id,
