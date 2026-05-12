@@ -224,6 +224,9 @@ export default function ShortQuestionnaire() {
           <Card>
             <CardContent className="p-6 text-center space-y-4">
               <p className="text-sm text-muted-foreground">תודה על הזמן! 💛 נשמח לדבר בקרוב.</p>
+              {(!form.name || !form.phone) && (
+                <p className="text-sm text-destructive">יש למלא שם מלא וטלפון כדי לשלוח</p>
+              )}
               <Button size="lg" className="gap-2 w-full max-w-xs" onClick={handleSubmit} disabled={submitting || !form.name || !form.phone}>
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 שליחה
