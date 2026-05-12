@@ -5,8 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, FileText, Check, Loader2, Circle } from 'lucide-react';
 import { getStageByNum } from '@/lib/stageConfig';
 import { motion } from 'framer-motion';
+import PortalStageMeetings from './PortalStageMeetings';
+import PortalStagePayments from './PortalStagePayments';
+import PortalQuestionnaireView from './PortalQuestionnaireView';
 
-export default function PortalStageView({ project, stageNum }) {
+export default function PortalStageView({ project, stageNum, meetings, payments, questionnaires }) {
   const stage = getStageByNum(stageNum);
   const status = project[stage?.key] || 'pending';
 
@@ -19,6 +22,10 @@ export default function PortalStageView({ project, stageNum }) {
 
   const statusLabel = status === 'completed' ? 'הושלם ✅' : status === 'in_progress' ? 'בביצוע 🔄' : 'ממתין ⏳';
   const StatusIcon = status === 'completed' ? Check : status === 'in_progress' ? Loader2 : Circle;
+
+  // Find relevant questionnaire for this stage
+  const shortQ = questionnaires?.find(q => q.type === 'short');
+  const detailedQ = questionnaires?.find(q => q.type === 'detailed');
 
   return (
     <motion.div
@@ -49,6 +56,33 @@ export default function PortalStageView({ project, stageNum }) {
           }`}>{statusLabel}</span>
         </div>
       </div>
+
+      {/* Stage 1: Short questionnaire */}
+      {stageNum === 1 && shortQ && (
+        <PortalQuestionnaireView questionnaire={shortQ} />
+      )}
+
+      {/* Stage 2: Meeting (intro/qualifying) */}
+      {stageNum === 2 && (
+        <PortalStageMeetings meetings={meetings} stageNum={2} />
+      )}
+
+      {/* Stage 3: Quote meeting + quote document + payment */}
+      {stageNum === 3 && (
+        <>
+          <PortalStageMeetings meetings={meetings} stageNum={3} />
+        </>
+      )}
+
+      {/* Stage 5: Detailed questionnaire (future) */}
+      {stageNum === 5 && detailedQ && (
+        <PortalQuestionnaireView questionnaire={detailedQ} />
+      )}
+
+      {/* Meetings for stages 4+ (if explicitly assigned via stage_ref) */}
+      {stageNum >= 4 && stageNum !== 5 && (
+        <PortalStageMeetings meetings={meetings} stageNum={stageNum} />
+      )}
 
       {/* Documents for this stage */}
       <Card>
@@ -96,6 +130,9 @@ export default function PortalStageView({ project, stageNum }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Payments for this stage */}
+      <PortalStagePayments payments={payments} stageNum={stageNum} />
     </motion.div>
   );
 }

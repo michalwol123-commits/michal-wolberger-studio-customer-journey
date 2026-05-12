@@ -5,8 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowRight, Calendar, Clock, MapPin, CreditCard, Download } from 'lucide-react';
-import StatusBadge from '@/components/shared/StatusBadge';
+import { ArrowRight } from 'lucide-react';
 import PortalTimeline from './PortalTimeline';
 import PortalStageView from './PortalStageView';
 import PortalGanttView from './PortalGanttView';
@@ -34,15 +33,13 @@ export default function PortalProjectView({ project, onBack }) {
     queryFn: () => base44.entities.Document.filter({ project_id: project.id }),
   });
 
-  const visiblePayments = payments;
-  const upcomingMeetings = meetings
-    .filter(m => m.project_id === project.id && m.status === 'scheduled' && new Date(m.scheduled_at) > new Date())
-    .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+  const { data: questionnaires = [] } = useQuery({
+    queryKey: ['portal-questionnaires', client.id],
+    queryFn: () => base44.entities.Questionnaire.filter({ client_id: client.id }),
+  });
 
-  const typeLabels = {
-    intro: 'היכרות', qualifying: 'אפיון', stage_review: 'סקירת שלב',
-    site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב'
-  };
+  // Filter meetings to this project
+  const projectMeetings = meetings.filter(m => !m.project_id || m.project_id === project.id);
 
   return (
     <div className="space-y-6">
@@ -97,87 +94,19 @@ export default function PortalProjectView({ project, onBack }) {
           {/* Document approvals */}
           <PortalDocApproval documents={allDocs} projectId={project.id} />
 
-          <PortalStageView project={project} stageNum={selectedStage} />
+          <PortalStageView 
+            project={project} 
+            stageNum={selectedStage} 
+            meetings={projectMeetings}
+            payments={payments}
+            questionnaires={questionnaires}
+          />
 
-          {/* Gantt timeline */}
-          <PortalGanttView project={project} />
+          {/* Gantt timeline (visible from stage 6+) */}
+          {selectedStage >= 6 && <PortalGanttView project={project} />}
 
-          {/* Budget utilization */}
-          <PortalBudgetView project={project} />
-
-          {/* Upcoming meetings */}
-          {upcomingMeetings.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base font-heading flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-primary" />
-                    פגישות קרובות
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {upcomingMeetings.map(m => (
-                      <div key={m.id} className="p-3 rounded-lg border border-border">
-                        <p className="text-sm font-medium">{typeLabels[m.type] || m.type}</p>
-                        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {format(new Date(m.scheduled_at), 'dd/MM/yyyy HH:mm')} • {m.duration} דק׳
-                          </span>
-                          {m.location && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />{m.location}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Payments */}
-          {visiblePayments.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base font-heading flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-primary" />
-                    תשלומים
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-muted/50">
-                          <th className="text-right px-3 py-2 font-medium">אבן דרך</th>
-                          <th className="text-right px-3 py-2 font-medium">סכום</th>
-                          <th className="text-right px-3 py-2 font-medium">תאריך יעד</th>
-                          <th className="text-right px-3 py-2 font-medium">סטטוס</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {visiblePayments.map(pay => (
-                          <tr key={pay.id} className="border-b last:border-0">
-                            <td className="px-3 py-2.5">{pay.milestone}</td>
-                            <td className="px-3 py-2.5 font-medium">₪{pay.amount?.toLocaleString()}</td>
-                            <td className="px-3 py-2.5 text-muted-foreground">
-                              {pay.due_date ? format(new Date(pay.due_date), 'dd/MM/yyyy') : '—'}
-                            </td>
-                            <td className="px-3 py-2.5"><StatusBadge status={pay.status} /></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
+          {/* Budget utilization (visible from stage 6+) */}
+          {selectedStage >= 6 && <PortalBudgetView project={project} />}
         </div>
       </div>
     </div>

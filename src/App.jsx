@@ -22,6 +22,7 @@ import Tasks from '@/pages/Tasks';
 import SettingsPage from '@/pages/SettingsPage';
 import UserGuide from '@/pages/UserGuide';
 import Portal from '@/pages/Portal';
+import ShortQuestionnaire from '@/pages/ShortQuestionnaire';
 import Suppliers from '@/pages/Suppliers';
 import PurchaseOrders from '@/pages/PurchaseOrders';
 import Reports from '@/pages/Reports';
@@ -63,6 +64,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/portal" element={<Portal />} />
+            <Route path="/q" element={<ShortQuestionnaire />} />
             <Route element={<AuthedLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/pipeline" element={<Pipeline />} />
