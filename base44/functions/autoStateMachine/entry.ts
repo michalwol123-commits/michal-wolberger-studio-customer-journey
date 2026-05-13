@@ -17,7 +17,7 @@ const TRANSITIONS = {
     active: ['on_hold', 'completed', 'cancelled'],
     on_hold: ['active', 'cancelled'],
     completed: [],
-    cancelled: ['active'],
+    cancelled: [],
   },
   Quote: {
     draft: ['sent', 'viewed', 'approved', 'rejected', 'expired'],
