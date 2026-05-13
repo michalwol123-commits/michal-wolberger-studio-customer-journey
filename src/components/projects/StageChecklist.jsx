@@ -52,6 +52,26 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
     return !!stageData[item.id];
   };
 
+  // Persist auto-check results to stage_checklist_data so StageAdvanceButton can see them
+  React.useEffect(() => {
+    if (!config) return;
+    const autoItems = visibleItems.filter(i => i.type === 'auto');
+    if (autoItems.length === 0) return;
+
+    let needsUpdate = false;
+    const newData = { ...stageData };
+    for (const item of autoItems) {
+      const autoVal = getAutoState(item);
+      if (!!newData[item.id] !== autoVal) {
+        newData[item.id] = autoVal;
+        needsUpdate = true;
+      }
+    }
+    if (needsUpdate) {
+      saveMutation.mutate(newData);
+    }
+  }, [detailedSubmitted, allPaymentsPaid]);
+
   // Filter shopping day items based on quota
   const visibleItems = useMemo(() => {
     if (!config) return [];
