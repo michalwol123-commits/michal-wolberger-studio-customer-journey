@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -111,7 +111,20 @@ export default function ProjectDetail() {
             <Link to={`/clients/${client.id}`} className="text-sm text-primary hover:underline">{client.name}</Link>
           )}
         </div>
+        {isAdmin ? (
+        <select
+          value={project.status}
+          onChange={e => updateProjectStatus.mutate(e.target.value)}
+          className="text-sm border rounded-lg px-3 py-1.5 bg-background cursor-pointer font-medium"
+        >
+          <option value="active">פעיל</option>
+          <option value="on_hold">מושהה</option>
+          <option value="completed">הושלם</option>
+          <option value="cancelled">בוטל</option>
+        </select>
+      ) : (
         <StatusBadge status={project.status} />
+      )}
       </div>
 
       {/* 13 Stages — Clickable */}
