@@ -31,6 +31,12 @@ export default function ProjectDetail() {
   const [showUploadDoc, setShowUploadDoc] = React.useState(false);
   const [selectedStage, setSelectedStage] = React.useState(null);
   const [activeTab, setActiveTab] = React.useState('overview');
+  const queryClient = useQueryClient();
+
+  const updateProjectStatus = useMutation({
+    mutationFn: (newStatus) => base44.entities.Project.update(projectId, { status: newStatus }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
+  });
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
