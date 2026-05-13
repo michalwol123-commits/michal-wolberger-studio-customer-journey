@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       stageUpdates[`s${newStage}_status`] = 'in_progress';
     }
     // Calculate progress based on completed stages
-    stageUpdates.progress = Math.round(((newStage - 1) / TOTAL_STAGES) * 100);
+    stageUpdates.progress = newStage >= TOTAL_STAGES ? 100 : Math.round((newStage / TOTAL_STAGES) * 100);
     
     await base44.asServiceRole.entities.Project.update(projectId, stageUpdates);
 
