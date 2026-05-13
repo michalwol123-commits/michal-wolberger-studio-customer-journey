@@ -9,8 +9,10 @@ import DeleteButton from '@/components/shared/DeleteButton';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Briefcase } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Briefcase, Plus } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
+import AddProjectDialog from '@/components/projects/AddProjectDialog';
 import { Link } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
 import ViewToggle from '@/components/shared/ViewToggle';
@@ -25,6 +27,7 @@ export default function Projects() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [view, setView] = useState('cards');
   const [selectedIds, setSelectedIds] = useState([]);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: projects = [] } = useQuery({
@@ -75,6 +78,9 @@ export default function Projects() {
   return (
     <div>
       <PageHeader title="פרויקטים" subtitle={`${totalCount} פרויקטים`}>
+        <Button onClick={() => setShowAddDialog(true)} className="gap-1">
+          <Plus className="w-4 h-4" />פרויקט חדש
+        </Button>
         <ExportCSVButton
           data={filtered}
           columns={[
@@ -164,6 +170,8 @@ export default function Projects() {
           ))}
         </div>
       )}
+
+      <AddProjectDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
     </div>
   );
 }
