@@ -143,14 +143,20 @@ export default function GanttChart({ projectId, project }) {
       {milestones.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <EmptyState title="אין אבני דרך" description="צרי אבני דרך ברירת מחדל או הוסיפי ידנית" />
-          <Button
-            onClick={handleGenerateDefaults}
-            disabled={generating}
-            className="gap-2 mt-4"
-          >
-            {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-            צור 13 אבני דרך ברירת מחדל
-          </Button>
+          <div className="flex gap-3 mt-4">
+            <Button
+              onClick={handleGenerateDefaults}
+              disabled={generating}
+              className="gap-2"
+            >
+              {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+              צור 13 אבני דרך ברירת מחדל
+            </Button>
+            <Button variant="outline" onClick={() => setShowAdd(true)} className="gap-2">
+              <Plus className="w-4 h-4" />
+              הוסף אבן דרך ידנית
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="bg-card border rounded-xl overflow-hidden">
