@@ -28,6 +28,7 @@ import PurchaseOrders from '@/pages/PurchaseOrders';
 import Reports from '@/pages/Reports';
 import Quotes from '@/pages/Quotes';
 import PortalDemo from '@/pages/PortalDemo';
+import ScheduleMeeting from '@/pages/ScheduleMeeting';
 
 const AuthGate = ({ children }) => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -66,6 +67,7 @@ function App() {
           <Routes>
             <Route path="/portal" element={<Portal />} />
             <Route path="/q" element={<ShortQuestionnaire />} />
+            <Route path="/schedule" element={<ScheduleMeeting />} />
             <Route element={<AuthedLayout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/pipeline" element={<Pipeline />} />

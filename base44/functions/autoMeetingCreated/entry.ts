@@ -9,6 +9,15 @@ const MEETING_TYPE_LABELS = {
   design_approval: 'אישור עיצוב',
 };
 
+function generateToken() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 32; i++) {
+    token += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return token;
+}
+
 Deno.serve(async (req) => {
   try {
     const body = await req.json();
@@ -18,12 +27,43 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'skipped', reason: 'not a create event' });
     }
 
-    // Skip meetings without a scheduled date (e.g. auto-generated placeholders)
-    if (!data.scheduled_at) {
-      return Response.json({ status: 'skipped', reason: 'no scheduled_at set' });
-    }
-
     const base44 = createClientFromRequest(req);
+
+    // Always generate a scheduling_token for new meetings
+    const schedulingToken = generateToken();
+    await base44.asServiceRole.entities.Meeting.update(event.entity_id, {
+      scheduling_token: schedulingToken,
+    });
+    console.log('Scheduling token generated:', schedulingToken);
+
+    // Skip calendar sync if no scheduled date (will sync when date is set later)
+    if (!data.scheduled_at) {
+      // Send WhatsApp with scheduling link if client has phone
+      const clients = await base44.asServiceRole.entities.Client.filter({ id: data.client_id });
+      const client = clients[0];
+      if (client?.phone) {
+        const meetingLabel = MEETING_TYPE_LABELS[data.type] || data.type || 'פגישה';
+        const scheduleUrl = `${Deno.env.get('BASE44_APP_URL') || 'https://app.base44.com'}/schedule?token=${schedulingToken}`;
+
+        await base44.asServiceRole.functions.invoke('sendWhatsApp', {
+          to: client.phone,
+          message: `שלום ${client.name} 👋\nנפתחה עבורך ${meetingLabel}.\nנא לבחור מועד נוח בקישור:\n${scheduleUrl}`,
+        });
+
+        await base44.asServiceRole.entities.Communication.create({
+          client_id: client.id,
+          project_id: data.project_id || undefined,
+          type: 'whatsapp',
+          direction: 'outbound',
+          content: `קישור תיאום ${meetingLabel} נשלח ללקוח בווטסאפ`,
+          sent_by: 'system',
+          status: 'sent',
+          channel: 'base44_native',
+        });
+      }
+
+      return Response.json({ status: 'ok', scheduling_token: schedulingToken, reason: 'no scheduled_at, link sent' });
+    }
 
     // Skip sync for auto-generated meetings (created by automation, not by admin)
     // These will be synced when an admin manually updates the scheduled_at

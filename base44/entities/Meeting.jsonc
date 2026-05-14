@@ -29,6 +29,10 @@
       "type": "string",
       "description": "\u05e7\u05d9\u05e9\u05d5\u05e8 Google Meet / Zoom"
     },
+    "scheduling_token": {
+      "type": "string",
+      "description": "\u05d8\u05d5\u05e7\u05df \u05d9\u05d9\u05d7\u05d5\u05d3\u05d9 \u05dc\u05d3\u05e3 \u05ea\u05d9\u05d0\u05d5\u05dd \u05e6\u05d9\u05d1\u05d5\u05e8\u05d9"
+    },
     "type": {
       "type": "string",
       "enum": [

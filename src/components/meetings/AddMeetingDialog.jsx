@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Send, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 const typeOptions = [
@@ -71,6 +71,33 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
 
   const [conflictWarning, setConflictWarning] = useState(null);
   const [checking, setChecking] = useState(false);
+  const [sendingLink, setSendingLink] = useState(false);
+
+  const schedulingToken = initialData?.scheduling_token;
+  const scheduleUrl = schedulingToken ? `${window.location.origin}/schedule?token=${schedulingToken}` : null;
+
+  const handleSendScheduleLink = async () => {
+    if (!schedulingToken || !initialData?.client_id) return;
+    setSendingLink(true);
+    const client = clients.find(c => c.id === initialData.client_id);
+    if (client?.phone) {
+      const typeLabel = typeOptions.find(t => t.value === initialData.type)?.label || initialData.type;
+      await base44.functions.invoke('sendWhatsApp', {
+        to: client.phone,
+        message: `שלום ${client.name} 👋\nנא לבחור מועד ל${typeLabel} בקישור:\n${scheduleUrl}`,
+      });
+      toast.success('קישור תיאום נשלח בווטסאפ');
+    } else {
+      toast.error('ללקוח אין מספר טלפון');
+    }
+    setSendingLink(false);
+  };
+
+  const handleCopyLink = () => {
+    if (!scheduleUrl) return;
+    navigator.clipboard.writeText(scheduleUrl);
+    toast.success('קישור הועתק');
+  };
 
   const doCreate = () => {
     if (!form.scheduled_at) {
@@ -195,6 +222,19 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
                   חזור לעריכה
                 </Button>
               </div>
+            </div>
+          )}
+
+          {/* Schedule link actions (only on edit, when token exists) */}
+          {initialData?.id && scheduleUrl && (
+            <div className="flex items-center gap-2 pt-1 border-t">
+              <Button type="button" size="sm" variant="outline" onClick={handleSendScheduleLink} disabled={sendingLink} className="flex-1">
+                {sendingLink ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                שלח קישור תיאום
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={handleCopyLink} title="העתק קישור">
+                <Copy className="w-3.5 h-3.5" />
+              </Button>
             </div>
           )}
 
