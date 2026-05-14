@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, FileText, ExternalLink, Link, Upload, Calendar } from 'lucide-react';
+import { Plus, Search, FileText } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { format } from 'date-fns';
 import AddQuoteDialog from '@/components/quotes/AddQuoteDialog';
@@ -101,7 +101,7 @@ export default function Quotes() {
       const pageH = (canvas.height * pageW) / canvas.width;
       pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
       pdf.save('quote_' + (clientName || 'client') + '.pdf');
-        try { await base44.functions.invoke('generateQuotePDF', { client_id: quote.client_id, title: quote.title, package_type: quote.package_type, total_amount: quote.total_amount, scope: quote.scope }); } catch(e) { console.log('email err', e); }
+
     } finally {
       document.body.removeChild(div);
     }
@@ -217,26 +217,8 @@ export default function Quotes() {
                   </div>
                   <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                     <span>{q.created_date ? format(new Date(q.created_date), 'dd/MM/yyyy') : ''}</span>
-                    <div className="flex items-center gap-2">
-                      {q.meeting_id && meetingsMap[q.meeting_id] && (
-                        <span className="flex items-center gap-0.5 text-violet-500" title="פגישה נקבעה">
-                          <Calendar className="w-3 h-3" />
-                        </span>
-                      )}
-                      {q.quote_type && (
-                        <span className="flex items-center gap-0.5">
-                          {q.quote_type === 'generated' && <FileText className="w-3 h-3" />}
-                          {q.quote_type === 'link' && <Link className="w-3 h-3" />}
-                          {q.quote_type === 'uploaded' && <Upload className="w-3 h-3" />}
-                        </span>
-                      )}
-                      {q.url && (
-                        <a href={q.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                          className="flex items-center gap-1 text-primary hover:underline">
-                          <ExternalLink className="w-3 h-3" />לינק
-                        </a>
-                      )}
-                          <button onClick={e => { e.stopPropagation(); generatePDF(q, clientMap[q.client_id]?.name); }} className="flex items-center gap-1 text-sm text-[#8B7355] hover:text-[#C9A96E]" title="הורד PDF עברית"><FileText className="w-3 h-3" />הורד PDF</button>
+                    <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                      <button onClick={() => generatePDF(q, clientMap[q.client_id]?.name)} className="flex items-center gap-1 text-sm text-[#8B7355] hover:text-[#C9A96E]" title="הורד PDF"><FileText className="w-3 h-3" />הורד PDF</button>
                     </div>
                   </div>
                 </CardContent>

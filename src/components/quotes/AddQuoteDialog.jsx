@@ -32,7 +32,7 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState(defaultForm);
   const [uploading, setUploading] = useState(false);
-  const [generating, setGenerating] = useState(false);
+
   const [showMeetingDialog, setShowMeetingDialog] = useState(false);
   const [editMeetingId, setEditMeetingId] = useState(null);
   const [meetingId, setMeetingId] = useState(initialData?.meeting_id || null);
@@ -127,20 +127,6 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
     setUploading(false);
   };
 
-  const handleGeneratePDF = async () => {
-    if (!form.client_id || !form.title || !form.total_amount) return;
-    setGenerating(true);
-    const res = await base44.functions.invoke('generateQuotePDF', {
-      client_id: form.client_id,
-      title: form.title,
-      package_type: form.package_type,
-      total_amount: Number(form.total_amount),
-      scope: form.scope,
-      meeting_date: form.meeting_date,
-    });
-    setForm(p => ({ ...p, file_url: res.data.file_url }));
-    setGenerating(false);
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -263,20 +249,6 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
             <div>
               <Label>תיאור / היקף *</Label>
               <Textarea value={form.scope} onChange={e => setForm(p => ({ ...p, scope: e.target.value }))} rows={3} placeholder="תיאור השירות, מה כלול בחבילה..." />
-              {form.file_url ? (
-                <div className="flex items-center gap-2 mt-2">
-                  <a href={form.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">צפה ב-PDF שנוצר</a>
-                  <Button type="button" variant="outline" size="sm" onClick={handleGeneratePDF} disabled={generating}>
-                    {generating ? <Loader2 className="w-3 h-3 animate-spin ml-1" /> : null}
-                    יצירה מחדש
-                  </Button>
-                </div>
-              ) : (
-                <Button type="button" variant="outline" size="sm" className="mt-2 gap-1" onClick={handleGeneratePDF} disabled={generating || !form.client_id || !form.title || !form.total_amount}>
-                  {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileText className="w-3 h-3" />}
-                  צור PDF מעוצב
-                </Button>
-              )}
             </div>
           )}
 
