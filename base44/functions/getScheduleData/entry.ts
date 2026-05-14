@@ -1,8 +1,8 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClient } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = createClient({ appId: Deno.env.get('BASE44_APP_ID') });
     const { token } = await req.json();
 
     if (!token) {
@@ -23,8 +23,7 @@ Deno.serve(async (req) => {
     }
 
     // Get client name
-    const clients = await base44.asServiceRole.entities.Client.filter({ id: meeting.client_id });
-    const client = clients[0];
+    const client = await base44.asServiceRole.entities.Client.get(meeting.client_id);
 
     const MEETING_TYPE_LABELS = {
       intro: 'פגישת היכרות',
