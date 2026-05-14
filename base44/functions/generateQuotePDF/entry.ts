@@ -30,7 +30,34 @@ Deno.serve(async (req) => {
     if (clients.length === 0) return Response.json({ error: 'Client not found' }, { status: 404 });
     const client = clients[0];
 
+    // Load Hebrew Heebo font for proper Hebrew/RTL rendering
+    let heeboBase64 = '';
+    try {
+      const cssResp = await fetch(
+        'https://fonts.googleapis.com/css?family=Heebo&subset=hebrew',
+        { headers: { 'User-Agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)' } }
+      );
+      const css = await cssResp.text();
+      const ttfLines = css.split('\n').filter(l => l.includes('.ttf'));
+      const ttfUrl = ttfLines[0] && ttfLines[0].match(/url\(([^)]+)\)/)?.[1]?.replace(/['"]/g, '');
+      if (ttfUrl) {
+        const fontResp = await fetch(ttfUrl);
+        const fontBuf = await fontResp.arrayBuffer();
+        const fontArr = new Uint8Array(fontBuf);
+        let binary = '';
+        fontArr.forEach(b => { binary += String.fromCharCode(b); });
+        heeboBase64 = btoa(binary);
+      }
+    } catch (fontErr) {
+      console.error('Hebrew font fetch failed:', fontErr);
+    }
+
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    if (heeboBase64) {
+      doc.addFileToVFS('Heebo.ttf', heeboBase64);
+      doc.addFont('Heebo.ttf', 'Heebo', 'normal');
+      doc.setFont('Heebo');
+    }
     const pageW = 210;
     const pageH = 297;
     const margin = 20;
