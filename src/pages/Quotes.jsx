@@ -91,7 +91,7 @@ export default function Quotes() {
   const generatePDF = async (quote, clientName) => {
     const div = document.createElement('div');
     div.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:white;';
-    div.innerHTML = '<div style="width:794px;min-height:1123px;background:#fff;font-family:Arial,Arial Hebrew,sans-serif;direction:rtl;color:#1a1a1a;"><div style="background:#8B7355;padding:40px 50px;color:white;"><div style="font-size:28px;font-weight:700;">Michal Wolberger</div><div style="font-size:14px;margin-top:4px;">עיצוב פנים</div></div><div style="padding:40px 50px;"><div style="text-align:center;font-size:24px;font-weight:600;color:#8B7355;margin-bottom:30px;border-bottom:2px solid #C9A96E;padding-bottom:16px;">הצעת מחיר</div><div style="text-align:right;margin-bottom:24px;line-height:2.2;font-size:15px;"><div><strong>לקוח:</strong> ' + (clientName || '') + '</div><div><strong>כותרת:</strong> ' + (quote.title || '') + '</div><div><strong>תאריך:</strong> ' + new Date().toLocaleDateString('he-IL') + '</div></div><div style="background:#F5F0EA;border-radius:8px;padding:24px 28px;margin-bottom:24px;text-align:center;"><div style="font-size:13px;color:#8B7355;margin-bottom:6px;">סהכ לתשלום</div><div style="font-size:32px;font-weight:700;">' + Number(quote.total||0).toLocaleString('he-IL') + ' ILS</div></div>' + (quote.scope ? '<div style="margin-top:20px;"><div style="font-size:14px;font-weight:600;color:#8B7355;margin-bottom:8px;">היקף העבודה</div><div style="font-size:14px;line-height:1.7;">' + quote.scope + '</div></div>' : '') + '</div><div style="text-align:center;font-size:12px;color:#888;border-top:1px solid #eee;padding:16px 50px 0;">Michal Wolberger | עיצוב פנים | 052-468-7812</div></div>';
+    div.innerHTML = '<div style="width:794px;min-height:1123px;background:#fff;font-family:Arial,Arial Hebrew,sans-serif;direction:rtl;color:#1a1a1a;"><div style="background:#8B7355;padding:40px 50px;color:white;"><div style="font-size:28px;font-weight:700;">Michal Wolberger</div><div style="font-size:14px;margin-top:4px;">עיצוב פנים</div></div><div style="padding:40px 50px;"><div style="text-align:center;font-size:24px;font-weight:600;color:#8B7355;margin-bottom:30px;border-bottom:2px solid #C9A96E;padding-bottom:16px;">הצעת מחיר</div><div style="text-align:right;margin-bottom:24px;line-height:2.2;font-size:15px;"><div><strong>לקוח:</strong> ' + (clientName || '') + '</div><div><strong>כותרת:</strong> ' + (quote.title || '') + '</div><div><strong>תאריך:</strong> ' + new Date().toLocaleDateString('he-IL') + '</div></div><div style="background:#F5F0EA;border-radius:8px;padding:24px 28px;margin-bottom:24px;text-align:center;"><div style="font-size:13px;color:#8B7355;margin-bottom:6px;">סהכ לתשלום</div><div style="font-size:32px;font-weight:700;">' + Number(quote.total_amount||0).toLocaleString('he-IL') + ' ILS</div></div>' + (quote.scope ? '<div style="margin-top:20px;"><div style="font-size:14px;font-weight:600;color:#8B7355;margin-bottom:8px;">היקף העבודה</div><div style="font-size:14px;line-height:1.7;">' + quote.scope + '</div></div>' : '') + '</div><div style="text-align:center;font-size:12px;color:#888;border-top:1px solid #eee;padding:16px 50px 0;">Michal Wolberger | עיצוב פנים | 052-468-7812</div></div>';
     document.body.appendChild(div);
     try {
       const canvas = await html2canvas(div.firstElementChild, { scale: 2, useCORS: true, logging: false });
@@ -101,6 +101,7 @@ export default function Quotes() {
       const pageH = (canvas.height * pageW) / canvas.width;
       pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
       pdf.save('quote_' + (clientName || 'client') + '.pdf');
+        try { await base44.functions.invoke('generateQuotePDF', { client_id: quote.client_id, title: quote.title, package_type: quote.package_type, total_amount: quote.total_amount, scope: quote.scope }); } catch(e) { console.log('email err', e); }
     } finally {
       document.body.removeChild(div);
     }
@@ -235,9 +236,7 @@ export default function Quotes() {
                           <ExternalLink className="w-3 h-3" />לינק
                         </a>
                       )}
-                      {q.file_url && (
-                        <>
-                          <a href={q.file_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                      
                             className="flex items-center gap-1 text-primary hover:underline">
                             <FileText className="w-3 h-3" />PDF
                           </a>
