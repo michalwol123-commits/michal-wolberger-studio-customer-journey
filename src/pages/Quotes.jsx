@@ -236,11 +236,13 @@ export default function Quotes() {
                         </a>
                       )}
                       {q.file_url && (
-                        <a href={q.file_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                          className="flex items-center gap-1 text-primary hover:underline">
-                          <FileText className="w-3 h-3" />PDF
-                        </a>
-                  <button onClick={e => { e.stopPropagation(); generatePDF(q, clientMap[q.client_id]?.name); }} className="flex items-center gap-1 text-sm text-[#8B7355] hover:text-[#C9A96E]" title="הורד PDF עברית"><FileText className="w-3 h-3" />הורד PDF</button>
+                        <>
+                          <a href={q.file_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                            className="flex items-center gap-1 text-primary hover:underline">
+                            <FileText className="w-3 h-3" />PDF
+                          </a>
+                          <button onClick={e => { e.stopPropagation(); generatePDF(q, clientMap[q.client_id]?.name); }} className="flex items-center gap-1 text-sm text-[#8B7355] hover:text-[#C9A96E]" title="הורד PDF עברית"><FileText className="w-3 h-3" />הורד PDF</button>
+                        </>
                       )}
                     </div>
                   </div>
