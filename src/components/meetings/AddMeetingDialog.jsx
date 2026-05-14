@@ -128,12 +128,6 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Skip conflict check on edit
-    if (initialData?.id) {
-      doCreate();
-      return;
-    }
-
     setChecking(true);
     setConflictWarning(null);
     const res = await base44.functions.invoke('checkCalendarConflict', {
