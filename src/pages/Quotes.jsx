@@ -236,13 +236,7 @@ export default function Quotes() {
                           <ExternalLink className="w-3 h-3" />לינק
                         </a>
                       )}
-                      
-                            className="flex items-center gap-1 text-primary hover:underline">
-                            <FileText className="w-3 h-3" />PDF
-                          </a>
                           <button onClick={e => { e.stopPropagation(); generatePDF(q, clientMap[q.client_id]?.name); }} className="flex items-center gap-1 text-sm text-[#8B7355] hover:text-[#C9A96E]" title="הורד PDF עברית"><FileText className="w-3 h-3" />הורד PDF</button>
-                        </>
-                      )}
                     </div>
                   </div>
                 </CardContent>
