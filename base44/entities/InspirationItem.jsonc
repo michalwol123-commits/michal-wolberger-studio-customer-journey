@@ -1,0 +1,67 @@
+{
+  "name": "InspirationItem",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "relationType": "Project",
+      "description": "\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 \u05de\u05e9\u05d5\u05d9\u05da"
+    },
+    "uploader_role": {
+      "type": "string",
+      "enum": [
+        "staff",
+        "client"
+      ],
+      "description": "\u05de\u05d9 \u05d4\u05e2\u05dc\u05d4: \u05e6\u05d5\u05d5\u05ea \u05d0\u05d5 \u05dc\u05e7\u05d5\u05d7"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "render",
+        "inspiration",
+        "texture",
+        "sketch",
+        "material"
+      ],
+      "description": "\u05e1\u05d5\u05d2 \u05d4\u05e4\u05e8\u05d9\u05d8"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "\u05e7\u05d9\u05e9\u05d5\u05e8 \u05dc\u05e7\u05d5\u05d1\u05e5"
+    },
+    "title": {
+      "type": "string",
+      "description": "\u05db\u05d5\u05ea\u05e8\u05ea"
+    },
+    "client_reaction": {
+      "type": "string",
+      "enum": [
+        "love",
+        "like",
+        "neutral",
+        "dislike",
+        "none"
+      ],
+      "default": "none",
+      "description": "\u05ea\u05d2\u05d5\u05d1\u05ea \u05d4\u05dc\u05e7\u05d5\u05d7"
+    },
+    "client_comment": {
+      "type": "string",
+      "description": "\u05d4\u05e2\u05e8\u05ea \u05d4\u05dc\u05e7\u05d5\u05d7"
+    },
+    "is_approved": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d4\u05d0\u05dd \u05de\u05d0\u05d5\u05e9\u05e8"
+    },
+    "order": {
+      "type": "number",
+      "default": 0,
+      "description": "\u05e1\u05d3\u05e8 \u05ea\u05e6\u05d5\u05d2\u05d4"
+    }
+  },
+  "required": [
+    "project_id"
+  ]
+}
