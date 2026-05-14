@@ -71,6 +71,11 @@ export default function ScheduleMeeting() {
 
   if (scheduled) {
     const dt = new Date(scheduledTime);
+    const fmt = (d) => d.toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
+    const start = new Date(scheduledTime);
+    const end = new Date(start.getTime() + (meetingData.duration || 45) * 60 * 1000);
+    const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(meetingData.type_label + ' - Michal Wolberger Studio')}&dates=${fmt(start)}/${fmt(end)}&location=${encodeURIComponent(meetingData.location || '')}`;
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
         <div className="text-center space-y-4 max-w-sm">
@@ -80,7 +85,14 @@ export default function ScheduleMeeting() {
             {meetingData.type_label} — {dt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             {' '}בשעה {dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
           </p>
-          <p className="text-sm text-muted-foreground">תקבלו אישור במייל בהקדם 😊</p>
+          <a
+            href={gcalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          >
+            הוסף ליומן Google
+          </a>
         </div>
       </div>
     );

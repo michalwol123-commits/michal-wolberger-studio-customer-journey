@@ -10,7 +10,6 @@ export default function ScheduleTimePicker({ meetingData, token, onScheduled }) 
   const [selectedDateTime, setSelectedDateTime] = useState(
     meetingData.scheduled_at ? meetingData.scheduled_at.slice(0, 16) : ''
   );
-  const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [conflict, setConflict] = useState(null);
 
@@ -22,7 +21,6 @@ export default function ScheduleTimePicker({ meetingData, token, onScheduled }) 
     const res = await base44.functions.invoke('submitSchedule', {
       token,
       scheduled_at: new Date(selectedDateTime).toISOString(),
-      client_email: email || undefined,
     });
 
     setSubmitting(false);
@@ -80,18 +78,6 @@ export default function ScheduleTimePicker({ meetingData, token, onScheduled }) 
             onChange={e => { setSelectedDateTime(e.target.value); setConflict(null); }}
             min={minDateTime}
             className="text-base"
-          />
-        </div>
-
-        {/* Email input */}
-        <div>
-          <Label>כתובת מייל לאישור</Label>
-          <Input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            dir="ltr"
           />
         </div>
 
