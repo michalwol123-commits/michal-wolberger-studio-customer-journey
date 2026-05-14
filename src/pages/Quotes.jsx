@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, FileText } from 'lucide-react';
+import { Plus, Search, FileText, Send } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { format } from 'date-fns';
 import AddQuoteDialog from '@/components/quotes/AddQuoteDialog';
@@ -72,6 +72,11 @@ export default function Quotes() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Quote.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['quotes'] }),
+  });
+
+  const markSentMutation = useMutation({
+    mutationFn: (id) => base44.entities.Quote.update(id, { status: 'sent' }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['quotes'] }); toast.success('הסטטוס שונה ל״נשלח״'); },
   });
 
   const bulkDeleteMutation = useMutation({
@@ -218,6 +223,9 @@ export default function Quotes() {
                   <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                     <span>{q.created_date ? format(new Date(q.created_date), 'dd/MM/yyyy') : ''}</span>
                     <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                      {q.status === 'draft' && (
+                        <button onClick={() => markSentMutation.mutate(q.id)} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800" title="סמן כנשלח"><Send className="w-3 h-3" /></button>
+                      )}
                       <button onClick={() => generatePDF(q, clientMap[q.client_id]?.name)} className="flex items-center gap-1 text-sm text-[#8B7355] hover:text-[#C9A96E]" title="הורד PDF"><FileText className="w-3 h-3" />הורד PDF</button>
                     </div>
                   </div>
