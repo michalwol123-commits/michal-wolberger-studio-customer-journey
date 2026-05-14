@@ -9,17 +9,17 @@ export default function PortalTimeline({ project, selectedStage, onSelectStage }
         const status = project[stage.key] || 'pending';
         const isCurrent = project.stage_current === stage.num;
         const isSelected = selectedStage === stage.num;
-        const isClickable = status === 'completed' || status === 'in_progress' || isCurrent;
+        // All stages are clickable for planning view navigation
+        const isClickable = true;
 
         return (
           <button
             key={stage.key}
             onClick={() => onSelectStage(stage.num)}
-            disabled={!isClickable && status === 'pending'}
+            disabled={false}
             className={`w-full flex items-start gap-3 text-right rounded-lg px-2 py-1.5 transition-all ${
               isSelected ? 'bg-primary/10 ring-1 ring-primary/30' :
-              isClickable ? 'hover:bg-muted/50 cursor-pointer' :
-              'opacity-50 cursor-default'
+              'hover:bg-muted/50 cursor-pointer'
             }`}
           >
             <div className="flex flex-col items-center">

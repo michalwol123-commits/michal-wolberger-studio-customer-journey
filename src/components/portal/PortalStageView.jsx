@@ -10,6 +10,7 @@ import PortalStagePayments from './PortalStagePayments';
 import PortalQuestionnaireView from './PortalQuestionnaireView';
 import DetailedQuestionnaireForm from './DetailedQuestionnaireForm';
 import DetailedQuestionnaireResults from './DetailedQuestionnaireResults';
+import PortalDesignMap from './PortalDesignMap';
 
 // Define what content each stage shows in the portal
 const STAGE_CONTENT = {
@@ -145,6 +146,11 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Design Map (stages 4+) */}
+      {stageNum >= 4 && (
+        <PortalDesignMap projectId={project.id} stageFilter={stageNum} />
       )}
 
       {/* Payments */}

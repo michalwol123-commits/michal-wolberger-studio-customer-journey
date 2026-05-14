@@ -9,6 +9,7 @@ import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import StageGallery from './StageGallery';
 import StageAdvanceButton from './StageAdvanceButton';
 import StageChecklist from './StageChecklist';
+import ProjectDesignMap from '@/components/design/ProjectDesignMap';
 
 const VISUAL_STAGES = [8]; // stages that get gallery view
 
@@ -65,6 +66,11 @@ export default function StagePanel({ project, stageNum, onNavigateTab }) {
       {/* Stage Checklist (stages 4-13) */}
       {stageNum >= 4 && (
         <StageChecklist project={project} stageNum={stageNum} onNavigateTab={onNavigateTab} />
+      )}
+
+      {/* Design Map (stages 4-13) */}
+      {stageNum >= 4 && (
+        <ProjectDesignMap projectId={project.id} stageFilter={stageNum} />
       )}
 
       {/* Visual gallery for stage 8 */}

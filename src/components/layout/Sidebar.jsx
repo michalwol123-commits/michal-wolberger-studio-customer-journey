@@ -18,7 +18,8 @@ import {
   BookOpen,
   ClipboardList,
   ChevronRight,
-  X
+  X,
+  Eye
 } from 'lucide-react';
 import useCurrentUser from '@/lib/useCurrentUser';
 
@@ -39,6 +40,7 @@ const navItems = [
   { path: '/q', label: 'שאלון קצר', icon: ClipboardList, adminOnly: true },
   { path: '/settings', label: 'הגדרות', icon: Settings, adminOnly: true },
   { path: '/user-guide', label: 'מדריך למשתמשת', icon: BookOpen, adminOnly: true },
+  { path: '/portal-demo', label: 'דוגמת פורטל', icon: Eye, adminOnly: true },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
