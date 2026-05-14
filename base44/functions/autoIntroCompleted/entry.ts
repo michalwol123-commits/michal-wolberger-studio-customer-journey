@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { meetingId, action } = await req.json();
+    const { meetingId, action, meetingPrice } = await req.json();
     if (!meetingId || !action) {
       return Response.json({ error: 'Missing meetingId or action' }, { status: 400 });
     }
@@ -40,12 +40,16 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.Client.update(client.id, { status: 'qualified' });
 
       // Create quote presentation meeting
-      await base44.asServiceRole.entities.Meeting.create({
+      const meetingData = {
         client_id: client.id,
         type: 'quote_presentation',
         status: 'scheduled',
         duration: 60,
-      });
+      };
+      if (meetingPrice != null && meetingPrice > 0) {
+        meetingData.meeting_price = Number(meetingPrice);
+      }
+      await base44.asServiceRole.entities.Meeting.create(meetingData);
 
       // Log communication
       await base44.asServiceRole.entities.Communication.create({

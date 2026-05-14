@@ -239,7 +239,7 @@ export default function Meetings() {
       <IntroCompletedDialog
         open={!!introDialogMeeting}
         onOpenChange={(open) => { if (!open) setIntroDialogMeeting(null); }}
-        onContinue={() => introActionMutation.mutate({ meetingId: introDialogMeeting.id, action: 'continue' })}
+        onContinue={({ meetingPrice }) => introActionMutation.mutate({ meetingId: introDialogMeeting.id, action: 'continue', meetingPrice })}
         onNotInterested={() => introActionMutation.mutate({ meetingId: introDialogMeeting.id, action: 'not_interested' })}
         loading={introActionMutation.isPending}
       />

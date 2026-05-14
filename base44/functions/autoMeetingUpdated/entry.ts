@@ -104,6 +104,10 @@ Deno.serve(async (req) => {
         const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         const timeStr = scheduledAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
 
+        const priceRow = (data.type === 'quote_presentation' && data.meeting_price)
+          ? `<tr><td style="padding: 8px; font-weight: bold; color: #555;">מחיר פגישה:</td><td style="padding: 8px;">${data.meeting_price}₪</td></tr>`
+          : '';
+
         const emailBody = `
           <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #8B6F47;">שלום ${client.name},</h2>
@@ -114,6 +118,7 @@ Deno.serve(async (req) => {
               <tr><td style="padding: 8px; font-weight: bold; color: #555;">שעה:</td><td style="padding: 8px;">${timeStr}</td></tr>
               <tr><td style="padding: 8px; font-weight: bold; color: #555;">משך:</td><td style="padding: 8px;">${duration} דקות</td></tr>
               ${data.location ? `<tr><td style="padding: 8px; font-weight: bold; color: #555;">מיקום:</td><td style="padding: 8px;">${data.location}</td></tr>` : ''}
+              ${priceRow}
             </table>
             <p>נשמח לראות אותך! 😊</p>
             <p style="color: #999; font-size: 12px; margin-top: 24px;">הודעה זו נשלחה אוטומטית מהסטודיו</p>

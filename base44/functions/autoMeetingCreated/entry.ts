@@ -45,9 +45,14 @@ Deno.serve(async (req) => {
         const meetingLabel = MEETING_TYPE_LABELS[data.type] || data.type || 'פגישה';
         const scheduleUrl = `${Deno.env.get('BASE44_APP_URL') || 'https://app.base44.com'}/schedule?token=${schedulingToken}`;
 
+        let whatsappMsg = `שלום ${client.name} 👋\nנפתחה עבורך ${meetingLabel}.\nנא לבחור מועד נוח בקישור:\n${scheduleUrl}`;
+        if (data.type === 'quote_presentation' && data.meeting_price) {
+          whatsappMsg += `\n\nמחיר הפגישה: ${data.meeting_price}₪`;
+        }
+
         await base44.asServiceRole.functions.invoke('sendWhatsApp', {
           to: client.phone,
-          message: `שלום ${client.name} 👋\nנפתחה עבורך ${meetingLabel}.\nנא לבחור מועד נוח בקישור:\n${scheduleUrl}`,
+          message: whatsappMsg,
         });
 
         await base44.asServiceRole.entities.Communication.create({
@@ -60,6 +65,18 @@ Deno.serve(async (req) => {
           status: 'sent',
           channel: 'base44_native',
         });
+      }
+
+      // Create Payment record for quote_presentation with meeting_price
+      if (data.type === 'quote_presentation' && data.meeting_price) {
+        await base44.asServiceRole.entities.Payment.create({
+          client_id: client.id,
+          milestone: 'פגישת הצגת הצעת מחיר',
+          amount: Number(data.meeting_price),
+          due_date: new Date().toISOString().split('T')[0],
+          status: 'pending',
+        });
+        console.log('Payment created for meeting price:', data.meeting_price);
       }
 
       return Response.json({ status: 'ok', scheduling_token: schedulingToken, reason: 'no scheduled_at, link sent' });

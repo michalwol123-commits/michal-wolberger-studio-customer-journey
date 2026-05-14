@@ -23,7 +23,7 @@ const typeOptions = [
 const defaultForm = {
   client_id: '', project_id: '', quote_id: '', type: 'intro',
   scheduled_at: '', duration: 45, location: '',
-  status: 'scheduled', summary: ''
+  status: 'scheduled', summary: '', meeting_price: ''
 };
 
 export default function AddMeetingDialog({ open, onOpenChange, initialData, onCreated }) {
@@ -52,6 +52,7 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
         location: initialData.location || '',
         status: initialData.status || 'scheduled',
         summary: initialData.summary || '',
+        meeting_price: initialData.meeting_price || '',
       });
     } else {
       setForm(defaultForm);
@@ -107,9 +108,11 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
       ...form,
       duration: Number(form.duration),
       scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : undefined,
+      meeting_price: form.meeting_price ? Number(form.meeting_price) : undefined,
     };
     if (!payload.project_id) delete payload.project_id;
     if (!payload.quote_id) delete payload.quote_id;
+    if (!payload.meeting_price) delete payload.meeting_price;
     setConflictWarning(null);
     mutation.mutate(payload);
   };
@@ -194,6 +197,13 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
             <Label>מיקום</Label>
             <Input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="כתובת או לינק Zoom" />
           </div>
+
+          {form.type === 'quote_presentation' && (
+            <div>
+              <Label>מחיר פגישה (₪)</Label>
+              <Input type="number" value={form.meeting_price} onChange={e => setForm(p => ({ ...p, meeting_price: e.target.value }))} placeholder="250" min={0} />
+            </div>
+          )}
 
           <div>
             <Label>סיכום / הערות</Label>
