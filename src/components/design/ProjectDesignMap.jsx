@@ -89,7 +89,7 @@ export default function ProjectDesignMap({ projectId, stageFilter }) {
                 <FileUp className="w-4 h-4" />ייבוא PDF
               </Button>
               <Button size="sm" onClick={() => { setEditItem(null); setShowAdd(true); }} className="gap-1">
-                <Plus className="w-4 h-4" />הוספת פריט
+                <Plus className="w-4 h-4" />+ פריט חדש
               </Button>
             </div>
           </div>

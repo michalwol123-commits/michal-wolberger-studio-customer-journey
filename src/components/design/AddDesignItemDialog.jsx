@@ -88,7 +88,7 @@ export default function AddDesignItemDialog({ open, onOpenChange, projectId, edi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="font-heading">{editItem ? 'עריכת פריט' : 'הוספת פריט חדש'}</DialogTitle>
+          <DialogTitle className="font-heading">{editItem ? 'עריכת פריט במפת פרויקט' : 'הוספת פריט למפת פרויקט'}</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4">

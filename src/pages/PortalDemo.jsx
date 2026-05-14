@@ -90,7 +90,7 @@ export default function PortalDemo() {
           <div className="flex items-center gap-3">
             {project && (
               <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setShowDesignForm(true)}>
-                <Plus className="w-3.5 h-3.5 ml-1" />טופס פריט עיצובי
+                <Plus className="w-3.5 h-3.5 ml-1" />מפת פרויקט
               </Button>
             )}
             <span className="text-xs text-muted-foreground">פרויקט:</span>
