@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowRight, Eye } from 'lucide-react';
+import { ArrowRight, Eye, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import AddDesignItemDialog from '@/components/design/AddDesignItemDialog';
 import PortalLayout from '@/components/portal/PortalLayout';
 import PortalTimeline from '@/components/portal/PortalTimeline';
 import PortalStageView from '@/components/portal/PortalStageView';
@@ -19,6 +20,7 @@ import PortalDocApproval from '@/components/portal/PortalDocApproval';
 export default function PortalDemo() {
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [selectedStage, setSelectedStage] = useState(null);
+  const [showDesignForm, setShowDesignForm] = useState(false);
 
   const { data: projects = [], isLoading: loadingProjects } = useQuery({
     queryKey: ['projects'],
@@ -85,7 +87,12 @@ export default function PortalDemo() {
             <span className="text-sm font-medium">תצוגת דוגמת פורטל</span>
             <span className="text-xs text-muted-foreground">(כך הלקוח רואה את הפורטל)</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {project && (
+              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setShowDesignForm(true)}>
+                <Plus className="w-3.5 h-3.5 ml-1" />טופס פריט עיצובי
+              </Button>
+            )}
             <span className="text-xs text-muted-foreground">פרויקט:</span>
             <Select value={project?.id || ''} onValueChange={v => { setSelectedProjectId(v); setSelectedStage(null); }}>
               <SelectTrigger className="w-48 h-8 text-xs">
@@ -152,6 +159,15 @@ export default function PortalDemo() {
             </div>
           </div>
         </div>
+      )}
+      {project && (
+        <AddDesignItemDialog
+          open={showDesignForm}
+          onOpenChange={setShowDesignForm}
+          projectId={project.id}
+          defaultStage={currentStage}
+          onSave={() => {}}
+        />
       )}
     </div>
   );
