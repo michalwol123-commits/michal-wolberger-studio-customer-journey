@@ -74,7 +74,13 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
   const [checking, setChecking] = useState(false);
   const [sendingLink, setSendingLink] = useState(false);
 
-  const schedulingToken = initialData?.scheduling_token;
+  const { data: freshMeeting } = useQuery({
+    queryKey: ['meeting-fresh', initialData?.id],
+    queryFn: () => base44.entities.Meeting.filter({ id: initialData.id }),
+    enabled: !!initialData?.id && open,
+  });
+
+  const schedulingToken = freshMeeting?.[0]?.scheduling_token || initialData?.scheduling_token;
   const scheduleUrl = schedulingToken ? `${window.location.origin}/schedule?token=${schedulingToken}` : null;
 
   const handleSendScheduleLink = async () => {
