@@ -25,6 +25,9 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
   const [showRenderSuggest, setShowRenderSuggest] = useState(false);
   const [renderPrompt, setRenderPrompt] = useState('');
   const [submittingRender, setSubmittingRender] = useState(false);
+  const [showLinkForm, setShowLinkForm] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkTitle, setLinkTitle] = useState('');
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['inspiration-items-portal', projectId],
@@ -57,7 +60,8 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
     const r = await base44.integrations.Core.UploadFile({ file });
     if (r?.file_url) {
       await base44.entities.InspirationItem.create({
-        project_id: projectId, uploader_role: 'client', type: 'inspiration',
+        project_id: projectId, uploader_role: 'client',
+        type: (activeFilter !== 'all' && activeFilter !== 'render') ? activeFilter : 'inspiration',
         file_url: r.file_url, title: 'השראה שלי: ' + file.name.replace(/\.[^.]+$/, ''),
         is_approved: true, order: items.length + 100,
       });
@@ -135,7 +139,11 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
             <span className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-medium z-10 ${item.uploader_role === 'staff' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'}`}>
               {item.uploader_role === 'staff' ? 'מיכל' : 'לקוחה'}
             </span>
-            {item.file_url ? (
+            {item.ai_prompt && !item.file_url && !item.external_url ? (
+              <div className="flex items-center min-h-[80px] p-4 italic text-sm" style={{background:'#f3f0eb', color:'#555'}}>
+                💡 הצעת רנדר: {item.ai_prompt}
+              </div>
+            ) : item.file_url ? (
               <img src={item.file_url} alt={item.title || ''} className="w-full object-cover" />
             ) : item.external_url ? (
               <a href={item.external_url} target="_blank" rel="noopener noreferrer"
@@ -200,16 +208,39 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
         ))}
       </div>
 
-      {/* Client upload */}
+      {/* Client upload & link */}
       <div className="border-2 border-dashed border-border rounded-xl p-6 text-center space-y-3">
         <Upload size={24} className="mx-auto text-muted-foreground/40" />
         <p className="text-sm text-muted-foreground">יש לך תמונות השראה משלך? העלי כאן</p>
-        <label className="cursor-pointer">
-          <span className="inline-block px-4 py-2 border border-primary text-primary rounded-lg text-sm hover:bg-accent/20">
-            {uploading ? 'מעלה...' : 'בחרי תמונה'}
-          </span>
-          <input type="file" accept="image/*" className="hidden" onChange={handleClientUpload} disabled={uploading} />
-        </label>
+        <div className="flex justify-center gap-3 flex-wrap">
+          <label className="cursor-pointer">
+            <span className="inline-block px-4 py-2 border border-primary text-primary rounded-lg text-sm hover:bg-accent/20">
+              {uploading ? 'מעלה...' : 'בחרי תמונה'}
+            </span>
+            <input type="file" accept="image/*" className="hidden" onChange={handleClientUpload} disabled={uploading} />
+          </label>
+          <button onClick={() => setShowLinkForm(!showLinkForm)}
+            className="px-4 py-2 border border-primary text-primary rounded-lg text-sm hover:bg-accent/20">
+            🔗 הוסף קישור
+          </button>
+        </div>
+        {showLinkForm && (
+          <div className="mt-3 p-3 bg-muted/30 border rounded-lg space-y-2 text-right">
+            <input placeholder="כתובת URL (Pinterest, Houzz...)" value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg text-sm" dir="ltr" />
+            <input placeholder="כותרת (אופציונלי)" value={linkTitle} onChange={e => setLinkTitle(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg text-sm" />
+            <Button size="sm" disabled={!linkUrl.trim()} onClick={async () => {
+              await base44.entities.InspirationItem.create({
+                project_id: projectId, uploader_role: 'client',
+                type: (activeFilter !== 'all' && activeFilter !== 'render') ? activeFilter : 'inspiration',
+                external_url: linkUrl.trim(), title: linkTitle.trim() || linkUrl.trim(),
+                is_approved: false, order: items.length,
+              });
+              setLinkUrl(''); setLinkTitle(''); setShowLinkForm(false); refetch();
+            }}>הוסף</Button>
+          </div>
+        )}
       </div>
 
       {/* Concept approval */}

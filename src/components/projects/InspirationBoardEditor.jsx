@@ -200,7 +200,11 @@ export default function InspirationBoardEditor({ projectId, project }) {
           {filtered.map(item => (
             <div key={item.id} className="relative group rounded-xl overflow-hidden border bg-card shadow-sm">
               <div className="aspect-square bg-muted relative">
-                {item.file_url ? (
+                {item.ai_prompt && !item.file_url && !item.external_url ? (
+                  <div className="flex items-center justify-center h-full p-4 italic text-sm" style={{background:'#f3f0eb', color:'#8B6914', border:'1px dashed #C9A96E'}}>
+                    💡 הצעת רנדר מהלקוחה: {item.ai_prompt}
+                  </div>
+                ) : item.file_url ? (
                   <img src={item.file_url} alt={item.title || ''} className="w-full h-full object-cover" />
                 ) : item.external_url ? (
                   <a href={item.external_url} target="_blank" rel="noopener noreferrer"
