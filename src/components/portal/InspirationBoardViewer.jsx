@@ -41,7 +41,7 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
   });
 
   const refetch = () => queryClient.invalidateQueries({ queryKey: ['inspiration-items-portal', projectId] });
-  const refetchProject = () => queryClient.invalidateQueries({ queryKey: ['project'] });
+  const refetchProject = () => queryClient.invalidateQueries({ queryKey: ['portal-projects'] });
 
   // Categories that actually have items
   const categoriesWithItems = APPROVABLE_CATEGORIES.filter(cat =>
@@ -74,7 +74,7 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
         project_id: projectId, uploader_role: 'client',
         type: (activeFilter !== 'all' && activeFilter !== 'render') ? activeFilter : 'inspiration',
         file_url: r.file_url, title: 'השראה שלי: ' + file.name.replace(/\.[^.]+$/, ''),
-        is_approved: true, order: items.length + 100,
+        is_approved: false, order: items.length + 100,
       });
       refetch();
     }
@@ -165,7 +165,7 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
             <Textarea placeholder="תארי מה תרצי לראות בפרויקט..." value={renderPrompt} onChange={e => setRenderPrompt(e.target.value)} className="text-right" rows={3} />
             <Button size="sm" disabled={submittingRender || !renderPrompt.trim()} onClick={async () => {
               setSubmittingRender(true);
-              await base44.entities.InspirationItem.create({ project_id: projectId, uploader_role: 'client', type: 'render', ai_prompt: renderPrompt, title: 'הצעת רנדר', is_approved: false, order: items.length });
+              await base44.entities.InspirationItem.create({ project_id: projectId, uploader_role: 'client', type: (activeFilter !== 'all' && activeFilter !== 'render') ? activeFilter : 'inspiration', ai_prompt: renderPrompt, title: 'הצעת רנדר', is_approved: false, order: items.length });
               setRenderPrompt(''); setShowRenderSuggest(false); setSubmittingRender(false); refetch();
             }}>{submittingRender ? 'שולח...' : 'שלח הצעה'}</Button>
           </div>
