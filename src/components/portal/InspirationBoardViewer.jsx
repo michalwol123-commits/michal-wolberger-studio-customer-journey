@@ -12,6 +12,7 @@ const REACTIONS = [
   { value: 'dislike', emoji: '👎', label: 'לא בשבילי' },
 ];
 const TYPE_LABELS = { render: 'רנדר', inspiration: 'השראה', texture: 'טקסטורה', sketch: 'סקיצה', material: 'חומרים' };
+const FILTER_LABELS = { all: 'הכל', render: 'רנדרים', inspiration: 'השראה', texture: 'טקסטורות', sketch: 'סקיצות', material: 'חומרים' };
 
 export default function InspirationBoardViewer({ projectId, project, onConceptApproved }) {
   const queryClient = useQueryClient();
@@ -20,6 +21,10 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
   const [uploading, setUploading] = useState(false);
   const [approving, setApproving] = useState(false);
   const [conceptApproved, setConceptApproved] = useState(project?.concept_status === 'approved');
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [showRenderSuggest, setShowRenderSuggest] = useState(false);
+  const [renderPrompt, setRenderPrompt] = useState('');
+  const [submittingRender, setSubmittingRender] = useState(false);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['inspiration-items-portal', projectId],
@@ -94,10 +99,42 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
         <p className="text-muted-foreground mt-1 text-sm">עברי על התמונות, הגיבי לכל אחת ובסוף אשרי את הקונספט</p>
       </div>
 
+      {/* Filter tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {Object.entries(FILTER_LABELS).map(([key, label]) => (
+          <button key={key} onClick={() => setActiveFilter(key)}
+            className={`px-3 py-1 rounded-full text-sm border transition-colors ${activeFilter === key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:border-primary'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Suggest render */}
+      <div>
+        <button onClick={() => setShowRenderSuggest(!showRenderSuggest)}
+          className="flex items-center gap-2 text-sm text-primary hover:underline">
+          💡 הצע רנדר למיכל
+        </button>
+        {showRenderSuggest && (
+          <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+            <Textarea placeholder="תארי מה תרצי לראות בפרויקט..." value={renderPrompt} onChange={e => setRenderPrompt(e.target.value)} className="text-right" rows={3} />
+            <Button size="sm" disabled={submittingRender || !renderPrompt.trim()} onClick={async () => {
+              setSubmittingRender(true);
+              await base44.entities.InspirationItem.create({ project_id: projectId, uploader_role: 'client', type: 'render', ai_prompt: renderPrompt, title: 'הצעת רנדר', is_approved: false, order: items.length });
+              setRenderPrompt(''); setShowRenderSuggest(false); setSubmittingRender(false); refetch();
+            }}>{submittingRender ? 'שולח...' : 'שלח הצעה'}</Button>
+          </div>
+        )}
+      </div>
+
       {/* Masonry grid */}
       <div className="columns-2 md:columns-3 gap-3">
-        {items.map(item => (
-          <div key={item.id} className="break-inside-avoid mb-3 rounded-xl overflow-hidden border bg-card shadow-sm">
+        {(activeFilter === 'all' ? items : items.filter(i => i.type === activeFilter)).map(item => (
+          <div key={item.id} className="break-inside-avoid mb-3 rounded-xl overflow-hidden border bg-card shadow-sm relative">
+            {/* Uploader badge */}
+            <span className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-medium z-10 ${item.uploader_role === 'staff' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'}`}>
+              {item.uploader_role === 'staff' ? 'מיכל' : 'לקוחה'}
+            </span>
             {item.file_url ? (
               <img src={item.file_url} alt={item.title || ''} className="w-full object-cover" />
             ) : item.external_url ? (
@@ -147,6 +184,16 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
                 <Button size="sm" variant="outline" className="text-xs w-full" onClick={() => handleComment(item)} disabled={savingId === item.id + '_c'}>
                   שמור הערה
                 </Button>
+              )}
+
+              {/* Edit/delete for client items */}
+              {item.uploader_role === 'client' && (
+                <div className="flex gap-2 mt-1">
+                  <button onClick={() => { const t = prompt('כותרת חדשה:', item.title); if(t) base44.entities.InspirationItem.update(item.id, { title: t }).then(refetch); }}
+                    className="text-xs text-gray-500 hover:text-gray-700 underline">עריכה</button>
+                  <button onClick={() => { if(confirm('למחוק?')) base44.entities.InspirationItem.delete(item.id).then(refetch); }}
+                    className="text-xs text-red-400 hover:text-red-600 underline">מחיקה</button>
+                </div>
               )}
             </div>
           </div>

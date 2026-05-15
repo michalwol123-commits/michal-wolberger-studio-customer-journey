@@ -110,6 +110,13 @@ export default function InspirationBoardEditor({ projectId, project }) {
 
   return (
     <div className="space-y-4" dir="rtl">
+      {/* Concept approved banner */}
+      {project?.concept_status === 'approved' && (
+        <div className="flex items-center gap-2 p-3 mb-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm font-medium">
+          <span>✓</span><span>הלקוחה אישרה את הקונספט העיצובי</span>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex gap-2 flex-wrap items-center">
         {['all', ...Object.keys(TYPE_LABELS)].map(t => (
@@ -230,6 +237,9 @@ export default function InspirationBoardEditor({ projectId, project }) {
                   <p className="text-xs mt-0.5">
                     {item.client_reaction === 'love' ? '❤️' : item.client_reaction === 'like' ? '👍' : item.client_reaction === 'neutral' ? '😐' : '👎'}
                   </p>
+                )}
+                {item.client_comment && (
+                  <p className="text-xs text-muted-foreground mt-1 italic border-r-2 border-amber-300 pr-2">"{item.client_comment}"</p>
                 )}
               </div>
             </div>
