@@ -128,6 +128,10 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.scheduled_at) {
+      doCreate();
+      return;
+    }
     setChecking(true);
     setConflictWarning(null);
     const res = await base44.functions.invoke('checkCalendarConflict', {
