@@ -1,9 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Upload, Link, CheckCircle, Clock, XCircle } from 'lucide-react';
+
+function LinkPreviewCard({ url, title }) {
+  const [preview, setPreview] = useState(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!cancelled && data?.data?.image?.url) {
+          setPreview(data.data.image.url);
+        } else {
+          setFailed(true);
+        }
+      })
+      .catch(() => { if (!cancelled) setFailed(true); });
+    return () => { cancelled = true; };
+  }, [url]);
+
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+      {preview ? (
+        <img src={preview} alt={title || url} className="w-full object-cover" />
+      ) : (
+        <div className="flex flex-col items-center justify-center py-8 px-4 gap-2 text-primary hover:bg-accent/20">
+          {failed ? <Link size={28} /> : <Loader2 size={28} className="animate-spin text-muted-foreground" />}
+          <span className="text-xs text-center text-muted-foreground">{title || url}</span>
+        </div>
+      )}
+    </a>
+  );
+}
 
 const REACTIONS = [
   { value: 'love', emoji: '❤️', label: 'אוהבת!' },
@@ -46,16 +79,19 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['inspiration-items-portal', projectId],
-    queryFn: () => base44.entities.InspirationItem.filter({ project_id: projectId, is_approved: true }, 'order'),
+    queryFn: () => base44.entities.InspirationItem.filter({ project_id: projectId }, 'order'),
     enabled: !!projectId,
   });
+
+  // Show approved items + all client-uploaded items (even if not yet approved by staff)
+  const visibleItems = items.filter(i => i.is_approved || i.uploader_role === 'client');
 
   const refetch = () => queryClient.invalidateQueries({ queryKey: ['inspiration-items-portal', projectId] });
   const refetchProject = () => queryClient.invalidateQueries({ queryKey: ['portal-projects'] });
 
   // Categories that actually have items
   const categoriesWithItems = APPROVABLE_CATEGORIES.filter(cat =>
-    items.some(i => i.type === cat)
+    visibleItems.some(i => i.type === cat)
   );
 
   const handleReaction = async (item, reaction) => {
@@ -184,7 +220,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
 
       {/* Masonry grid */}
       <div className="columns-2 md:columns-3 gap-3">
-        {(activeFilter === 'all' ? items : items.filter(i => i.type === activeFilter)).map(item => (
+        {(activeFilter === 'all' ? visibleItems : visibleItems.filter(i => i.type === activeFilter)).map(item => (
           <div key={item.id} className="break-inside-avoid mb-3 rounded-xl overflow-hidden border bg-card shadow-sm relative">
             <span className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-medium z-10 ${item.uploader_role === 'staff' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'}`}>
               {item.uploader_role === 'staff' ? 'מיכל' : 'לקוחה'}
@@ -196,11 +232,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
             ) : item.file_url ? (
               <img src={item.file_url} alt={item.title || ''} className="w-full object-cover" />
             ) : item.external_url ? (
-              <a href={item.external_url} target="_blank" rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center py-8 px-4 gap-2 text-primary hover:bg-accent/20">
-                <Link size={28} />
-                <span className="text-xs text-center text-muted-foreground">{item.title || item.external_url}</span>
-              </a>
+              <LinkPreviewCard url={item.external_url} title={item.title} />
             ) : null}
 
             <div className="p-3 space-y-2">

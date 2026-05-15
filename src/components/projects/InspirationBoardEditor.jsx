@@ -1,10 +1,43 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Upload, Link, Sparkles, Trash2, Eye, EyeOff, Send, XCircle, CheckCircle } from 'lucide-react';
+
+function LinkPreviewCard({ url, title }) {
+  const [preview, setPreview] = useState(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!cancelled && data?.data?.image?.url) {
+          setPreview(data.data.image.url);
+        } else {
+          setFailed(true);
+        }
+      })
+      .catch(() => { if (!cancelled) setFailed(true); });
+    return () => { cancelled = true; };
+  }, [url]);
+
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center h-full">
+      {preview ? (
+        <img src={preview} alt={title || url} className="w-full h-full object-cover" />
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground hover:text-primary">
+          {failed ? <Link size={32} /> : <Loader2 size={32} className="animate-spin" />}
+          <span className="text-xs text-center px-2 break-all">{title || url}</span>
+        </div>
+      )}
+    </a>
+  );
+}
 
 const TYPE_LABELS = { render: 'רנדר', inspiration: 'השראה', texture: 'טקסטורה', sketch: 'סקיצה', material: 'חומרים' };
 const TYPE_COLORS = { render: 'bg-blue-100 text-blue-800', inspiration: 'bg-purple-100 text-purple-800', texture: 'bg-green-100 text-green-800', sketch: 'bg-yellow-100 text-yellow-800', material: 'bg-orange-100 text-orange-800' };
@@ -263,11 +296,7 @@ export default function InspirationBoardEditor({ projectId, project: projectProp
                 ) : item.file_url ? (
                   <img src={item.file_url} alt={item.title || ''} className="w-full h-full object-cover" />
                 ) : item.external_url ? (
-                  <a href={item.external_url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-center h-full flex-col gap-2 text-muted-foreground hover:text-primary">
-                    <Link size={32} />
-                    <span className="text-xs text-center px-2 break-all">{item.title}</span>
-                  </a>
+                  <LinkPreviewCard url={item.external_url} title={item.title} />
                 ) : null}
 
                 {/* Hover overlay */}
