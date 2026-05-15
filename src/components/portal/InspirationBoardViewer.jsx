@@ -326,8 +326,8 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
         )}
       </div>
 
-      {/* Global concept approval (Level 2) */}
-      <div className={`border-2 rounded-xl p-6 text-center space-y-3 ${conceptApproved ? 'border-green-300 bg-green-50' : 'border-primary bg-accent/10'}`}>
+      {/* Category checklist + Global concept approval */}
+      <div className={`border-2 rounded-xl p-6 text-center space-y-4 ${conceptApproved ? 'border-green-300 bg-green-50' : 'border-primary bg-accent/10'}`}>
         {conceptApproved ? (
           <>
             <CheckCircle size={40} className="mx-auto text-green-500" />
@@ -342,12 +342,44 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
         ) : (
           <>
             <h3 className="text-lg font-bold">אישור קונספט עיצובי</h3>
-            <p className="text-muted-foreground text-sm">עברת על ההשראה? לחצי לאישור הקונספט</p>
+            <p className="text-muted-foreground text-sm">אשרי כל קטגוריה בנפרד, ואז אשרי את הקונספט</p>
+
+            {/* Category checklist */}
             {categoriesWithItems.length > 0 && (
-              <p className="text-sm font-medium text-foreground">
-                אושרו {approvedCategories.filter(c => categoriesWithItems.includes(c)).length}/{categoriesWithItems.length} קטגוריות
-              </p>
+              <div className="space-y-2 text-right max-w-xs mx-auto">
+                {categoriesWithItems.map(cat => {
+                  const catApproved = approvedCategories.includes(cat);
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => catApproved ? handleRevokeCategoryApproval(cat) : handleApproveCategory(cat)}
+                      disabled={approvingCategory === cat}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+                        catApproved
+                          ? 'bg-green-50 border-green-300 text-green-700'
+                          : 'bg-card border-border text-muted-foreground hover:border-primary'
+                      }`}
+                    >
+                      {approvingCategory === cat ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : catApproved ? (
+                        <CheckCircle size={16} className="text-green-600" />
+                      ) : (
+                        <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40" />
+                      )}
+                      <span className="font-medium">{CATEGORY_LABELS[cat]}</span>
+                      <span className="mr-auto text-xs text-muted-foreground">
+                        ({items.filter(i => i.type === cat).length} פריטים)
+                      </span>
+                    </button>
+                  );
+                })}
+                <p className="text-xs text-muted-foreground text-center mt-1">
+                  אושרו {approvedCategories.filter(c => categoriesWithItems.includes(c)).length}/{categoriesWithItems.length} קטגוריות
+                </p>
+              </div>
             )}
+
             <Button onClick={handleApproveAll} disabled={approving} className="px-8 py-3 text-base font-semibold">
               {approving ? <><Loader2 size={18} className="animate-spin ml-2" /> שומרת...</> : '✓ אישרתי את הקונספט!'}
             </Button>
