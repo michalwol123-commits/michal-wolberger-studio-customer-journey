@@ -11,6 +11,7 @@ import PortalQuestionnaireView from './PortalQuestionnaireView';
 import DetailedQuestionnaireForm from './DetailedQuestionnaireForm';
 import DetailedQuestionnaireResults from './DetailedQuestionnaireResults';
 import PortalDesignMap from './PortalDesignMap';
+import InspirationBoardViewer from './InspirationBoardViewer';
 
 // Define what content each stage shows in the portal
 const STAGE_CONTENT = {
@@ -19,6 +20,7 @@ const STAGE_CONTENT = {
   3: { meetings: true, payments: true, docs: true },  // שלב 3: פגישה + תשלומים + מסמכים
   4: { docs: true },                                  // שלב 4: חוזה (מסמכים)
   5: { questionnaire: 'detailed', docs: true },       // שלב 5: שאלון מפורט + מסמכים
+  8: { meetings: true, docs: true, payments: true, inspiration: true }, // שלב 8: קונספט עיצובי + לוח השראה
 };
 // שלבים 6-13: פגישות + מסמכים + תשלומים (ברירת מחדל)
 
@@ -146,6 +148,11 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Inspiration Board (stage 8) */}
+      {content.inspiration && (
+        <InspirationBoardViewer projectId={project.id} project={project} />
       )}
 
       {/* Design Map (stages 4+) */}

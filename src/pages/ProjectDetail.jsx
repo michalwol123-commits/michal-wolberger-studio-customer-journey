@@ -23,6 +23,7 @@ import ProjectPurchaseOrders from '@/components/purchases/ProjectPurchaseOrders'
 import QuestionnaireResponsesView from '@/components/questionnaire/QuestionnaireResponsesView';
 import DetailedQuestionnairePreview from '@/components/questionnaire/DetailedQuestionnairePreview';
 import MeetingsList from '@/components/meetings/MeetingsList';
+import InspirationBoardEditor from '@/components/projects/InspirationBoardEditor';
 
 export default function ProjectDetail() {
   const pathParts = window.location.pathname.split('/');
@@ -161,6 +162,7 @@ export default function ProjectDetail() {
           <TabsTrigger value="suppliers">ספקים</TabsTrigger>
           <TabsTrigger value="purchases">רכש</TabsTrigger>
           <TabsTrigger value="questionnaires">שאלונים</TabsTrigger>
+          <TabsTrigger value="inspiration">לוח השראה</TabsTrigger>
           <TabsTrigger value="communications">תקשורת</TabsTrigger>
         </TabsList>
 
@@ -273,6 +275,10 @@ export default function ProjectDetail() {
             <DetailedQuestionnairePreview questionnaires={projectQuestionnaires} projectId={projectId} clientId={clientId} />
             <QuestionnaireResponsesView questionnaires={projectQuestionnaires} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="inspiration">
+          <InspirationBoardEditor projectId={projectId} project={project} />
         </TabsContent>
 
         <TabsContent value="communications">

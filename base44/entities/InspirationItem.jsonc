@@ -30,9 +30,17 @@
       "type": "string",
       "description": "\u05e7\u05d9\u05e9\u05d5\u05e8 \u05dc\u05e7\u05d5\u05d1\u05e5"
     },
+    "external_url": {
+      "type": "string",
+      "description": "\u05e7\u05d9\u05e9\u05d5\u05e8 \u05d7\u05d9\u05e6\u05d5\u05e0\u05d9 (Pinterest, Houzz \u05d5\u05db\u05d5\u05f3)"
+    },
     "title": {
       "type": "string",
       "description": "\u05db\u05d5\u05ea\u05e8\u05ea"
+    },
+    "ai_prompt": {
+      "type": "string",
+      "description": "\u05e4\u05e8\u05d5\u05de\u05e4\u05d8 \u05e9\u05e0\u05d5\u05e6\u05e8 \u05de\u05de\u05e0\u05d5 \u05e8\u05e0\u05d3\u05e8 AI"
     },
     "client_reaction": {
       "type": "string",
