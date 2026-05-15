@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,9 @@ const FILTER_LABELS = { all: 'הכל', render: 'רנדרים', inspiration: 'ה�
 const APPROVABLE_CATEGORIES = ['inspiration', 'texture', 'sketch', 'material'];
 const CATEGORY_LABELS = { inspiration: 'השראה', texture: 'טקסטורות', sketch: 'סקיצות', material: 'חומרים' };
 
-export default function InspirationBoardViewer({ projectId, project, onConceptApproved }) {
+export default function InspirationBoardViewer({ projectId, project: projectProp, onConceptApproved }) {
   const queryClient = useQueryClient();
+  const [localProject, setLocalProject] = useState(projectProp);
   const [commentMap, setCommentMap] = useState({});
   const [savingId, setSavingId] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -31,8 +32,16 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
   const [linkUrl, setLinkUrl] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
 
-  const conceptApproved = project?.concept_status === 'approved';
-  const approvedCategories = project?.concept_approved_categories || [];
+  // Sync with prop when it changes from above
+  useEffect(() => { setLocalProject(projectProp); }, [projectProp?.id, projectProp?.concept_status, projectProp?.concept_approved_categories?.length]);
+
+  const reloadProject = async () => {
+    const fresh = await base44.entities.Project.get(projectId);
+    setLocalProject(fresh);
+  };
+
+  const conceptApproved = localProject?.concept_status === 'approved';
+  const approvedCategories = localProject?.concept_approved_categories || [];
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['inspiration-items-portal', projectId],
@@ -85,7 +94,7 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
     setApprovingCategory(category);
     const updated = [...new Set([...approvedCategories, category])];
     await base44.entities.Project.update(projectId, { concept_approved_categories: updated });
-    refetchProject();
+    await reloadProject();
     setApprovingCategory(null);
   };
 
@@ -93,7 +102,7 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
     setApprovingCategory(category);
     const updated = approvedCategories.filter(c => c !== category);
     await base44.entities.Project.update(projectId, { concept_approved_categories: updated });
-    refetchProject();
+    await reloadProject();
     setApprovingCategory(null);
   };
 
@@ -101,7 +110,7 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
     setApproving(true);
     await base44.entities.Project.update(projectId, { concept_status: 'approved' });
     if (onConceptApproved) onConceptApproved();
-    refetchProject();
+    await reloadProject();
     setApproving(false);
   };
 
@@ -111,7 +120,7 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
       concept_status: 'pending',
       concept_approved_categories: [],
     });
-    refetchProject();
+    await reloadProject();
     setApproving(false);
   };
 

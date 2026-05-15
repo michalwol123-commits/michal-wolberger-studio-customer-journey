@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,10 @@ const TYPE_COLORS = { render: 'bg-blue-100 text-blue-800', inspiration: 'bg-purp
 const APPROVABLE_CATEGORIES = ['inspiration', 'texture', 'sketch', 'material'];
 const CATEGORY_LABELS = { inspiration: 'השראה', texture: 'טקסטורות', sketch: 'סקיצות', material: 'חומרים' };
 
-export default function InspirationBoardEditor({ projectId, project }) {
+export default function InspirationBoardEditor({ projectId, project: projectProp }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
+  const [localProject, setLocalProject] = useState(projectProp);
   const [activeFilter, setActiveFilter] = useState('all');
   const [addMode, setAddMode] = useState(null);
   const [externalUrl, setExternalUrl] = useState('');
@@ -24,19 +25,26 @@ export default function InspirationBoardEditor({ projectId, project }) {
   const [aiLoading, setAiLoading] = useState(false);
   const [revokingConcept, setRevokingConcept] = useState(false);
 
-  const approvedCategories = project?.concept_approved_categories || [];
+  useEffect(() => { setLocalProject(projectProp); }, [projectProp?.id, projectProp?.concept_status, projectProp?.concept_approved_categories?.length]);
+
+  const reloadProject = async () => {
+    const fresh = await base44.entities.Project.get(projectId);
+    setLocalProject(fresh);
+  };
+
+  const approvedCategories = localProject?.concept_approved_categories || [];
 
   const handleRevokeConceptApproval = async () => {
     setRevokingConcept(true);
     await base44.entities.Project.update(projectId, { concept_status: 'pending', concept_approved_categories: [] });
-    queryClient.invalidateQueries({ queryKey: ['project'] });
+    await reloadProject();
     setRevokingConcept(false);
   };
 
   const handleRevokeCategoryApproval = async (category) => {
     const updated = approvedCategories.filter(c => c !== category);
     await base44.entities.Project.update(projectId, { concept_approved_categories: updated });
-    queryClient.invalidateQueries({ queryKey: ['project'] });
+    await reloadProject();
   };
 
   const { data: items = [], isLoading: itemsLoading } = useQuery({
@@ -129,7 +137,7 @@ export default function InspirationBoardEditor({ projectId, project }) {
   return (
     <div className="space-y-4" dir="rtl">
       {/* Concept approved banner */}
-      {project?.concept_status === 'approved' && (
+      {localProject?.concept_status === 'approved' && (
         <div className="flex items-center justify-between p-3 mb-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm font-medium">
           <div className="flex items-center gap-2">
             <CheckCircle size={16} />
