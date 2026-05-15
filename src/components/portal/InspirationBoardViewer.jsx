@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Upload, Link, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Loader2, Upload, Link, CheckCircle, Clock, XCircle, Sparkles } from 'lucide-react';
 
 function LinkPreviewCard({ url, title }) {
   const [preview, setPreview] = useState(null);
@@ -200,20 +200,31 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
         ))}
       </div>
 
-      {/* Suggest render */}
+      {/* AI Render */}
       <div>
         <button onClick={() => setShowRenderSuggest(!showRenderSuggest)}
-          className="flex items-center gap-2 text-sm text-primary hover:underline">
-          💡 הצע רנדר למיכל
+          className="flex items-center gap-2 text-sm text-primary hover:underline font-medium">
+          <Sparkles size={16} /> צור רנדר AI
         </button>
         {showRenderSuggest && (
           <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
-            <Textarea placeholder="תארי מה תרצי לראות בפרויקט..." value={renderPrompt} onChange={e => setRenderPrompt(e.target.value)} className="text-right" rows={3} />
+            <Textarea placeholder="תארי את החזון העיצובי שלך..." value={renderPrompt} onChange={e => setRenderPrompt(e.target.value)} className="text-right" rows={3} />
             <Button size="sm" disabled={submittingRender || !renderPrompt.trim()} onClick={async () => {
               setSubmittingRender(true);
-              await base44.entities.InspirationItem.create({ project_id: projectId, uploader_role: 'client', type: selectedUploadType, ai_prompt: renderPrompt, title: 'הצעת רנדר', is_approved: false, order: items.length });
-              setRenderPrompt(''); setShowRenderSuggest(false); setSubmittingRender(false); refetch();
-            }}>{submittingRender ? 'שולח...' : 'שלח הצעה'}</Button>
+              const result = await base44.integrations.Core.GenerateImage({ prompt: renderPrompt.trim() });
+              if (result?.url) {
+                await base44.entities.InspirationItem.create({
+                  project_id: projectId, uploader_role: 'client', type: 'render',
+                  file_url: result.url, ai_prompt: renderPrompt.trim(),
+                  title: 'רנדר AI: ' + renderPrompt.substring(0, 40),
+                  is_approved: false, order: items.length,
+                });
+                refetch();
+              }
+              setRenderPrompt(''); setShowRenderSuggest(false); setSubmittingRender(false);
+            }}>
+              {submittingRender ? <><Loader2 size={14} className="animate-spin ml-1" /> יוצר רנדר...</> : <><Sparkles size={14} className="ml-1" /> צור רנדר</>}
+            </Button>
           </div>
         )}
       </div>
