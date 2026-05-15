@@ -10,6 +10,7 @@ import StageGallery from './StageGallery';
 import StageAdvanceButton from './StageAdvanceButton';
 import StageChecklist from './StageChecklist';
 import ProjectDesignMap from '@/components/design/ProjectDesignMap';
+import InspirationBoardEditor from '@/components/projects/InspirationBoardEditor';
 
 const VISUAL_STAGES = [8]; // stages that get gallery view
 
@@ -62,6 +63,11 @@ export default function StagePanel({ project, stageNum, onNavigateTab }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Inspiration Board (stage 8) */}
+      {stageNum === 8 && (
+        <InspirationBoardEditor projectId={project.id} project={project} />
+      )}
 
       {/* Stage Checklist (stages 4-13) */}
       {stageNum >= 4 && (
