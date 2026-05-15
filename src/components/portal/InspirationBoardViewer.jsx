@@ -31,6 +31,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
+  const [selectedUploadType, setSelectedUploadType] = useState('inspiration');
 
   // Sync with prop when it changes from above
   useEffect(() => { setLocalProject(projectProp); }, [projectProp?.id, projectProp?.concept_status, projectProp?.concept_approved_categories?.length]);
@@ -81,7 +82,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
     if (r?.file_url) {
       await base44.entities.InspirationItem.create({
         project_id: projectId, uploader_role: 'client',
-        type: (activeFilter !== 'all' && activeFilter !== 'render') ? activeFilter : 'inspiration',
+        type: selectedUploadType,
         file_url: r.file_url, title: 'השראה שלי: ' + file.name.replace(/\.[^.]+$/, ''),
         is_approved: false, order: items.length + 100,
       });
@@ -174,7 +175,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
             <Textarea placeholder="תארי מה תרצי לראות בפרויקט..." value={renderPrompt} onChange={e => setRenderPrompt(e.target.value)} className="text-right" rows={3} />
             <Button size="sm" disabled={submittingRender || !renderPrompt.trim()} onClick={async () => {
               setSubmittingRender(true);
-              await base44.entities.InspirationItem.create({ project_id: projectId, uploader_role: 'client', type: (activeFilter !== 'all' && activeFilter !== 'render') ? activeFilter : 'inspiration', ai_prompt: renderPrompt, title: 'הצעת רנדר', is_approved: false, order: items.length });
+              await base44.entities.InspirationItem.create({ project_id: projectId, uploader_role: 'client', type: selectedUploadType, ai_prompt: renderPrompt, title: 'הצעת רנדר', is_approved: false, order: items.length });
               setRenderPrompt(''); setShowRenderSuggest(false); setSubmittingRender(false); refetch();
             }}>{submittingRender ? 'שולח...' : 'שלח הצעה'}</Button>
           </div>
@@ -295,6 +296,15 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
       <div className="border-2 border-dashed border-border rounded-xl p-6 text-center space-y-3">
         <Upload size={24} className="mx-auto text-muted-foreground/40" />
         <p className="text-sm text-muted-foreground">יש לך תמונות השראה משלך? העלי כאן</p>
+        <div className="flex justify-center">
+          <select value={selectedUploadType} onChange={e => setSelectedUploadType(e.target.value)}
+            className="text-sm border rounded-lg px-3 py-1.5 bg-card text-foreground">
+            <option value="inspiration">השראה</option>
+            <option value="texture">טקסטורה</option>
+            <option value="sketch">סקיצה</option>
+            <option value="material">חומרים</option>
+          </select>
+        </div>
         <div className="flex justify-center gap-3 flex-wrap">
           <label className="cursor-pointer">
             <span className="inline-block px-4 py-2 border border-primary text-primary rounded-lg text-sm hover:bg-accent/20">
@@ -316,7 +326,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
             <Button size="sm" disabled={!linkUrl.trim()} onClick={async () => {
               await base44.entities.InspirationItem.create({
                 project_id: projectId, uploader_role: 'client',
-                type: (activeFilter !== 'all' && activeFilter !== 'render') ? activeFilter : 'inspiration',
+                type: selectedUploadType,
                 external_url: linkUrl.trim(), title: linkTitle.trim() || linkUrl.trim(),
                 is_approved: false, order: items.length,
               });
