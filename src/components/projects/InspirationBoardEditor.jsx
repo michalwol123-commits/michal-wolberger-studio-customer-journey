@@ -4,10 +4,12 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Upload, Link, Sparkles, Trash2, Eye, EyeOff, Send } from 'lucide-react';
+import { Loader2, Upload, Link, Sparkles, Trash2, Eye, EyeOff, Send, XCircle, CheckCircle } from 'lucide-react';
 
 const TYPE_LABELS = { render: 'רנדר', inspiration: 'השראה', texture: 'טקסטורה', sketch: 'סקיצה', material: 'חומרים' };
 const TYPE_COLORS = { render: 'bg-blue-100 text-blue-800', inspiration: 'bg-purple-100 text-purple-800', texture: 'bg-green-100 text-green-800', sketch: 'bg-yellow-100 text-yellow-800', material: 'bg-orange-100 text-orange-800' };
+const APPROVABLE_CATEGORIES = ['inspiration', 'texture', 'sketch', 'material'];
+const CATEGORY_LABELS = { inspiration: 'השראה', texture: 'טקסטורות', sketch: 'סקיצות', material: 'חומרים' };
 
 export default function InspirationBoardEditor({ projectId, project }) {
   const queryClient = useQueryClient();
@@ -20,6 +22,22 @@ export default function InspirationBoardEditor({ projectId, project }) {
   const [selectedType, setSelectedType] = useState('inspiration');
   const [isLoading, setIsLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [revokingConcept, setRevokingConcept] = useState(false);
+
+  const approvedCategories = project?.concept_approved_categories || [];
+
+  const handleRevokeConceptApproval = async () => {
+    setRevokingConcept(true);
+    await base44.entities.Project.update(projectId, { concept_status: 'pending', concept_approved_categories: [] });
+    queryClient.invalidateQueries({ queryKey: ['project'] });
+    setRevokingConcept(false);
+  };
+
+  const handleRevokeCategoryApproval = async (category) => {
+    const updated = approvedCategories.filter(c => c !== category);
+    await base44.entities.Project.update(projectId, { concept_approved_categories: updated });
+    queryClient.invalidateQueries({ queryKey: ['project'] });
+  };
 
   const { data: items = [], isLoading: itemsLoading } = useQuery({
     queryKey: ['inspiration-items', projectId],
@@ -112,10 +130,40 @@ export default function InspirationBoardEditor({ projectId, project }) {
     <div className="space-y-4" dir="rtl">
       {/* Concept approved banner */}
       {project?.concept_status === 'approved' && (
-        <div className="flex items-center gap-2 p-3 mb-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm font-medium">
-          <span>✓</span><span>הלקוחה אישרה את הקונספט העיצובי</span>
+        <div className="flex items-center justify-between p-3 mb-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm font-medium">
+          <div className="flex items-center gap-2">
+            <CheckCircle size={16} />
+            <span>הלקוחה אישרה את הקונספט העיצובי</span>
+          </div>
+          <Button size="sm" variant="outline" onClick={handleRevokeConceptApproval} disabled={revokingConcept}
+            className="text-red-600 border-red-200 hover:bg-red-50 text-xs">
+            {revokingConcept ? <Loader2 size={12} className="animate-spin ml-1" /> : <XCircle size={12} className="ml-1" />}
+            בטל אישור קונספט
+          </Button>
         </div>
       )}
+
+      {/* Category approval status */}
+      <div className="flex gap-2 flex-wrap items-center text-xs">
+        {APPROVABLE_CATEGORIES.map(cat => {
+          const isApproved = approvedCategories.includes(cat);
+          return (
+            <button
+              key={cat}
+              onClick={() => isApproved && handleRevokeCategoryApproval(cat)}
+              className={`px-2.5 py-1 rounded-full border flex items-center gap-1 transition-colors ${
+                isApproved
+                  ? 'bg-green-50 text-green-700 border-green-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 cursor-pointer'
+                  : 'bg-muted text-muted-foreground border-border cursor-default'
+              }`}
+              title={isApproved ? 'לחצי לביטול אישור' : ''}
+            >
+              {isApproved ? <CheckCircle size={12} /> : <XCircle size={12} />}
+              {CATEGORY_LABELS[cat]}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap items-center">

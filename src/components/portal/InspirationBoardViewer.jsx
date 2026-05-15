@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Upload, Link, CheckCircle, Clock } from 'lucide-react';
+import { Loader2, Upload, Link, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 const REACTIONS = [
   { value: 'love', emoji: '❤️', label: 'אוהבת!' },
@@ -13,6 +13,8 @@ const REACTIONS = [
 ];
 const TYPE_LABELS = { render: 'רנדר', inspiration: 'השראה', texture: 'טקסטורה', sketch: 'סקיצה', material: 'חומרים' };
 const FILTER_LABELS = { all: 'הכל', render: 'רנדרים', inspiration: 'השראה', texture: 'טקסטורות', sketch: 'סקיצות', material: 'חומרים' };
+const APPROVABLE_CATEGORIES = ['inspiration', 'texture', 'sketch', 'material'];
+const CATEGORY_LABELS = { inspiration: 'השראה', texture: 'טקסטורות', sketch: 'סקיצות', material: 'חומרים' };
 
 export default function InspirationBoardViewer({ projectId, project, onConceptApproved }) {
   const queryClient = useQueryClient();
@@ -20,7 +22,7 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
   const [savingId, setSavingId] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [approving, setApproving] = useState(false);
-  const [conceptApproved, setConceptApproved] = useState(project?.concept_status === 'approved');
+  const [approvingCategory, setApprovingCategory] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
   const [showRenderSuggest, setShowRenderSuggest] = useState(false);
   const [renderPrompt, setRenderPrompt] = useState('');
@@ -29,6 +31,9 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
   const [linkUrl, setLinkUrl] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
 
+  const conceptApproved = project?.concept_status === 'approved';
+  const approvedCategories = project?.concept_approved_categories || [];
+
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['inspiration-items-portal', projectId],
     queryFn: () => base44.entities.InspirationItem.filter({ project_id: projectId, is_approved: true }, 'order'),
@@ -36,6 +41,12 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
   });
 
   const refetch = () => queryClient.invalidateQueries({ queryKey: ['inspiration-items-portal', projectId] });
+  const refetchProject = () => queryClient.invalidateQueries({ queryKey: ['project'] });
+
+  // Categories that actually have items
+  const categoriesWithItems = APPROVABLE_CATEGORIES.filter(cat =>
+    items.some(i => i.type === cat)
+  );
 
   const handleReaction = async (item, reaction) => {
     setSavingId(item.id + '_r');
@@ -70,11 +81,37 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
     setUploading(false);
   };
 
-  const handleApprove = async () => {
+  const handleApproveCategory = async (category) => {
+    setApprovingCategory(category);
+    const updated = [...new Set([...approvedCategories, category])];
+    await base44.entities.Project.update(projectId, { concept_approved_categories: updated });
+    refetchProject();
+    setApprovingCategory(null);
+  };
+
+  const handleRevokeCategoryApproval = async (category) => {
+    setApprovingCategory(category);
+    const updated = approvedCategories.filter(c => c !== category);
+    await base44.entities.Project.update(projectId, { concept_approved_categories: updated });
+    refetchProject();
+    setApprovingCategory(null);
+  };
+
+  const handleApproveAll = async () => {
     setApproving(true);
     await base44.entities.Project.update(projectId, { concept_status: 'approved' });
-    setConceptApproved(true);
     if (onConceptApproved) onConceptApproved();
+    refetchProject();
+    setApproving(false);
+  };
+
+  const handleRevokeAll = async () => {
+    setApproving(true);
+    await base44.entities.Project.update(projectId, {
+      concept_status: 'pending',
+      concept_approved_categories: [],
+    });
+    refetchProject();
     setApproving(false);
   };
 
@@ -96,6 +133,9 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
     );
   }
 
+  const isCategoryApproved = (cat) => approvedCategories.includes(cat);
+  const isApprovableTab = APPROVABLE_CATEGORIES.includes(activeFilter);
+
   return (
     <div className="space-y-6" dir="rtl">
       <div className="text-center">
@@ -109,6 +149,7 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
           <button key={key} onClick={() => setActiveFilter(key)}
             className={`px-3 py-1 rounded-full text-sm border transition-colors ${activeFilter === key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:border-primary'}`}>
             {label}
+            {APPROVABLE_CATEGORIES.includes(key) && isCategoryApproved(key) && ' ✓'}
           </button>
         ))}
       </div>
@@ -135,7 +176,6 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
       <div className="columns-2 md:columns-3 gap-3">
         {(activeFilter === 'all' ? items : items.filter(i => i.type === activeFilter)).map(item => (
           <div key={item.id} className="break-inside-avoid mb-3 rounded-xl overflow-hidden border bg-card shadow-sm relative">
-            {/* Uploader badge */}
             <span className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-medium z-10 ${item.uploader_role === 'staff' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'}`}>
               {item.uploader_role === 'staff' ? 'מיכל' : 'לקוחה'}
             </span>
@@ -161,6 +201,14 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
                 )}
               </div>
               {item.title && <p className="text-xs font-medium text-foreground">{item.title}</p>}
+
+              {/* Staff reply */}
+              {item.staff_reply && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs">
+                  <span className="font-medium text-amber-800">מיכל: </span>
+                  <span className="text-amber-700">{item.staff_reply}</span>
+                </div>
+              )}
 
               {/* Reactions */}
               <div className="flex gap-1.5 flex-wrap">
@@ -194,7 +242,6 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
                 </Button>
               )}
 
-              {/* Edit/delete for client items */}
               {item.uploader_role === 'client' && (
                 <div className="flex gap-2 mt-1">
                   <button onClick={() => { const t = prompt('כותרת חדשה:', item.title); if(t) base44.entities.InspirationItem.update(item.id, { title: t }).then(refetch); }}
@@ -207,6 +254,33 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
           </div>
         ))}
       </div>
+
+      {/* Category approval (only on specific category tabs, not "all" or "render") */}
+      {isApprovableTab && items.some(i => i.type === activeFilter) && (
+        <div className={`border-2 rounded-xl p-4 text-center space-y-2 ${isCategoryApproved(activeFilter) ? 'border-green-300 bg-green-50' : 'border-border bg-muted/30'}`}>
+          {isCategoryApproved(activeFilter) ? (
+            <>
+              <div className="flex items-center justify-center gap-2 text-green-700 font-medium">
+                <CheckCircle size={20} />
+                <span>קטגוריית {CATEGORY_LABELS[activeFilter]} אושרה</span>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => handleRevokeCategoryApproval(activeFilter)}
+                disabled={approvingCategory === activeFilter}
+                className="text-red-600 border-red-200 hover:bg-red-50">
+                {approvingCategory === activeFilter ? <Loader2 size={14} className="animate-spin ml-1" /> : <XCircle size={14} className="ml-1" />}
+                ביטול אישור קטגוריה
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => handleApproveCategory(activeFilter)}
+              disabled={approvingCategory === activeFilter}
+              className="px-6">
+              {approvingCategory === activeFilter ? <Loader2 size={14} className="animate-spin ml-1" /> : null}
+              ✓ אישרתי קטגוריה זו
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Client upload & link */}
       <div className="border-2 border-dashed border-border rounded-xl p-6 text-center space-y-3">
@@ -243,19 +317,29 @@ export default function InspirationBoardViewer({ projectId, project, onConceptAp
         )}
       </div>
 
-      {/* Concept approval */}
+      {/* Global concept approval (Level 2) */}
       <div className={`border-2 rounded-xl p-6 text-center space-y-3 ${conceptApproved ? 'border-green-300 bg-green-50' : 'border-primary bg-accent/10'}`}>
         {conceptApproved ? (
           <>
             <CheckCircle size={40} className="mx-auto text-green-500" />
             <h3 className="text-lg font-bold text-green-700">הקונספט אושר!</h3>
             <p className="text-green-600 text-sm">תודה! מיכל תמשיך לשלב הבא.</p>
+            <Button size="sm" variant="outline" onClick={handleRevokeAll} disabled={approving}
+              className="text-red-600 border-red-200 hover:bg-red-50">
+              {approving ? <Loader2 size={14} className="animate-spin ml-1" /> : <XCircle size={14} className="ml-1" />}
+              ביטול אישור קונספט
+            </Button>
           </>
         ) : (
           <>
             <h3 className="text-lg font-bold">אישור קונספט עיצובי</h3>
             <p className="text-muted-foreground text-sm">עברת על ההשראה? לחצי לאישור הקונספט</p>
-            <Button onClick={handleApprove} disabled={approving} className="px-8 py-3 text-base font-semibold">
+            {categoriesWithItems.length > 0 && (
+              <p className="text-sm font-medium text-foreground">
+                אושרו {approvedCategories.filter(c => categoriesWithItems.includes(c)).length}/{categoriesWithItems.length} קטגוריות
+              </p>
+            )}
+            <Button onClick={handleApproveAll} disabled={approving} className="px-8 py-3 text-base font-semibold">
               {approving ? <><Loader2 size={18} className="animate-spin ml-2" /> שומרת...</> : '✓ אישרתי את הקונספט!'}
             </Button>
           </>
