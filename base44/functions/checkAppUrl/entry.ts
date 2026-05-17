@@ -5,8 +5,15 @@ Deno.serve(async (req) => {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const headers = {};
+  for (const [key, value] of req.headers.entries()) {
+    headers[key] = value;
+  }
+
+  const envKeys = Object.keys(Deno.env.toObject());
+
   return Response.json({
-    BASE44_APP_URL: Deno.env.get('BASE44_APP_URL') || 'NOT SET',
-    BASE44_APP_ID: Deno.env.get('BASE44_APP_ID') || 'NOT SET',
+    all_env_keys: envKeys,
+    headers,
   });
 });
