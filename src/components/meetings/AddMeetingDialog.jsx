@@ -90,16 +90,40 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
     if (!schedulingToken || !initialData?.client_id) return;
     setSendingLink(true);
     const client = clients.find(c => c.id === initialData.client_id);
-    if (client?.phone) {
-      const typeLabel = typeOptions.find(t => t.value === initialData.type)?.label || initialData.type;
+    if (!client?.phone && !client?.email) {
+      toast.error('ללקוח אין טלפון ולא מייל');
+      setSendingLink(false);
+      return;
+    }
+
+    const typeLabel = typeOptions.find(t => t.value === initialData.type)?.label || initialData.type;
+    const sentVia = [];
+
+    // WhatsApp
+    if (client.phone) {
       await base44.functions.invoke('sendWhatsApp', {
         to: client.phone,
         message: `שלום ${client.name} 👋\nנא לבחור מועד ל${typeLabel} בקישור:\n${scheduleUrl}`,
       });
-      toast.success('קישור תיאום נשלח בווטסאפ');
-    } else {
-      toast.error('ללקוח אין מספר טלפון');
+      sentVia.push('וואטסאפ');
     }
+
+    // Email — create pending Communication record (sendEmail picks it up)
+    if (client.email) {
+      await base44.entities.Communication.create({
+        client_id: client.id,
+        project_id: initialData.project_id || undefined,
+        type: 'email',
+        direction: 'outbound',
+        content: `שלום ${client.name},\n\nלתיאום מועד ל${typeLabel} לחצ/י על הקישור:\n${scheduleUrl}`,
+        sent_by: 'system',
+        status: 'pending',
+        channel: 'gmail',
+      });
+      sentVia.push('מייל');
+    }
+
+    toast.success(`קישור תיאום נשלח ב${sentVia.join(' וב')}`);
     setSendingLink(false);
   };
 

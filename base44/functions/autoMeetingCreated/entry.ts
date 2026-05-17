@@ -41,10 +41,11 @@ Deno.serve(async (req) => {
       // Send WhatsApp with scheduling link if client has phone
       const clients = await base44.asServiceRole.entities.Client.filter({ id: data.client_id });
       const client = clients[0];
-      if (client?.phone) {
-        const meetingLabel = MEETING_TYPE_LABELS[data.type] || data.type || 'פגישה';
-        const scheduleUrl = `${Deno.env.get('BASE44_APP_URL') || 'https://app.base44.com'}/schedule?token=${schedulingToken}`;
+      const meetingLabel = MEETING_TYPE_LABELS[data.type] || data.type || 'פגישה';
+      const scheduleUrl = `${Deno.env.get('BASE44_APP_URL') || 'https://app.base44.com'}/schedule?token=${schedulingToken}`;
 
+      // Send WhatsApp if client has phone
+      if (client?.phone) {
         let whatsappMsg = `שלום ${client.name} 👋\nנפתחה עבורך ${meetingLabel}.\nנא לבחור מועד נוח בקישור:\n${scheduleUrl}`;
         if (data.type === 'quote_presentation' && data.meeting_price) {
           whatsappMsg += `\n\nמחיר הפגישה: ${data.meeting_price}₪`;
@@ -64,6 +65,20 @@ Deno.serve(async (req) => {
           sent_by: 'system',
           status: 'sent',
           channel: 'base44_native',
+        });
+      }
+
+      // Send Email if client has email (pending Communication — sendEmail picks it up)
+      if (client?.email) {
+        await base44.asServiceRole.entities.Communication.create({
+          client_id: client.id,
+          project_id: data.project_id || undefined,
+          type: 'email',
+          direction: 'outbound',
+          content: `שלום ${client.name},\n\nנפתחה עבורך ${meetingLabel}.\nלתיאום מועד נוח לחצ/י על הקישור:\n${scheduleUrl}`,
+          sent_by: 'system',
+          status: 'pending',
+          channel: 'gmail',
         });
       }
 

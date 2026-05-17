@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Clock, MapPin, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, Clock, MapPin, FileText, CalendarPlus } from 'lucide-react';
 import { format } from 'date-fns';
 
 const typeLabels = {
@@ -64,6 +65,14 @@ export default function PortalStageMeetings({ meetings, stageNum }) {
                   <Clock className="w-3 h-3" />
                   {format(new Date(m.scheduled_at), 'dd/MM/yyyy HH:mm')}
                 </span>
+              )}
+              {!m.scheduled_at && m.scheduling_token && (
+                <a href={`/schedule?token=${m.scheduling_token}`} target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" variant="outline" className="gap-1.5 text-xs">
+                    <CalendarPlus className="w-3.5 h-3.5" />
+                    קבעי מועד
+                  </Button>
+                </a>
               )}
               {m.location && (
                 <span className="flex items-center gap-1">
