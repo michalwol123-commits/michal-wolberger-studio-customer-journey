@@ -73,7 +73,10 @@ export default function TutorialOverlay({ active, currentStep, setCurrentStep, o
       setWaitingForNav(false);
     } else {
       setHighlightRect(null);
-      if (step.navigateTo && location.pathname !== step.navigateTo) {
+      const navTargets = step.navigateLinks
+        ? step.navigateLinks.map(l => l.path)
+        : step.navigateTo ? [step.navigateTo] : [];
+      if (navTargets.length > 0 && !navTargets.includes(location.pathname)) {
         setWaitingForNav(true);
       }
     }

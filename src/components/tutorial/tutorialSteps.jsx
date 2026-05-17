@@ -44,14 +44,16 @@ const TUTORIAL_STEPS = [
   {
     id: 'qualify',
     title: 'שלב 3 — הפיכה למתעניין',
-    content: 'אחרי הפגישה — מסמנים מתעניין.\nהמערכת שולחת ללקוח מייל עם בקשת תשלום מקדמה (250₪).',
+    content: 'אחרי הפגישה יש שתי דרכים:\n1. סימון פגישת ההיכרות כבוצעה בדף הפגישות\n2. שינוי סטטוס הליד למתעניין בדף הלידים\nבשני המקרים — המערכת שולחת ללקוח מייל עם בקשת תשלום מקדמה (250₪).',
     icon: UserCheck,
     iconColor: 'text-purple-600',
     bgColor: 'from-purple-50 to-violet-50',
     position: 'right',
     highlightSelector: '[data-tutorial="client-status"]',
-    navigateTo: '/clients',
-    navigateLabel: 'עברי לדף הלקוחות',
+    navigateLinks: [
+      { path: '/meetings', label: 'עברי לדף הפגישות' },
+      { path: '/leads', label: 'עברי לדף הלידים' },
+    ],
     autoNote: 'קורה אוטומטית — לא צריך לעשות כלום',
   },
   {

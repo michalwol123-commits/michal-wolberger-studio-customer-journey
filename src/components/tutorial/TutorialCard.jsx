@@ -89,8 +89,26 @@ export default function TutorialCard({
           </Button>
         )}
 
-        {/* Navigate button (when we need to go to another page first) */}
-        {waitingForNav && step.navigateTo && (
+        {/* Navigate button(s) */}
+        {waitingForNav && step.navigateLinks && (
+          <div className="space-y-2">
+            {step.navigateLinks.map((link, i) => (
+              <Button
+                key={i}
+                onClick={() => onNavigate(link.path)}
+                className="w-full gap-2"
+                variant={i === 0 ? 'default' : 'outline'}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                {link.label}
+              </Button>
+            ))}
+            {step.navigateNote && (
+              <p className="text-xs text-muted-foreground text-center">{step.navigateNote}</p>
+            )}
+          </div>
+        )}
+        {waitingForNav && !step.navigateLinks && step.navigateTo && (
           <div className="space-y-2">
             <Button
               onClick={() => onNavigate(step.navigateTo)}
