@@ -37,40 +37,115 @@ Deno.serve(async (req) => {
       sent_at: new Date().toISOString(),
     });
 
-    // Build message content
-    let emailContent = '';
-    let whatsappContent = '';
-    let attachmentUrl = '';
-
-    if (quoteType === 'link') {
-      // Send link
-      const link = data.file_url || data.url || '';
-      emailContent = `שלום ${clientName},\n\nמצורפת הצעת המחיר שלך: "${title}"${amount ? ` בסך ${amount}` : ''}.\n\nלצפייה בהצעה: ${link}\n\nבברכה,\nמיכל וולברגר - עיצוב פנים`;
-      whatsappContent = `שלום ${clientName} 👋\n\nהצעת המחיר שלך מוכנה!\n"${title}"${amount ? ` | ${amount}` : ''}\n\nלצפייה: ${link}\n\nמיכל וולברגר - עיצוב פנים`;
-    } else {
-      // generated or uploaded — use file_url
-      attachmentUrl = data.file_url || '';
-      emailContent = `שלום ${clientName},\n\nמצורפת הצעת המחיר שלך: "${title}"${amount ? ` בסך ${amount}` : ''}.\n\nלצפייה בהצעה: ${attachmentUrl}\n\nבברכה,\nמיכל וולברגר - עיצוב פנים`;
-      whatsappContent = `שלום ${clientName} 👋\n\nהצעת המחיר שלך מוכנה!\n"${title}"${amount ? ` | ${amount}` : ''}\n\nלהורדה: ${attachmentUrl}\n\nמיכל וולברגר - עיצוב פנים`;
+    // Auto-generate PDF if missing and quote_type is 'generated'
+    let pdfUrl = data.file_url;
+    if (!pdfUrl && quoteType === 'generated') {
+      console.log('No file_url found, generating PDF on-demand...');
+      const pdfResult = await base44.asServiceRole.functions.invoke('generateQuotePDF', {
+        client_id: clientId,
+        quote_id: quoteId,
+        title: title,
+        package_type: data.package_type,
+        total_amount: data.total_amount,
+        scope: data.scope,
+        meeting_date: data.meeting_date,
+      });
+      pdfUrl = pdfResult?.data?.file_url;
+      console.log('PDF generated:', pdfUrl);
     }
+
+    // For link type, use url field as fallback
+    const linkUrl = pdfUrl || data.url || '';
+
+    // Build WhatsApp content
+    const whatsappContent = `שלום ${clientName} 👋\n\nהצעת המחיר שלך מוכנה!\n"${title}"${amount ? ` | ${amount}` : ''}\n\n${linkUrl ? `לצפייה: ${linkUrl}` : ''}\n\nמיכל וולברגר - עיצוב פנים`;
 
     const results = [];
 
-    // Create email Communication record (picked up by sendEmail automation)
+    // Send email directly via Gmail API (with PDF attachment if available)
     if (sendVia === 'email' || sendVia === 'both') {
       if (client.email) {
+        const { accessToken: gmailToken } = await base44.asServiceRole.connectors.getConnection('gmail');
+        const subject = `הצעת מחיר — ${title}`;
+        const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
+
+        const htmlBody = `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+          <div style="background:#8B7355;padding:32px;text-align:center;color:white;">
+            <h1 style="margin:0;font-size:22px;">סטודיו מיכל וולברגר</h1>
+            <p style="margin:8px 0 0;font-size:13px;opacity:0.85;">עיצוב פנים</p>
+          </div>
+          <div style="padding:32px;">
+            <p>שלום ${clientName},</p>
+            <p>מצורפת הצעת המחיר שלך: <strong>"${title}"</strong>${amount ? ` בסך ${amount}` : ''}.</p>
+            ${linkUrl ? `<p><a href="${linkUrl}" style="color:#8B7355;">לצפייה בהצעה</a></p>` : ''}
+            <p>בברכה,<br/>מיכל וולברגר - עיצוב פנים</p>
+          </div>
+          <div style="text-align:center;font-size:12px;color:#999;padding:16px;">סטודיו מיכל וולברגר | עיצוב פנים<br/>הודעה זו נשלחה אוטומטית</div>
+        </div>`;
+
+        let rawEmail;
+
+        if (pdfUrl) {
+          // Send with PDF attachment
+          const pdfRes = await fetch(pdfUrl);
+          const pdfBuffer = await pdfRes.arrayBuffer();
+          const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
+          const boundary = 'boundary_' + Date.now();
+          const mimeEmail = [
+            `From: "סטודיו מיכל וולברגר" <me>`,
+            `To: ${client.email}`,
+            `Subject: ${subjectEncoded}`,
+            `MIME-Version: 1.0`,
+            `Content-Type: multipart/mixed; boundary="${boundary}"`,
+            ``,
+            `--${boundary}`,
+            `Content-Type: text/html; charset=utf-8`,
+            ``,
+            htmlBody,
+            ``,
+            `--${boundary}`,
+            `Content-Type: application/pdf`,
+            `Content-Transfer-Encoding: base64`,
+            `Content-Disposition: attachment; filename="quote_${clientName}.pdf"`,
+            ``,
+            pdfBase64,
+            `--${boundary}--`,
+          ].join('\r\n');
+          rawEmail = btoa(unescape(encodeURIComponent(mimeEmail))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        } else {
+          // Send without attachment
+          const emailRaw = [
+            `From: "סטודיו מיכל וולברגר" <me>`,
+            `To: ${client.email}`,
+            `Subject: ${subjectEncoded}`,
+            `MIME-Version: 1.0`,
+            `Content-Type: text/html; charset=utf-8`,
+            ``,
+            htmlBody,
+          ].join('\r\n');
+          rawEmail = btoa(unescape(encodeURIComponent(emailRaw))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw: rawEmail }),
+        });
+        if (!gmailRes.ok) throw new Error(`Gmail error: ${JSON.stringify(await gmailRes.json())}`);
+
+        // Log email communication as sent
         await base44.asServiceRole.entities.Communication.create({
           client_id: clientId,
           type: 'email',
           direction: 'outbound',
-          subject: `הצעת מחיר — ${title}`,
-          content: emailContent,
+          subject: subject,
+          content: `הצעת מחיר "${title}" נשלחה עם PDF מצורף ל-${client.email}`,
           sent_by: 'system',
-          status: 'pending',
-          channel: 'base44_native',
-          attachment_url: attachmentUrl || undefined,
+          status: 'sent',
+          channel: 'gmail',
+          attachment_url: pdfUrl || undefined,
         });
-        results.push('email queued');
+        results.push('email sent directly via Gmail');
       } else {
         results.push('email skipped — no email address');
       }
@@ -96,8 +171,8 @@ Deno.serve(async (req) => {
     }
 
     // Create Document record for the quote file (skip if already exists)
-    if (data.file_url || data.url) {
-      const fileUrl = data.file_url || data.url;
+    if (pdfUrl || data.url) {
+      const fileUrl = pdfUrl || data.url;
       const existingDocs = await base44.asServiceRole.entities.Document.filter({ client_id: clientId });
       const alreadyExists = existingDocs.some(d => d.type === 'quote' && d.file_url === fileUrl);
       if (!alreadyExists) {
