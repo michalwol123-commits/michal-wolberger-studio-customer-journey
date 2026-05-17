@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       }
 
       const client = clients[0];
-      const subject = comm.content?.slice(0, 60) || 'עדכון מסטודיו מיכל וולברגר';
+      const subject = comm.subject || comm.content?.slice(0, 60) || 'עדכון מסטודיו מיכל וולברגר';
 
       const htmlBody = `
         <div dir="rtl" style="font-family: 'Heebo', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #faf8f5; border-radius: 12px; overflow: hidden;">

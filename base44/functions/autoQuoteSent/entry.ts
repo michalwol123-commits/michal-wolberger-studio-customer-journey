@@ -15,6 +15,10 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'not a transition to sent' });
     }
 
+    if (data.sent_at && old_data.sent_at) {
+      return Response.json({ skipped: true, reason: 'already sent before' });
+    }
+
     const quoteId = event.entity_id;
     const clientId = data.client_id;
     if (!clientId) return Response.json({ skipped: true, reason: 'no client_id' });
@@ -42,7 +46,7 @@ Deno.serve(async (req) => {
 
     if (quoteType === 'link') {
       // Send link
-      const link = data.url || '';
+      const link = data.file_url || data.url || '';
       emailContent = `שלום ${clientName},\n\nמצורפת הצעת המחיר שלך: "${title}"${amount ? ` בסך ${amount}` : ''}.\n\nלצפייה בהצעה: ${link}\n\nבברכה,\nמיכל וולברגר - עיצוב פנים`;
       whatsappContent = `שלום ${clientName} 👋\n\nהצעת המחיר שלך מוכנה!\n"${title}"${amount ? ` | ${amount}` : ''}\n\nלצפייה: ${link}\n\nמיכל וולברגר - עיצוב פנים`;
     } else {
@@ -61,6 +65,7 @@ Deno.serve(async (req) => {
           client_id: clientId,
           type: 'email',
           direction: 'outbound',
+          subject: `הצעת מחיר — ${title}`,
           content: emailContent,
           sent_by: 'system',
           status: 'pending',

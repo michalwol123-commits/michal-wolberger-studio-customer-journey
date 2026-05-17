@@ -34,6 +34,10 @@
       "default": "outbound",
       "description": "\u05db\u05d9\u05d5\u05d5\u05df"
     },
+    "subject": {
+      "type": "string",
+      "description": "\u05e0\u05d5\u05e9\u05d0 \u05d4\u05d4\u05d5\u05d3\u05e2\u05d4 (\u05d0\u05d5\u05e4\u05e6\u05d9\u05d5\u05e0\u05dc\u05d9)"
+    },
     "content": {
       "type": "string",
       "description": "\u05ea\u05d5\u05db\u05df \u05d4\u05d4\u05d5\u05d3\u05e2\u05d4 / \u05e1\u05d9\u05db\u05d5\u05dd \u05e9\u05d9\u05d7\u05d4"
@@ -47,7 +51,7 @@
         "client"
       ],
       "default": "system",
-      "description": "\u05e0\u05e9\u05dc\u05d7 \u05e2\u05f4\u05d9"
+      "description": "\u05e0\u05e9\u05dc\u05d7 \u05e2\"\u05d9"
     },
     "status": {
       "type": "string",
@@ -56,7 +60,8 @@
         "delivered",
         "read",
         "failed",
-        "retried"
+        "retried",
+        "pending"
       ],
       "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d4\u05d5\u05d3\u05e2\u05d4"
     },
@@ -66,7 +71,8 @@
         "make_com",
         "base44_native",
         "calendly",
-        "manual"
+        "manual",
+        "gmail"
       ],
       "description": "\u05e2\u05e8\u05d5\u05e5 \u05e9\u05dc\u05d9\u05d7\u05d4"
     },
@@ -89,7 +95,7 @@
     },
     "updated_by": {
       "type": "string",
-      "description": "\u05e2\u05d5\u05d3\u05db\u05df \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4 \u05e2\u05f4\u05d9 (user)"
+      "description": "\u05e2\u05d5\u05d3\u05db\u05df \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4 \u05e2\"\u05d9 (user)"
     }
   },
   "required": [
