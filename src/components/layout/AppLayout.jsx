@@ -23,6 +23,9 @@ export default function AppLayout() {
         currentStep={tutorial.currentStep}
         setCurrentStep={tutorial.setCurrentStep}
         onStop={tutorial.stop}
+        practicing={tutorial.practicing}
+        onPractice={tutorial.startPractice}
+        onResume={tutorial.resumeFromPractice}
       />
       {!tutorial.active && <TutorialHelpButton onStart={tutorial.start} />}
     </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Zap, Lightbulb, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Zap, Lightbulb, ArrowLeft, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const springConfig = { type: 'spring', damping: 25, stiffness: 300 };
@@ -14,6 +14,7 @@ export default function TutorialCard({
   onSkip,
   onNavigate,
   waitingForNav,
+  onPractice,
 }) {
   const Icon = step.icon;
   const progress = ((currentIndex + 1) / totalSteps) * 100;
@@ -74,6 +75,18 @@ export default function TutorialCard({
             <Zap className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
             <p className="text-xs text-green-700 font-medium">{step.autoNote}</p>
           </div>
+        )}
+
+        {/* Practice button */}
+        {onPractice && !waitingForNav && (
+          <Button
+            onClick={onPractice}
+            variant="outline"
+            className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5"
+          >
+            <Play className="w-4 h-4" />
+            תרגלי עכשיו
+          </Button>
         )}
 
         {/* Navigate button (when we need to go to another page first) */}

@@ -10,17 +10,28 @@ const STEP_KEY = 'michal_tutorial_step';
 export function useTutorial() {
   const [active, setActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [practicing, setPracticing] = useState(false);
 
   const start = useCallback(() => {
     setCurrentStep(0);
     setActive(true);
+    setPracticing(false);
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
   const stop = useCallback(() => {
     setActive(false);
+    setPracticing(false);
     localStorage.setItem(STORAGE_KEY, 'true');
     localStorage.removeItem(STEP_KEY);
+  }, []);
+
+  const startPractice = useCallback(() => {
+    setPracticing(true);
+  }, []);
+
+  const resumeFromPractice = useCallback(() => {
+    setPracticing(false);
   }, []);
 
   // Auto-start on first visit
@@ -33,10 +44,10 @@ export function useTutorial() {
     }
   }, []);
 
-  return { active, currentStep, setCurrentStep, start, stop };
+  return { active, currentStep, setCurrentStep, start, stop, practicing, startPractice, resumeFromPractice };
 }
 
-export default function TutorialOverlay({ active, currentStep, setCurrentStep, onStop }) {
+export default function TutorialOverlay({ active, currentStep, setCurrentStep, onStop, practicing, onPractice, onResume }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [highlightRect, setHighlightRect] = useState(null);
@@ -94,6 +105,23 @@ export default function TutorialOverlay({ active, currentStep, setCurrentStep, o
   }, [currentStep, active]);
 
   if (!step || !active) return null;
+
+  // Practice mode — show only the floating resume button
+  if (practicing) {
+    return (
+      <motion.button
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        onClick={onResume}
+        dir="rtl"
+        className="fixed bottom-6 left-6 z-[10001] flex items-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-full shadow-lg hover:bg-primary/90 transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span className="text-sm font-medium">חזרה למדריך</span>
+      </motion.button>
+    );
+  }
 
   const handleNext = () => {
     if (currentStep >= TUTORIAL_STEPS.length - 1) {
@@ -242,6 +270,7 @@ export default function TutorialOverlay({ active, currentStep, setCurrentStep, o
             onSkip={onStop}
             onNavigate={handleNavigate}
             waitingForNav={waitingForNav}
+            onPractice={step.highlightSelector ? onPractice : null}
           />
         </div>
       </AnimatePresence>
