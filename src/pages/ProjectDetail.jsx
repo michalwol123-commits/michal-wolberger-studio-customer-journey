@@ -138,7 +138,7 @@ export default function ProjectDetail() {
       <Card className="mb-6">
         <CardContent className="p-5">
           <h3 className="font-heading font-semibold mb-4">שלבי הפרויקט <span className="text-sm font-normal text-muted-foreground">(לחצי על שלב לצפייה)</span></h3>
-          <StageSelector project={project} selectedStage={selectedStage} onSelect={setSelectedStage} />
+          <div data-tutorial="stage-selector"><StageSelector project={project} selectedStage={selectedStage} onSelect={setSelectedStage} /></div>
         </CardContent>
       </Card>
 

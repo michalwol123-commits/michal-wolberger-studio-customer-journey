@@ -150,7 +150,7 @@ export default function ClientProfile() {
               {['lead', 'qualified', 'proposal_sent'].includes(client.status) ? 'כרטיס ליד' : 'כרטיס לקוח'} — {client.name}
             </h1>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
-              <ClientStatusChanger client={client} />
+              <span data-tutorial="client-status"><ClientStatusChanger client={client} /></span>
               {client.tags?.map(t => (
                 <span key={t} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">{t}</span>
               ))}
@@ -162,7 +162,7 @@ export default function ClientProfile() {
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             {copied ? 'הועתק!' : 'העתק קישור פורטל'}
           </Button>
-          <Button size="sm" onClick={handleOpenPortal} className="gap-1">
+          <Button data-tutorial="portal-btn" size="sm" onClick={handleOpenPortal} className="gap-1">
             <ExternalLink className="w-4 h-4" />
             צפה בפורטל
           </Button>

@@ -128,7 +128,7 @@ export default function Quotes() {
           filename="הצעות_מחיר"
         />
         <ViewToggle view={view} onViewChange={setView} />
-        <Button onClick={() => { setEditQuote(null); setShowAdd(true); }} className="gap-1">
+        <Button data-tutorial="add-quote-btn" onClick={() => { setEditQuote(null); setShowAdd(true); }} className="gap-1">
           <Plus className="w-4 h-4" />הצעה חדשה
         </Button>
       </PageHeader>

@@ -68,7 +68,7 @@ export default function Leads() {
           ]}
           filename="לידים"
         />
-        <Button onClick={() => { setEditLead(null); setShowAdd(true); }} className="gap-2">
+        <Button data-tutorial="add-lead-btn" onClick={() => { setEditLead(null); setShowAdd(true); }} className="gap-2">
           <Plus className="w-4 h-4" />
           ליד חדש
         </Button>

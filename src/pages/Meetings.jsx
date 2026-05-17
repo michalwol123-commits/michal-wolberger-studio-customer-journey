@@ -158,7 +158,7 @@ export default function Meetings() {
               <button onClick={() => setWeekOffset(w => w + 1)} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted">הבא</button>
             </>
           )}
-          <Button onClick={() => { setEditMeeting(null); setShowAdd(true); }} className="gap-1">
+          <Button data-tutorial="add-meeting-btn" onClick={() => { setEditMeeting(null); setShowAdd(true); }} className="gap-1">
             <Plus className="w-4 h-4" />פגישה חדשה
           </Button>
         </div>

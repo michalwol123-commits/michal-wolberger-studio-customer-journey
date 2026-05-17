@@ -78,7 +78,7 @@ export default function Projects() {
   return (
     <div>
       <PageHeader title="פרויקטים" subtitle={`${totalCount} פרויקטים`}>
-        <Button onClick={() => setShowAddDialog(true)} className="gap-1">
+        <Button data-tutorial="add-project-btn" onClick={() => setShowAddDialog(true)} className="gap-1">
           <Plus className="w-4 h-4" />פרויקט חדש
         </Button>
         <ExportCSVButton
