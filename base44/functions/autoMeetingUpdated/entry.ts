@@ -80,6 +80,59 @@ Deno.serve(async (req) => {
       });
       const calData = await calRes.json();
       console.log('Calendar event updated:', calData.id);
+
+      // Send reschedule email to client
+      if (client.email) {
+        const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const timeStr = scheduledAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+        const emailBody = `
+<div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2 style="color: #8B6F47;">שלום ${client.name},</h2>
+  <p>מועד הפגישה שלך עודכן:</p>
+  <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+    <tr><td style="padding: 8px; font-weight: bold; color: #555;">סוג פגישה:</td><td style="padding: 8px;">${meetingLabel}</td></tr>
+    <tr><td style="padding: 8px; font-weight: bold; color: #555;">תאריך חדש:</td><td style="padding: 8px;">${dateStr}</td></tr>
+    <tr><td style="padding: 8px; font-weight: bold; color: #555;">שעה:</td><td style="padding: 8px;">${timeStr}</td></tr>
+    <tr><td style="padding: 8px; font-weight: bold; color: #555;">משך:</td><td style="padding: 8px;">${duration} דקות</td></tr>
+    ${data.location ? `<tr><td style="padding: 8px; font-weight: bold; color: #555;">מיקום:</td><td style="padding: 8px;">${data.location}</td></tr>` : ''}
+  </table>
+  <p style="color: #999; font-size: 12px; margin-top: 24px;">הודעה זו נשלחה אוטומטית מהסטודיו</p>
+</div>`;
+
+        const subject = `עדכון מועד — ${meetingLabel} — ${dateStr}`;
+        const { accessToken: gmailToken } = await base44.asServiceRole.connectors.getConnection('gmail');
+        const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
+        const emailRaw = [
+          `From: "סטודיו מיכל וולברגר" <me>`,
+          `To: ${client.email}`,
+          `Subject: ${subjectEncoded}`,
+          `MIME-Version: 1.0`,
+          `Content-Type: text/html; charset=utf-8`,
+          ``,
+          emailBody
+        ].join('\r\n');
+        const raw = btoa(unescape(encodeURIComponent(emailRaw)))
+          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+        const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw }),
+        });
+        if (!gmailRes.ok) throw new Error(`Gmail error: ${JSON.stringify(await gmailRes.json())}`);
+
+        await base44.asServiceRole.entities.Communication.create({
+          client_id: client.id,
+          project_id: data.project_id || undefined,
+          type: 'email',
+          direction: 'outbound',
+          content: `עדכון מועד ${meetingLabel} נשלח ללקוח — ${dateStr} בשעה ${timeStr}`,
+          sent_by: 'system',
+          status: 'sent',
+          channel: 'gmail',
+        });
+      }
     } else {
       // Create new Google Calendar event
       const calRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
