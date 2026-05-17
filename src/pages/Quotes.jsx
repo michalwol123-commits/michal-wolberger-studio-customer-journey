@@ -107,6 +107,13 @@ export default function Quotes() {
       pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
       pdf.save('quote_' + (clientName || 'client') + '.pdf');
 
+      // Upload to Base44 and save file_url on the Quote entity
+      const pdfBlob = pdf.output('blob');
+      const file = new File([pdfBlob], 'quote_' + (clientName || 'client') + '.pdf', { type: 'application/pdf' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.entities.Quote.update(quote.id, { file_url });
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+
     } finally {
       document.body.removeChild(div);
     }
