@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { client_id, title, package_type, total_amount, scope, meeting_date } = await req.json();
+    const { client_id, quote_id, title, package_type, total_amount, scope, meeting_date } = await req.json();
 
     // Fetch client
     const clients = await base44.asServiceRole.entities.Client.filter({ id: client_id });
@@ -171,6 +171,10 @@ Deno.serve(async (req) => {
     const file = new File([blob], `quote_${client.name}_${Date.now()}.pdf`, { type: 'application/pdf' });
 
     const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+
+    if (quote_id) {
+      await base44.asServiceRole.entities.Quote.update(quote_id, { file_url });
+    }
 
     return Response.json({ success: true, file_url });
   } catch (error) {
