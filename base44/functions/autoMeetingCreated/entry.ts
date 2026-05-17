@@ -3,6 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const MEETING_TYPE_LABELS = {
   intro: 'פגישת היכרות',
   qualifying: 'פגישת סינון',
+  quote_presentation: 'הצגת הצעת מחיר',
   stage_review: 'סקירת שלב',
   site_visit: 'ביקור באתר',
   zoom: 'פגישת זום',
