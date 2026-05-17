@@ -15,9 +15,7 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'not a transition to sent' });
     }
 
-    if (data.sent_at && old_data.sent_at) {
-      return Response.json({ skipped: true, reason: 'already sent before' });
-    }
+
 
     const quoteId = event.entity_id;
     const clientId = data.client_id;
