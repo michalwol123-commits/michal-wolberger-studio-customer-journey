@@ -43,8 +43,8 @@ const TUTORIAL_STEPS = [
   },
   {
     id: 'qualify',
-    title: 'שלב 3 — הפיכה ל-Qualified',
-    content: 'אחרי הפגישה — מסמנים Qualified.\nהמערכת שולחת ללקוח מייל עם בקשת תשלום מקדמה (250₪).',
+    title: 'שלב 3 — הפיכה למתעניין',
+    content: 'אחרי הפגישה — מסמנים מתעניין.\nהמערכת שולחת ללקוח מייל עם בקשת תשלום מקדמה (250₪).',
     icon: UserCheck,
     iconColor: 'text-purple-600',
     bgColor: 'from-purple-50 to-violet-50',
