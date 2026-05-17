@@ -13,6 +13,8 @@ Deno.serve(async (req) => {
       direction: 'outbound',
     });
 
+    const { accessToken: gmailToken } = await base44.asServiceRole.connectors.getConnection('gmail');
+
     let sent = 0;
     let failed = 0;
 
@@ -56,12 +58,24 @@ Deno.serve(async (req) => {
       `;
 
       try {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: client.email,
-          subject: subject,
-          body: htmlBody,
-          from_name: 'סטודיו מיכל וולברגר',
+        const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
+        const emailRaw = [
+          `From: "סטודיו מיכל וולברגר" <me>`,
+          `To: ${client.email}`,
+          `Subject: ${subjectEncoded}`,
+          `MIME-Version: 1.0`,
+          `Content-Type: text/html; charset=utf-8`,
+          ``,
+          htmlBody
+        ].join('\r\n');
+        const raw = btoa(unescape(encodeURIComponent(emailRaw)))
+          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw }),
         });
+        if (!gmailRes.ok) throw new Error(`Gmail error: ${JSON.stringify(await gmailRes.json())}`);
 
         await base44.asServiceRole.entities.Communication.update(comm.id, {
           status: 'sent',

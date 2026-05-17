@@ -160,11 +160,26 @@ Deno.serve(async (req) => {
         </div>
       `;
 
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: client.email,
-        subject: `הזמנה ל${meetingLabel} — ${dateStr}`,
-        body: emailBody,
+      const subject = `הזמנה ל${meetingLabel} — ${dateStr}`;
+      const { accessToken: gmailToken } = await base44.asServiceRole.connectors.getConnection('gmail');
+      const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
+      const emailRaw = [
+        `From: "סטודיו מיכל וולברגר" <me>`,
+        `To: ${client.email}`,
+        `Subject: ${subjectEncoded}`,
+        `MIME-Version: 1.0`,
+        `Content-Type: text/html; charset=utf-8`,
+        ``,
+        emailBody
+      ].join('\r\n');
+      const raw = btoa(unescape(encodeURIComponent(emailRaw)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw }),
       });
+      if (!gmailRes.ok) throw new Error(`Gmail error: ${JSON.stringify(await gmailRes.json())}`);
 
       // 3. Log communication
       await base44.asServiceRole.entities.Communication.create({
