@@ -45,7 +45,7 @@ export default function TutorialOverlay({ active, currentStep, setCurrentStep, o
   const step = TUTORIAL_STEPS[currentStep];
 
   const updateHighlight = useCallback(() => {
-    if (!step.highlightSelector) {
+    if (!step || !step.highlightSelector) {
       setHighlightRect(null);
       return;
     }
@@ -62,7 +62,6 @@ export default function TutorialOverlay({ active, currentStep, setCurrentStep, o
       setWaitingForNav(false);
     } else {
       setHighlightRect(null);
-      // If we're on the wrong page, show navigation button
       if (step.navigateTo && location.pathname !== step.navigateTo) {
         setWaitingForNav(true);
       }
