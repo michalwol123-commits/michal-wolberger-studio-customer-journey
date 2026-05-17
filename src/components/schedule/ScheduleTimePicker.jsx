@@ -18,17 +18,21 @@ export default function ScheduleTimePicker({ meetingData, token, onScheduled }) 
     setSubmitting(true);
     setConflict(null);
 
-    const res = await base44.functions.invoke('submitSchedule', {
-      token,
-      scheduled_at: new Date(selectedDateTime).toISOString(),
-    });
+    try {
+      const res = await base44.functions.invoke('submitSchedule', {
+        token,
+        scheduled_at: new Date(selectedDateTime).toISOString(),
+      });
 
-    setSubmitting(false);
-
-    if (res.data?.error === 'conflict') {
-      setConflict(res.data.conflicting_events);
-    } else if (res.data?.status === 'ok') {
-      onScheduled(selectedDateTime);
+      if (res.data?.error === 'conflict') {
+        setConflict(res.data.conflicting_events);
+      } else if (res.data?.status === 'ok') {
+        onScheduled(selectedDateTime);
+      }
+    } catch (err) {
+      console.error('submitSchedule failed:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
