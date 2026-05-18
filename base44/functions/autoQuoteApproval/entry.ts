@@ -46,6 +46,7 @@ Deno.serve(async (req) => {
     for (const ms of milestones) {
       const dueDate = new Date(Date.now() + ms.daysOffset * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       await base44.asServiceRole.entities.Payment.create({
+        client_id: clientId,
         project_id: project.id,
         milestone: ms.milestone,
         milestone_stage: ms.milestone_stage,

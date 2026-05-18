@@ -51,12 +51,42 @@ Deno.serve(async (req) => {
       }
       await base44.asServiceRole.entities.Meeting.create(meetingData);
 
+      // Create payment for intro meeting (₪250)
+      const today = new Date().toISOString().split('T')[0];
+      await base44.asServiceRole.entities.Payment.create({
+        client_id: client.id,
+        milestone: 'פגישת היכרות',
+        amount: 250,
+        amount_paid: 0,
+        due_date: today,
+        status: 'pending',
+      });
+
+      // Create task for quote presentation prep
+      const dueDateTask = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      await base44.asServiceRole.entities.Task.create({
+        client_id: client.id,
+        title: `הכנת פגישת הצעת מחיר — ${clientName}`,
+        type: 'followup',
+        priority: 'high',
+        status: 'open',
+        due_date: dueDateTask,
+      });
+
+      // Create draft quote for the client
+      await base44.asServiceRole.entities.Quote.create({
+        client_id: client.id,
+        title: `הצעת מחיר — ${clientName}`,
+        total_amount: 0,
+        status: 'draft',
+      });
+
       // Log communication
       await base44.asServiceRole.entities.Communication.create({
         client_id: client.id,
         type: 'note',
         direction: 'outbound',
-        content: `פגישת היכרות הושלמה — ${clientName} ממשיך. נפתחה פגישת הצגת הצעה.`,
+        content: `פגישת היכרות הושלמה — ${clientName} ממשיך. נפתחה פגישת הצגת הצעה, משימה, תשלום ₪250 והצעת מחיר בטיוטה.`,
         sent_by: 'system',
         status: 'sent',
         channel: 'base44_native',

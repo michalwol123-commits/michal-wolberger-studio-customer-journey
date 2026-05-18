@@ -1,13 +1,13 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { UserPlus, Phone, CheckCircle, Send, PartyPopper } from 'lucide-react';
+import { UserPlus, Phone, CheckCircle, FileText, Send, PartyPopper } from 'lucide-react';
 
 const EVENTS = [
   { key: 'created_date', label: 'ליד נוצר', icon: UserPlus },
   { key: 'first_response_at', label: 'מענה ראשוני', icon: Phone },
   { key: 'qualified_at', label: 'הפך למתעניין', icon: CheckCircle },
-
+  { key: 'proposal_presented_at', label: 'הוגשה הצעה בפגישה', icon: FileText },
   { key: 'proposal_sent_at', label: 'הצעה נשלחה', icon: Send },
   { key: 'completed_at', label: 'הושלם', icon: PartyPopper },
 ];

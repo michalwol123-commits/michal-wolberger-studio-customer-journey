@@ -194,6 +194,7 @@ Deno.serve(async (req) => {
       if (['qualified', 'proposal_presented'].includes(currentStatus)) {
         await base44.asServiceRole.entities.Client.update(clientId, {
           status: 'proposal_sent',
+          proposal_sent_at: new Date().toISOString(),
         });
       }
     }
