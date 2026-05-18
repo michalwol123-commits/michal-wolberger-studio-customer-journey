@@ -21,40 +21,51 @@ Deno.serve(async (req) => {
     if (clients.length === 0) return Response.json({ skipped: true, reason: 'client not found' });
     const client = clients[0];
 
-    // Create project with stages 1-3 already completed (intro, qualifying, quote)
-    const project = await base44.asServiceRole.entities.Project.create({
-      client_id: clientId,
-      name: data.title || `פרויקט — ${client.name}`,
-      status: 'active',
-      stage_current: 4,
-      progress: 0,
-      total_budget: data.total_amount || 0,
-      start_date: new Date().toISOString().split('T')[0],
-      s1_status: 'completed',
-      s2_status: 'completed',
-      s3_status: 'completed',
-    });
+    // Check if an active project already exists for this client (avoid duplicate project)
+    const existingProjects = await base44.asServiceRole.entities.Project.filter({ client_id: clientId, status: 'active' });
+    let project;
+    let isNewProject = false;
 
-    // Create default payment milestones (3 payments: advance 40%, mid 30%, final 30%)
-    const totalAmount = data.total_amount || 0;
-    const milestones = [
-      { milestone: 'מקדמה', amount: Math.round(totalAmount * 0.4), milestone_stage: 1, daysOffset: 7 },
-      { milestone: 'תשלום אמצע', amount: Math.round(totalAmount * 0.3), milestone_stage: 5, daysOffset: 60 },
-      { milestone: 'תשלום סיום', amount: Math.round(totalAmount * 0.3), milestone_stage: 9, daysOffset: 120 },
-    ];
-
-    for (const ms of milestones) {
-      const dueDate = new Date(Date.now() + ms.daysOffset * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      await base44.asServiceRole.entities.Payment.create({
+    if (existingProjects.length > 0) {
+      project = existingProjects[0];
+    } else {
+      isNewProject = true;
+      project = await base44.asServiceRole.entities.Project.create({
         client_id: clientId,
-        project_id: project.id,
-        milestone: ms.milestone,
-        milestone_stage: ms.milestone_stage,
-        amount: ms.amount,
-        amount_paid: 0,
-        due_date: dueDate,
-        status: 'pending',
+        name: data.title || `פרויקט — ${client.name}`,
+        status: 'active',
+        stage_current: 4,
+        progress: 0,
+        total_budget: data.total_amount || 0,
+        start_date: new Date().toISOString().split('T')[0],
+        s1_status: 'completed',
+        s2_status: 'completed',
+        s3_status: 'completed',
       });
+    }
+
+    // Create default payment milestones only for new projects (avoid duplicates)
+    if (isNewProject) {
+      const totalAmount = data.total_amount || 0;
+      const milestones = [
+        { milestone: 'מקדמה', amount: Math.round(totalAmount * 0.4), milestone_stage: 1, daysOffset: 7 },
+        { milestone: 'תשלום אמצע', amount: Math.round(totalAmount * 0.3), milestone_stage: 5, daysOffset: 60 },
+        { milestone: 'תשלום סיום', amount: Math.round(totalAmount * 0.3), milestone_stage: 9, daysOffset: 120 },
+      ];
+
+      for (const ms of milestones) {
+        const dueDate = new Date(Date.now() + ms.daysOffset * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        await base44.asServiceRole.entities.Payment.create({
+          client_id: clientId,
+          project_id: project.id,
+          milestone: ms.milestone,
+          milestone_stage: ms.milestone_stage,
+          amount: ms.amount,
+          amount_paid: 0,
+          due_date: dueDate,
+          status: 'pending',
+        });
+      }
     }
 
     // Link existing orphan records (docs, payments, tasks, meetings) to the new project
