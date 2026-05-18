@@ -66,17 +66,28 @@ export default function ImportFromDriveDialog({ open, onOpenChange, projectId, o
     setStep('extracting');
     setError('');
     try {
-      // First export the doc as PDF
+      // Step 1: Save as document first
+      const webLink = `https://docs.google.com/document/d/${selectedFile.id}/edit`;
+      await base44.entities.Document.create({
+        project_id: projectId,
+        name: selectedFile.name,
+        file_url: webLink,
+        type: 'other',
+        approval_status: 'draft',
+        visible_to_client: false,
+      });
+
+      // Step 2: Fetch text content from Google Doc
       const fetchRes = await base44.functions.invoke('fetchGoogleDoc', { file_id: selectedFile.id });
-      const fileUrl = fetchRes.data?.file_url;
-      if (!fileUrl) {
-        setError(fetchRes.data?.error || 'שגיאה בייצוא הקובץ');
+      const docText = fetchRes.data?.text;
+      if (!docText) {
+        setError(fetchRes.data?.error || 'שגיאה בקריאת המסמך');
         setStep('choose');
         return;
       }
 
-      // Then extract design items using the existing importDesignPDF function
-      const extractRes = await base44.functions.invoke('importDesignPDF', { file_url: fileUrl, project_id: projectId });
+      // Step 3: Extract design items from text
+      const extractRes = await base44.functions.invoke('extractDesignFromText', { text: docText });
       if (extractRes.data?.error) {
         setError(extractRes.data.error);
         setStep('choose');
@@ -227,7 +238,7 @@ export default function ImportFromDriveDialog({ open, onOpenChange, projectId, o
                 <CardContent className="p-4 text-center">
                   <Wand2 className="w-8 h-8 text-accent mx-auto mb-2" />
                   <p className="font-medium text-sm">ייבוא פריטי עיצוב</p>
-                  <p className="text-xs text-muted-foreground mt-1">חילוץ אוטומטי לפי חדר וקטגוריה</p>
+                  <p className="text-xs text-muted-foreground mt-1">שמירה כמסמך + חילוץ פריטים</p>
                 </CardContent>
               </Card>
             </div>
