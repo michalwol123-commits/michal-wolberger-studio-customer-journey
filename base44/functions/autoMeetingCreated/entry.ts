@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       const clients = await base44.asServiceRole.entities.Client.filter({ id: data.client_id });
       const client = clients[0];
       const meetingLabel = MEETING_TYPE_LABELS[data.type] || data.type || 'פגישה';
-      const scheduleUrl = `${Deno.env.get('BASE44_APP_URL') || 'https://preview-sandbox--69e4e3a98f5f3e4e5bd49dba.base44.app'}/schedule?token=${schedulingToken}`;
+      const scheduleUrl = `${Deno.env.get('BASE44_APP_URL') || 'https://michal-design-flow.base44.app'}/schedule?token=${schedulingToken}`;
 
       // Send WhatsApp if client has phone
       if (client?.phone) {
