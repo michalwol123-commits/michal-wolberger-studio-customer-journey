@@ -14,26 +14,40 @@ export default function ImportDesignPDF({ open, onOpenChange, projectId, onImpor
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [error, setError] = useState('');
 
+  const MAX_FILE_SIZE_MB = 10;
+
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setStep('processing');
-    setError('');
 
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const response = await base44.functions.invoke('importDesignPDF', { file_url, project_id: projectId });
-
-    if (response.data?.error) {
-      setError(response.data.error);
-      setStep('upload');
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setError(`הקובץ גדול מ-${MAX_FILE_SIZE_MB}MB. נא לדחוס אותו לפני העלאה (למשל דרך ilovepdf.com) ולנסות שוב.`);
+      e.target.value = '';
       return;
     }
 
-    const extracted = response.data?.items || [];
-    setItems(extracted);
-    setSummary(response.data?.summary || '');
-    setSelectedItems(new Set(extracted.map((_, i) => i)));
-    setStep('review');
+    setStep('processing');
+    setError('');
+
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const response = await base44.functions.invoke('importDesignPDF', { file_url, project_id: projectId });
+
+      if (response.data?.error) {
+        setError(response.data.error);
+        setStep('upload');
+        return;
+      }
+
+      const extracted = response.data?.items || [];
+      setItems(extracted);
+      setSummary(response.data?.summary || '');
+      setSelectedItems(new Set(extracted.map((_, i) => i)));
+      setStep('review');
+    } catch (err) {
+      setError('שגיאה בעיבוד הקובץ. נסי לדחוס את ה-PDF ולהעלות שוב.');
+      setStep('upload');
+    }
   };
 
   const toggleItem = (idx) => {
