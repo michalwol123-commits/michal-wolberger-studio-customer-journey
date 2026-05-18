@@ -37,7 +37,7 @@ export default function CommunicationsTable({ communications, clientMap, isAdmin
                   <td className="px-4 py-3 text-muted-foreground">{client?.name || '—'}</td>
                   <td className="px-4 py-3 hidden md:table-cell text-muted-foreground truncate max-w-[250px]">{c.content}</td>
                   <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground">
-                    {c.created_date ? format(new Date(c.created_date), 'dd/MM HH:mm') : '—'}
+                    {c.created_date ? new Date(c.created_date).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' }) : '—'}
                   </td>
                   <td className="px-4 py-3">{c.status && <StatusBadge status={c.status} />}</td>
                 </tr>

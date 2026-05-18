@@ -96,7 +96,7 @@ export default function Communications() {
                       {client && <span className="text-xs text-muted-foreground">• {client.name}</span>}
                     </div>
                     <span className="text-xs text-muted-foreground shrink-0">
-                      {comm.created_date ? format(new Date(comm.created_date), 'dd/MM HH:mm') : ''}
+                      {comm.created_date ? new Date(comm.created_date).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' }) : ''}
                     </span>
                   </div>
                   <p className="text-sm">{comm.content}</p>
