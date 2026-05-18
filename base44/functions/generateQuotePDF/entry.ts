@@ -172,10 +172,6 @@ Deno.serve(async (req) => {
 
     const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
 
-    if (quote_id) {
-      await base44.asServiceRole.entities.Quote.update(quote_id, { file_url });
-    }
-
     return Response.json({ success: true, file_url });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
