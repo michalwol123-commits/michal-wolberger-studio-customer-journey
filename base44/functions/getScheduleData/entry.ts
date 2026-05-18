@@ -23,7 +23,8 @@ Deno.serve(async (req) => {
     }
 
     // Get client name
-    const client = await base44.asServiceRole.entities.Client.get(meeting.client_id);
+    const clients = await base44.asServiceRole.entities.Client.filter({ id: meeting.client_id });
+    const client = clients[0];
 
     const MEETING_TYPE_LABELS = {
       intro: 'פגישת היכרות',
