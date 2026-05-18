@@ -4,16 +4,18 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileUp, ChevronDown, ChevronRight, MapPin } from 'lucide-react';
+import { Plus, FileUp, ChevronDown, ChevronRight, MapPin, HardDrive } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import DesignItemCard from './DesignItemCard';
 import AddDesignItemDialog from './AddDesignItemDialog';
 import ImportDesignPDF from './ImportDesignPDF';
+import ImportFromDriveDialog from './ImportFromDriveDialog';
 import { STATUS_CONFIG } from './designConfig';
 
 export default function ProjectDesignMap({ projectId, stageFilter }) {
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showDriveImport, setShowDriveImport] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [openRooms, setOpenRooms] = useState(new Set());
   const queryClient = useQueryClient();
@@ -85,6 +87,9 @@ export default function ProjectDesignMap({ projectId, stageFilter }) {
               </div>
             </div>
             <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setShowDriveImport(true)} className="gap-1">
+                <HardDrive className="w-4 h-4" />ייבוא מ-Drive
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setShowImport(true)} className="gap-1">
                 <FileUp className="w-4 h-4" />ייבוא PDF
               </Button>
@@ -152,6 +157,13 @@ export default function ProjectDesignMap({ projectId, stageFilter }) {
       <ImportDesignPDF
         open={showImport}
         onOpenChange={setShowImport}
+        projectId={projectId}
+        onImported={handleSaved}
+      />
+
+      <ImportFromDriveDialog
+        open={showDriveImport}
+        onOpenChange={setShowDriveImport}
         projectId={projectId}
         onImported={handleSaved}
       />
