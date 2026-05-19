@@ -21,13 +21,18 @@ Deno.serve(async (req) => {
     if (clients.length === 0) return Response.json({ skipped: true, reason: 'client not found' });
     const client = clients[0];
 
-    // Check if an active project already exists for this client (avoid duplicate project)
-    const existingProjects = await base44.asServiceRole.entities.Project.filter({ client_id: clientId, status: 'active' });
+    // Check if ANY project already exists for this client (avoid duplicate project)
+    const allClientProjects = await base44.asServiceRole.entities.Project.filter({ client_id: clientId });
     let project;
     let isNewProject = false;
 
-    if (existingProjects.length > 0) {
-      project = existingProjects[0];
+    if (allClientProjects.length > 0) {
+      // Prefer active project, otherwise use the first one found
+      project = allClientProjects.find(p => p.status === 'active') || allClientProjects[0];
+      // Re-activate if needed
+      if (project.status !== 'active') {
+        await base44.asServiceRole.entities.Project.update(project.id, { status: 'active' });
+      }
     } else {
       isNewProject = true;
       project = await base44.asServiceRole.entities.Project.create({

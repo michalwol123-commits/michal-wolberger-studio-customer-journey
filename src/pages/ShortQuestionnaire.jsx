@@ -52,6 +52,10 @@ const STYLE_PHILOSOPHY = [
 export default function ShortQuestionnaire() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loadingClient, setLoadingClient] = useState(false);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const clientId = urlParams.get('cid') || '';
 
   const [form, setForm] = useState({
     name: '', phone: '', email: '',
@@ -61,6 +65,26 @@ export default function ShortQuestionnaire() {
     budget: '', gift: '', style_philosophy: '', style_philosophy_other: '',
   });
 
+  // Load client data if cid provided
+  React.useEffect(() => {
+    if (!clientId) return;
+    setLoadingClient(true);
+    base44.entities.Client.filter({ id: clientId })
+      .then(clients => {
+        if (clients.length > 0) {
+          const c = clients[0];
+          setForm(prev => ({
+            ...prev,
+            name: c.name || prev.name,
+            phone: c.phone || prev.phone,
+            email: c.email || prev.email,
+          }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingClient(false));
+  }, [clientId]);
+
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const handleSubmit = async () => {
@@ -68,7 +92,7 @@ export default function ShortQuestionnaire() {
     setSubmitting(true);
 
     const { name, phone, email, ...responses } = form;
-    await base44.entities.Questionnaire.create({
+    const qData = {
       type: 'short',
       status: 'submitted',
       name,
@@ -77,7 +101,11 @@ export default function ShortQuestionnaire() {
       responses: JSON.stringify(responses),
       submitted_at: new Date().toISOString(),
       stage: 1,
-    });
+    };
+    if (clientId) {
+      qData.client_id = clientId;
+    }
+    await base44.entities.Questionnaire.create(qData);
 
     setSubmitted(true);
     setSubmitting(false);

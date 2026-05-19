@@ -45,11 +45,18 @@ Deno.serve(async (req) => {
       const meetingLabel = MEETING_TYPE_LABELS[data.type] || data.type || 'פגישה';
       const scheduleUrl = `${Deno.env.get('BASE44_APP_URL') || 'https://michal-design-flow.base44.app'}/schedule?token=${schedulingToken}`;
 
+      // Build questionnaire link for intro meetings
+      const appUrl = Deno.env.get('BASE44_APP_URL') || 'https://michal-design-flow.base44.app';
+      const questionnaireUrl = data.type === 'intro' ? `${appUrl}/q?cid=${client.id}` : null;
+
       // Send WhatsApp if client has phone
       if (client?.phone) {
         let whatsappMsg = `שלום ${client.name} 👋\nנפתחה עבורך ${meetingLabel}.\nנא לבחור מועד נוח בקישור:\n${scheduleUrl}`;
         if (data.type === 'quote_presentation' && data.meeting_price) {
           whatsappMsg += `\n\nמחיר הפגישה: ${data.meeting_price}₪`;
+        }
+        if (questionnaireUrl) {
+          whatsappMsg += `\n\nלפני השיחה, אשמח שתמלאו שאלון קצר 📝:\n${questionnaireUrl}`;
         }
 
         await base44.asServiceRole.functions.invoke('sendWhatsApp', {
@@ -71,12 +78,16 @@ Deno.serve(async (req) => {
 
       // Send Email if client has email (pending Communication — sendEmail picks it up)
       if (client?.email) {
+        let emailContent = `שלום ${client.name},\n\nנפתחה עבורך ${meetingLabel}.\nלתיאום מועד נוח לחצ/י על הקישור:\n${scheduleUrl}`;
+        if (questionnaireUrl) {
+          emailContent += `\n\nלפני השיחה, אשמח שתמלאו שאלון קצר:\n${questionnaireUrl}`;
+        }
         await base44.asServiceRole.entities.Communication.create({
           client_id: client.id,
           project_id: data.project_id || undefined,
           type: 'email',
           direction: 'outbound',
-          content: `שלום ${client.name},\n\nנפתחה עבורך ${meetingLabel}.\nלתיאום מועד נוח לחצ/י על הקישור:\n${scheduleUrl}`,
+          content: emailContent,
           sent_by: 'system',
           status: 'pending',
           channel: 'gmail',
