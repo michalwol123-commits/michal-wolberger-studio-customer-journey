@@ -170,6 +170,7 @@ Deno.serve(async (req) => {
             <tr><td style="padding: 8px; font-weight: bold; color: #555;">שעה:</td><td style="padding: 8px;">${timeStr}</td></tr>
             <tr><td style="padding: 8px; font-weight: bold; color: #555;">משך:</td><td style="padding: 8px;">${duration} דקות</td></tr>
             ${data.location ? `<tr><td style="padding: 8px; font-weight: bold; color: #555;">מיקום:</td><td style="padding: 8px;">${data.location}</td></tr>` : ''}
+            ${data.type === 'quote_presentation' && data.meeting_price ? `<tr><td style="padding: 8px; font-weight: bold; color: #555;">תשלום עבור הפגישה:</td><td style="padding: 8px;">${data.meeting_price} ₪</td></tr>` : ''}
           </table>
           <p>נשמח לראות אותך! 😊</p>
           <p style="color: #999; font-size: 12px; margin-top: 24px;">הודעה זו נשלחה אוטומטית מהסטודיו</p>
