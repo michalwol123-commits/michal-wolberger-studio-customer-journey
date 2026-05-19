@@ -94,10 +94,9 @@ Deno.serve(async (req) => {
 
     // Send welcome email
     if (client.email) {
-      const appId = Deno.env.get('BASE44_APP_ID') || '';
-      const baseUrl = appId ? `https://${appId}.base44app.com` : '';
+      const appUrl = Deno.env.get('BASE44_APP_URL') || 'https://michal-design-flow.base44.app';
       const portalUrl = client.portal_token
-        ? `${baseUrl}/portal?token=${client.portal_token}`
+        ? `${appUrl}/portal?token=${client.portal_token}`
         : '';
 
       const emailBody = `
