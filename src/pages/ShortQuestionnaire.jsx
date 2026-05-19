@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -66,7 +66,7 @@ export default function ShortQuestionnaire() {
   });
 
   // Load client data if cid provided
-  React.useEffect(() => {
+  useEffect(() => {
     if (!clientId) return;
     setLoadingClient(true);
     base44.entities.Client.filter({ id: clientId })
