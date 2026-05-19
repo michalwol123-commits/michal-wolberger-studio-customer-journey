@@ -60,7 +60,6 @@ Deno.serve(async (req) => {
       ];
 
       let cursor = new Date(startDate);
-      // Stages 1-4 already passed — set them before project start
       const fmt = (d) => d.toISOString().split('T')[0];
       const milestonesToCreate = [];
 
