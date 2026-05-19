@@ -22,14 +22,14 @@ export default function IntroCompletedDialog({ open, onOpenChange, onContinue, o
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>פגישת היכרות הושלמה</DialogTitle>
+          <DialogTitle>שיחת טלפון ראשונית הושלמה</DialogTitle>
           <DialogDescription>
-            האם הלקוח ממשיך לשלב הבא (פגישת הצעת מחיר)?
+            האם הלקוח ממשיך לשלב הבא (היכרות והצגת הצעת מחיר)?
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 py-4">
           <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-            <Label className="text-sm font-medium">מחיר פגישת הצגת הצעה (₪)</Label>
+            <Label className="text-sm font-medium">מחיר פגישת היכרות והצגת הצעת מחיר (₪)</Label>
             <Input
               type="number"
               value={meetingPrice}
@@ -44,7 +44,7 @@ export default function IntroCompletedDialog({ open, onOpenChange, onContinue, o
             className="gap-2 h-12 text-base bg-green-600 hover:bg-green-700"
           >
             <CheckCircle className="w-5 h-5" />
-            ממשיך — פתח פגישת הצעת מחיר
+            ממשיך — פתח פגישת היכרות והצגת הצעת מחיר
           </Button>
           <Button
             variant="outline"
