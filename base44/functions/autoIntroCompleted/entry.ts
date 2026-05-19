@@ -51,11 +51,11 @@ Deno.serve(async (req) => {
       }
       await base44.asServiceRole.entities.Meeting.create(meetingData);
 
-      // Create payment for intro meeting (₪250)
+      // Create payment for quote presentation meeting (₪250)
       const today = new Date().toISOString().split('T')[0];
       await base44.asServiceRole.entities.Payment.create({
         client_id: client.id,
-        milestone: 'פגישת היכרות',
+        milestone: 'היכרות והצגת הצעת מחיר',
         amount: 250,
         amount_paid: 0,
         due_date: today,
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         client_id: client.id,
         type: 'note',
         direction: 'outbound',
-        content: `פגישת היכרות הושלמה — ${clientName} ממשיך. נפתחה פגישת הצגת הצעה, משימה, תשלום ₪250 והצעת מחיר בטיוטה.`,
+        content: `שיחת טלפון ראשונית הושלמה — ${clientName} ממשיך. נפתחה פגישת היכרות והצגת הצעה, משימה, תשלום ₪250 והצעת מחיר בטיוטה.`,
         sent_by: 'system',
         status: 'sent',
         channel: 'base44_native',
@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
         client_id: client.id,
         type: 'note',
         direction: 'outbound',
-        content: `פגישת היכרות הושלמה — ${clientName} לא ממשיך. הועבר לארכיון.`,
+        content: `שיחת טלפון ראשונית הושלמה — ${clientName} לא ממשיך. הועבר לארכיון.`,
         sent_by: 'system',
         status: 'sent',
         channel: 'base44_native',

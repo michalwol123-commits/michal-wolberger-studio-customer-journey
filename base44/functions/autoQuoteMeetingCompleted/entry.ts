@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
         client_id: clientId,
         type: 'note',
         direction: 'outbound',
-        content: `פגישת הצגת הצעת מחיר הושלמה עם ${client.name}. סטטוס הלקוח עודכן ל"הוגשה בפגישה".`,
+        content: `פגישת היכרות והצגת הצעת מחיר הושלמה עם ${client.name}. סטטוס הלקוח עודכן ל"הוגשה בפגישה".`,
         sent_by: 'system',
         status: 'sent',
         channel: 'base44_native',
