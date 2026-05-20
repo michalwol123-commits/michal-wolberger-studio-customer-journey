@@ -18,7 +18,7 @@ const STAGE_CHECKLISTS = {
       { id: 's4_1', label: 'אישור לקוח — בחירת חבילה', type: 'manual', required: true },
       { id: 's4_2', label: 'העלאת חוזה חתום', type: 'button', required: true, action: { type: 'upload_doc', docType: 'contract', stage: 4 } },
       { id: 's4_3', label: 'תשלום ראשון — מקדמה', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'payments' } },
-      { id: 's4_4', label: 'הגדרת פריסת תשלומים עתידית', type: 'manual', required: false },
+      { id: 's4_4', label: 'הגדרת פריסת תשלומים עתידית', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'payments' } },
       { id: 's4_5', label: 'הזנת Timeline ראשוני', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'gantt' } },
       { id: 's4_6', label: 'שליחת "ברוכים הבאים" + פרטי גישה לפורטל', type: 'button', required: false, action: { type: 'run_function', functionName: 'autoWelcomeClient' } },
       { id: 's4_7', label: 'תיאום פגישה ראשונה', type: 'button', required: false, action: { type: 'add_meeting', meetingType: 'stage_review' } },

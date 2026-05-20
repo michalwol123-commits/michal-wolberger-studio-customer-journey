@@ -7,11 +7,14 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList, CalendarDays } from 'lucide-react';
+import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList, CalendarDays, Plus, Trash2, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
+import EditPaymentDialog from '@/components/payments/EditPaymentDialog';
+import AddTaskDialog from '@/components/tasks/AddTaskDialog';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 import STAGES, { TOTAL_STAGES } from '@/lib/stageConfig';
 import StageSelector from '@/components/projects/StageSelector';
@@ -33,6 +36,9 @@ export default function ProjectDetail() {
   const [showUploadDoc, setShowUploadDoc] = React.useState(false);
   const [selectedStage, setSelectedStage] = React.useState(null);
   const [activeTab, setActiveTab] = React.useState('overview');
+  const [editPayment, setEditPayment] = React.useState(null);
+  const [editTask, setEditTask] = React.useState(null);
+  const [showAddTask, setShowAddTask] = React.useState(false);
   const queryClient = useQueryClient();
 
   const updateProjectStatus = useMutation({
@@ -172,29 +178,45 @@ export default function ProjectDetail() {
 
         {isAdmin && (
           <TabsContent value="payments">
+            <div className="flex justify-end mb-3">
+              <Button size="sm" onClick={() => setEditPayment({ client_id: project.client_id, project_id: projectId })} className="gap-1">
+                <Plus className="w-4 h-4" />
+                תשלום חדש
+              </Button>
+            </div>
             {projectPayments.length === 0 ? <EmptyState icon={CreditCard} title="אין תשלומים" /> : (
-              <div className="bg-card rounded-xl border overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead><tr className="border-b bg-muted/50">
-                    <th className="text-right px-4 py-3 font-medium">אבן דרך</th>
-                    <th className="text-right px-4 py-3 font-medium">סכום</th>
-                    <th className="text-right px-4 py-3 font-medium">שולם</th>
-                    <th className="text-right px-4 py-3 font-medium">תאריך יעד</th>
-                    <th className="text-right px-4 py-3 font-medium">סטטוס</th>
-                  </tr></thead>
-                  <tbody>
-                    {projectPayments.map(p => (
-                      <tr key={p.id} className="border-b last:border-0">
-                        <td className="px-4 py-3">{p.milestone}</td>
-                        <td className="px-4 py-3">₪{p.amount?.toLocaleString()}</td>
-                        <td className="px-4 py-3">₪{(p.amount_paid || 0).toLocaleString()}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{p.due_date ? format(new Date(p.due_date), 'dd/MM/yyyy') : '—'}</td>
-                        <td className="px-4 py-3"><StatusBadge status={p.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-2">
+                {projectPayments.map(p => (
+                  <Card key={p.id} className="hover:shadow-sm transition-shadow">
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div className="flex-1 cursor-pointer" onClick={() => setEditPayment(p)}>
+                        <p className="font-medium text-sm">{p.milestone}</p>
+                        <p className="text-xs text-muted-foreground">
+                          ₪{p.amount?.toLocaleString()} • שולם: ₪{(p.amount_paid || 0).toLocaleString()} • {p.due_date ? format(new Date(p.due_date), 'dd/MM/yyyy') : '—'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={p.status} />
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm('למחוק תשלום זה?')) {
+                            base44.entities.Payment.delete(p.id).then(() => queryClient.invalidateQueries({ queryKey: ['payments'] }));
+                          }
+                        }}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
+            )}
+            {editPayment && (
+              <EditPaymentDialog
+                open={!!editPayment}
+                onOpenChange={(open) => { if (!open) setEditPayment(null); }}
+                payment={editPayment}
+              />
             )}
           </TabsContent>
         )}
@@ -220,7 +242,16 @@ export default function ProjectDetail() {
                       <p className="font-medium text-sm">{doc.name}</p>
                       <p className="text-xs text-muted-foreground">{doc.type} • שלב {doc.stage || '—'} • גרסה {doc.version_number || 1}</p>
                     </div>
-                    {doc.file_url && <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">צפה</a>}
+                    <div className="flex items-center gap-2">
+                      {doc.file_url && <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">צפה</a>}
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => {
+                        if (confirm('למחוק מסמך זה?')) {
+                          base44.entities.Document.delete(doc.id).then(() => queryClient.invalidateQueries({ queryKey: ['documents'] }));
+                        }
+                      }}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -229,21 +260,42 @@ export default function ProjectDetail() {
         </TabsContent>
 
         <TabsContent value="tasks">
+          <div className="flex justify-end mb-3">
+            <Button size="sm" onClick={() => { setEditTask(null); setShowAddTask(true); }} className="gap-1">
+              <Plus className="w-4 h-4" />
+              משימה חדשה
+            </Button>
+          </div>
           {projectTasks.length === 0 ? <EmptyState icon={CheckSquare} title="אין משימות" /> : (
             <div className="space-y-2">
               {projectTasks.map(t => (
-                <Card key={t.id}>
+                <Card key={t.id} className="hover:shadow-sm transition-shadow">
                   <CardContent className="p-4 flex items-center justify-between">
-                    <div>
+                    <div className="flex-1 cursor-pointer" onClick={() => { setEditTask(t); setShowAddTask(true); }}>
                       <p className="font-medium text-sm">{t.title}</p>
                       <p className="text-xs text-muted-foreground">{t.due_date ? format(new Date(t.due_date), 'dd/MM/yyyy') : ''} • {t.assigned_to || ''}</p>
                     </div>
-                    <StatusBadge status={t.status} />
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={t.status} />
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm('למחוק משימה זו?')) {
+                          base44.entities.Task.delete(t.id).then(() => queryClient.invalidateQueries({ queryKey: ['tasks'] }));
+                        }
+                      }}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )}
+          <AddTaskDialog
+            open={showAddTask}
+            onOpenChange={(open) => { setShowAddTask(open); if (!open) setEditTask(null); }}
+            initialData={editTask || { client_id: project?.client_id, project_id: projectId }}
+          />
         </TabsContent>
 
         <TabsContent value="gantt">

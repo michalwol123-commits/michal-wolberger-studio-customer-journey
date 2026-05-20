@@ -19,6 +19,7 @@ const STATUSES = [
 export default function EditPaymentDialog({ open, onOpenChange, payment }) {
   const [form, setForm] = useState({});
   const queryClient = useQueryClient();
+  const isNew = !payment?.id;
 
   useEffect(() => {
     if (payment) {
@@ -30,33 +31,42 @@ export default function EditPaymentDialog({ open, onOpenChange, payment }) {
         due_date: payment.due_date || '',
         milestone: payment.milestone || '',
         notes: payment.notes || '',
+        client_id: payment.client_id || '',
+        project_id: payment.project_id || '',
       });
     }
   }, [payment]);
 
   const mutation = useMutation({
-    mutationFn: (data) => base44.entities.Payment.update(payment.id, data),
+    mutationFn: (data) => isNew
+      ? base44.entities.Payment.create(data)
+      : base44.entities.Payment.update(payment.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
-      toast.success('התשלום עודכן');
+      toast.success(isNew ? 'התשלום נוצר' : 'התשלום עודכן');
       onOpenChange(false);
     },
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    mutation.mutate({
+    const payload = {
       ...form,
       amount: Number(form.amount),
       amount_paid: Number(form.amount_paid),
-    });
+    };
+    if (isNew) {
+      payload.client_id = payment.client_id;
+      payload.project_id = payment.project_id;
+    }
+    mutation.mutate(payload);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="max-w-md">
         <DialogHeader>
-          <DialogTitle>עריכת תשלום</DialogTitle>
+          <DialogTitle>{isNew ? 'תשלום חדש' : 'עריכת תשלום'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -98,7 +108,7 @@ export default function EditPaymentDialog({ open, onOpenChange, payment }) {
           </div>
           <DialogFooter>
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? 'שומר...' : 'שמור'}
+              {mutation.isPending ? 'שומר...' : isNew ? 'צור תשלום' : 'שמור'}
             </Button>
           </DialogFooter>
         </form>
