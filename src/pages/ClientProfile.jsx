@@ -205,6 +205,9 @@ export default function ClientProfile() {
             {client.property_type && (
               <div className="text-muted-foreground">נכס: {propertyLabels[client.property_type] || client.property_type}</div>
             )}
+            {client.design_style && (
+              <div className="text-muted-foreground">סגנון עיצובי: {client.design_style}</div>
+            )}
             {client.source && (
               <div className="text-muted-foreground">מקור: {client.source}</div>
             )}

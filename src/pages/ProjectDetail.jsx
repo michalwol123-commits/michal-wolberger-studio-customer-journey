@@ -23,6 +23,7 @@ import ProjectPurchaseOrders from '@/components/purchases/ProjectPurchaseOrders'
 import QuestionnaireResponsesView from '@/components/questionnaire/QuestionnaireResponsesView';
 import DetailedQuestionnairePreview from '@/components/questionnaire/DetailedQuestionnairePreview';
 import MeetingsList from '@/components/meetings/MeetingsList';
+import ProjectOverview from '@/components/projects/ProjectOverview';
 
 
 export default function ProjectDetail() {
@@ -166,15 +167,7 @@ export default function ProjectDetail() {
         </TabsList>
 
         <TabsContent value="overview">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">תקציב</p><p className="text-lg font-bold">₪{(project.total_budget || 0).toLocaleString()}</p></CardContent></Card>
-            <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">התקדמות</p><p className="text-lg font-bold">{project.progress || 0}%</p></CardContent></Card>
-            <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">תאריך התחלה</p><p className="text-lg font-bold">{project.start_date ? format(new Date(project.start_date), 'dd/MM/yyyy') : '—'}</p></CardContent></Card>
-            <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">סיום משוער</p><p className="text-lg font-bold">{project.end_date_est ? format(new Date(project.end_date_est), 'dd/MM/yyyy') : '—'}</p></CardContent></Card>
-          </div>
-          {project.notes && (
-            <Card className="mt-4"><CardContent className="p-4"><p className="text-sm">{project.notes}</p></CardContent></Card>
-          )}
+          <ProjectOverview project={project} />
         </TabsContent>
 
         {isAdmin && (

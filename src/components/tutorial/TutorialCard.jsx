@@ -52,7 +52,7 @@ export default function TutorialCard({
             </div>
             <div>
               <h3 className="font-heading font-bold text-foreground text-base">{step.title}</h3>
-              <span className="text-xs text-muted-foreground">שלב {currentIndex + 1} מתוך {totalSteps}</span>
+              <span className="text-xs text-muted-foreground">כרטיס {currentIndex + 1} מתוך {totalSteps}</span>
             </div>
           </div>
           <button onClick={onSkip} className="text-muted-foreground hover:text-foreground p-1">
@@ -145,8 +145,8 @@ export default function TutorialCard({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={onNext} className="text-muted-foreground">
-            דלג
+          <Button variant="ghost" size="sm" onClick={onSkip} className="text-muted-foreground">
+            סגור
           </Button>
           <Button size="sm" onClick={onNext} className="gap-1">
             {currentIndex === totalSteps - 1 ? 'סיום' : 'הבא'}
