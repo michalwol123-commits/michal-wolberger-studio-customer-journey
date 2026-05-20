@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Zap, Lightbulb, ArrowLeft, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Zap, Lightbulb, ArrowLeft, Play, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const springConfig = { type: 'spring', damping: 25, stiffness: 300 };
@@ -15,7 +15,20 @@ export default function TutorialCard({
   onNavigate,
   waitingForNav,
   onPractice,
+  allStepTitles = [],
+  onJumpTo,
 }) {
+  const [showJumpMenu, setShowJumpMenu] = useState(false);
+  const jumpRef = useRef(null);
+
+  useEffect(() => {
+    if (!showJumpMenu) return;
+    const handler = (e) => {
+      if (jumpRef.current && !jumpRef.current.contains(e.target)) setShowJumpMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showJumpMenu]);
   const Icon = step.icon;
   const progress = ((currentIndex + 1) / totalSteps) * 100;
 
@@ -55,9 +68,38 @@ export default function TutorialCard({
               <span className="text-xs text-muted-foreground">כרטיס {currentIndex + 1} מתוך {totalSteps}</span>
             </div>
           </div>
-          <button onClick={onSkip} className="text-muted-foreground hover:text-foreground p-1">
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            {allStepTitles.length > 0 && onJumpTo && (
+              <div className="relative" ref={jumpRef}>
+                <button
+                  onClick={() => setShowJumpMenu(!showJumpMenu)}
+                  className="text-muted-foreground hover:text-foreground p-1 text-xs flex items-center gap-1 bg-white/60 rounded-md px-2 py-1"
+                >
+                  <ChevronsUpDown className="w-3 h-3" />
+                  דלג ל...
+                </button>
+                {showJumpMenu && (
+                  <div className="absolute left-0 top-full mt-1 bg-card border border-border rounded-lg shadow-xl z-50 max-h-[300px] overflow-y-auto w-64">
+                    {allStepTitles.map((title, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { onJumpTo(i); setShowJumpMenu(false); }}
+                        className={`w-full text-right px-3 py-2 text-xs hover:bg-muted transition-colors flex items-center gap-2 ${
+                          i === currentIndex ? 'bg-primary/10 text-primary font-medium' : 'text-foreground'
+                        }`}
+                      >
+                        <span className="text-muted-foreground w-5 shrink-0">{i + 1}.</span>
+                        <span className="truncate">{title}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            <button onClick={onSkip} className="text-muted-foreground hover:text-foreground p-1">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
