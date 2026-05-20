@@ -273,7 +273,7 @@ export default function TutorialOverlay({ active, currentStep, setCurrentStep, o
             onSkip={onStop}
             onNavigate={handleNavigate}
             waitingForNav={waitingForNav}
-            onPractice={step.highlightSelector ? onPractice : null}
+            onPractice={step.highlightSelector || step.forcePractice ? onPractice : null}
           />
         </div>
       </AnimatePresence>

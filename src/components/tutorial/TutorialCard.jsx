@@ -44,7 +44,11 @@ export default function TutorialCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl bg-white/80 flex items-center justify-center ${step.iconColor}`}>
-              <Icon className="w-5 h-5" />
+              {step.iconEmoji ? (
+                <span className="text-xl">{step.iconEmoji}</span>
+              ) : (
+                <Icon className="w-5 h-5" />
+              )}
             </div>
             <div>
               <h3 className="font-heading font-bold text-foreground text-base">{step.title}</h3>
@@ -78,9 +82,14 @@ export default function TutorialCard({
         )}
 
         {/* Practice button */}
-        {onPractice && !waitingForNav && (
+        {(onPractice || step.forcePractice) && !waitingForNav && (
           <Button
-            onClick={onPractice}
+            onClick={() => {
+              if (step.forcePractice && step.navigateTo && onNavigate) {
+                onNavigate(step.navigateTo);
+              }
+              if (onPractice) onPractice();
+            }}
             variant="outline"
             className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5"
           >
@@ -148,13 +157,17 @@ export default function TutorialCard({
         </div>
       </div>
 
-      {/* Step dots */}
-      <div className="flex justify-center gap-1.5 pb-3">
+      {/* Step dots — condensed for many steps */}
+      <div className="flex justify-center gap-1 pb-3 px-4">
         {Array.from({ length: totalSteps }).map((_, i) => (
           <div
             key={i}
-            className={`w-2 h-2 rounded-full transition-colors ${
-              i === currentIndex ? 'bg-primary' : i < currentIndex ? 'bg-primary/40' : 'bg-muted-foreground/20'
+            className={`rounded-full transition-colors ${
+              i === currentIndex 
+                ? 'w-3 h-1.5 bg-primary' 
+                : i < currentIndex 
+                  ? 'w-1.5 h-1.5 bg-primary/40' 
+                  : 'w-1.5 h-1.5 bg-muted-foreground/20'
             }`}
           />
         ))}

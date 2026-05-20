@@ -1,7 +1,20 @@
 import {
   Sparkles, UserPlus, Calendar, UserCheck, FileText, 
-  Briefcase, Globe, Layers, CreditCard, PartyPopper
+  Briefcase, Globe, Layers, CreditCard, PartyPopper, BookOpen
 } from 'lucide-react';
+import STAGE_TUTORIAL_STEPS from './stageTutorialSteps';
+
+// Convert stage tutorial steps to proper format with icon component
+const stageStepsWithIcon = STAGE_TUTORIAL_STEPS.map(step => ({
+  ...step,
+  icon: BookOpen,
+  // Enable practice on all stage steps
+  highlightSelector: null,
+  navigateTo: step.practiceNavigateTo || '/projects',
+  navigateLabel: step.practiceLabel || 'עברי לדף הפרויקטים',
+  // Force practice availability
+  forcePractice: true,
+}));
 
 const TUTORIAL_STEPS = [
   {
@@ -99,7 +112,7 @@ const TUTORIAL_STEPS = [
   {
     id: 'project-stages',
     title: 'שלב 7 — שלבי הפרויקט (1-13)',
-    content: 'הפרויקט עובר 13 שלבים — מאפיון ועד ביקורת סיום.\nכל שלב שמסמנים כהושלם מקדם את הפרויקט ויוצר משימה לשלב הבא.',
+    content: 'הפרויקט עובר 13 שלבים — מאפיון ועד ביקורת סיום.\nכל שלב שמסמנים כהושלם מקדם את הפרויקט ויוצר משימה לשלב הבא.\n\n👉 בכרטיסיות הבאות — תרגול מפורט לכל שלב!',
     icon: Layers,
     iconColor: 'text-indigo-600',
     bgColor: 'from-indigo-50 to-blue-50',
@@ -109,9 +122,12 @@ const TUTORIAL_STEPS = [
     navigateLabel: 'עברי לדף הפרויקטים',
     navigateNote: 'לחצי על פרויקט כדי לראות את לוח השלבים',
   },
+  // === 13 כרטיסיות שלבים מפורטות ===
+  ...stageStepsWithIcon,
+  // === המשך שלבי סיום ===
   {
     id: 'payments',
-    title: 'שלב 8 — תשלומים ומסמכים',
+    title: 'סקירה — תשלומים ומסמכים',
     content: 'כל אבן דרך פיננסית מופיעה כאן.\nניתן לעקוב אחר מה שולם, מה ממתין ולשלוח תזכורת.',
     icon: CreditCard,
     iconColor: 'text-emerald-600',
