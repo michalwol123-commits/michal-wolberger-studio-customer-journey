@@ -26,7 +26,7 @@ export default function TutorialCard({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={springConfig}
-      className="bg-card rounded-2xl shadow-2xl border border-border overflow-hidden w-[380px] max-w-[90vw] z-[10002]"
+      className="bg-card rounded-2xl shadow-2xl border border-border overflow-hidden w-[520px] max-w-[90vw] z-[10002]"
       dir="rtl"
     >
       {/* Progress bar */}
@@ -145,15 +145,13 @@ export default function TutorialCard({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={onSkip} className="text-muted-foreground">
+          <Button variant="ghost" size="sm" onClick={onNext} className="text-muted-foreground">
             דלג
           </Button>
-          {!waitingForNav && (
-            <Button size="sm" onClick={onNext} className="gap-1">
-              {currentIndex === totalSteps - 1 ? 'סיום' : 'הבא'}
-              {currentIndex < totalSteps - 1 && <ChevronLeft className="w-4 h-4" />}
-            </Button>
-          )}
+          <Button size="sm" onClick={onNext} className="gap-1">
+            {currentIndex === totalSteps - 1 ? 'סיום' : 'הבא'}
+            {currentIndex < totalSteps - 1 && <ChevronLeft className="w-4 h-4" />}
+          </Button>
         </div>
       </div>
 
