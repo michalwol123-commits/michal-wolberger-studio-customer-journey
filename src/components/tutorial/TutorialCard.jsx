@@ -62,7 +62,7 @@ export default function TutorialCard({
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 max-h-[50vh] overflow-y-auto">
         <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{step.content}</p>
 
         {/* Tip */}
