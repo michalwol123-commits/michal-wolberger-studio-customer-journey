@@ -265,7 +265,7 @@ export default function ProjectDetail() {
         <TabsContent value="questionnaires">
           <div className="space-y-4">
             <DetailedQuestionnairePreview questionnaires={projectQuestionnaires} projectId={projectId} clientId={clientId} />
-            <QuestionnaireResponsesView questionnaires={projectQuestionnaires} />
+            <QuestionnaireResponsesView questionnaires={projectQuestionnaires.filter(q => q.type !== 'detailed')} />
           </div>
         </TabsContent>
 
