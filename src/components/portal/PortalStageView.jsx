@@ -12,13 +12,14 @@ import DetailedQuestionnaireForm from './DetailedQuestionnaireForm';
 import DetailedQuestionnaireResults from './DetailedQuestionnaireResults';
 import PortalDesignMap from './PortalDesignMap';
 import InspirationBoardViewer from './InspirationBoardViewer';
+import PortalQuoteView from './PortalQuoteView';
 
 // Define what content each stage shows in the portal
 const STAGE_CONTENT = {
   1: { questionnaire: 'short' },                    // שלב 1: רק שאלון קצר
   2: { meetings: true, docs: true },                  // שלב 2: פגישת היכרות + סיכום + מסמכים
-  3: { meetings: true, payments: true, docs: true },  // שלב 3: פגישה + תשלומים + מסמכים
-  4: { docs: true },                                  // שלב 4: חוזה (מסמכים)
+  3: { meetings: true, payments: true, docs: true, quotes: true },  // שלב 3: פגישה + הצעת מחיר + תשלומים + מסמכים
+  4: { docs: true, quotes: true },                    // שלב 4: חוזה + פרטי ההצעה שאושרה
   5: { questionnaire: 'detailed', docs: true },       // שלב 5: שאלון מפורט + מסמכים
   8: { meetings: true, docs: true, payments: true, inspiration: true }, // שלב 8: קונספט עיצובי + לוח השראה
 };
@@ -94,6 +95,11 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
             clientId={project.client_id}
           />
         )
+      )}
+
+      {/* Quotes (stage 3+4) */}
+      {content.quotes && (
+        <PortalQuoteView projectId={project.id} clientId={project.client_id} stageNum={stageNum} />
       )}
 
       {/* Meetings */}

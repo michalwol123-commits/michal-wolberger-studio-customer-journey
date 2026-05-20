@@ -21,7 +21,7 @@ const STAGE_CHECKLISTS = {
       { id: 's4_4', label: 'הגדרת פריסת תשלומים עתידית', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'payments' } },
       { id: 's4_5', label: 'הזנת Timeline ראשוני', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'gantt' } },
       { id: 's4_6', label: 'שליחת "ברוכים הבאים" + פרטי גישה לפורטל', type: 'button', required: false, action: { type: 'run_function', functionName: 'autoWelcomeClient' } },
-      { id: 's4_7', label: 'תיאום פגישה ראשונה', type: 'button', required: false, action: { type: 'add_meeting', meetingType: 'stage_review' } },
+      { id: 's4_7', label: 'תיאום פגישה ראשונה', type: 'auto', required: false, action: { type: 'auto_check_stage_review' } },
     ]
   },
   5: {

@@ -274,6 +274,8 @@ export default function TutorialOverlay({ active, currentStep, setCurrentStep, o
             onNavigate={handleNavigate}
             waitingForNav={waitingForNav}
             onPractice={step.highlightSelector || step.forcePractice ? onPractice : null}
+            allStepTitles={TUTORIAL_STEPS.map(s => s.title)}
+            onJumpTo={(idx) => { setCurrentStep(idx); setWaitingForNav(false); setHighlightRect(null); }}
           />
         </div>
       </AnimatePresence>

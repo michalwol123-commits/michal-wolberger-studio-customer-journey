@@ -40,10 +40,19 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   });
   const allPaymentsPaid = payments.length > 0 && payments.every(p => p.status === 'paid');
 
+  // Auto-checks: stage_review meeting exists for project
+  const { data: projectMeetings = [] } = useQuery({
+    queryKey: ['meetings-stage-review', project.id],
+    queryFn: () => base44.entities.Meeting.filter({ project_id: project.id }),
+    enabled: stageNum === 4,
+  });
+  const hasStageReviewMeeting = projectMeetings.some(m => m.type === 'stage_review');
+
   // Compute auto-check state
   const getAutoState = (item) => {
     if (item.action?.type === 'auto_check_questionnaire') return detailedSubmitted;
     if (item.action?.type === 'auto_check_payments') return allPaymentsPaid;
+    if (item.action?.type === 'auto_check_stage_review') return hasStageReviewMeeting;
     return false;
   };
 
@@ -70,7 +79,7 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
     if (needsUpdate) {
       saveMutation.mutate(newData);
     }
-  }, [detailedSubmitted, allPaymentsPaid]);
+  }, [detailedSubmitted, allPaymentsPaid, hasStageReviewMeeting]);
 
   // Filter shopping day items based on quota
   const visibleItems = useMemo(() => {
@@ -294,6 +303,11 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
             client_id: project.client_id,
             project_id: project.id,
             type: meetingConfig.type,
+          }}
+          onCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ['meetings'] });
+            toast.success('הפגישה נוצרה — קישור תיאום נשלח ללקוח אוטומטית');
+            onNavigateTab?.('meetings');
           }}
         />
       )}
