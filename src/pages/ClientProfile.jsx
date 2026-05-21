@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban, Clock, Trash2, ClipboardList, CalendarDays } from 'lucide-react';
+import { ArrowRight, Phone, Mail, MapPin, Briefcase, CreditCard, FileText, MessageSquare, Upload, ExternalLink, Copy, Check, RefreshCw, Ban, Clock, Trash2, ClipboardList, CalendarDays, Send } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -18,6 +18,7 @@ import ClientTimeline from '@/components/clients/ClientTimeline';
 import DeleteButton from '@/components/shared/DeleteButton';
 import QuestionnaireResponsesView from '@/components/questionnaire/QuestionnaireResponsesView';
 import MeetingsList from '@/components/meetings/MeetingsList';
+import SendQuestionnaireDialog from '@/components/questionnaire/SendQuestionnaireDialog';
 
 export default function ClientProfile() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -26,6 +27,7 @@ export default function ClientProfile() {
   const { user, isAdmin } = useCurrentUser();
   const [showUploadDoc, setShowUploadDoc] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showSendShortQ, setShowSendShortQ] = useState(false);
   const queryClient = useQueryClient();
 
   const generateTokenMutation = useMutation({
@@ -336,7 +338,24 @@ export default function ClientProfile() {
         </TabsContent>
 
         <TabsContent value="questionnaires">
+          {isAdmin && ['lead', 'qualified'].includes(client.status) && (
+            <div className="flex justify-end mb-3">
+              <Button size="sm" onClick={() => setShowSendShortQ(true)} className="gap-1">
+                <Send className="w-4 h-4" />
+                שלח שאלון קצר
+              </Button>
+            </div>
+          )}
           <QuestionnaireResponsesView questionnaires={clientQuestionnaires} />
+          {showSendShortQ && (
+            <SendQuestionnaireDialog
+              open={showSendShortQ}
+              onOpenChange={setShowSendShortQ}
+              client={client}
+              questionnaireType="short"
+              questionnaireLink={`${window.location.origin}/q?cid=${client.id}`}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="history">
