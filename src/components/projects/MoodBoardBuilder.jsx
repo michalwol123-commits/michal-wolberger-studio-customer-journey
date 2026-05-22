@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Download, X } from 'lucide-react';
@@ -14,13 +15,14 @@ const BG_OPTIONS = [
   { label: 'כהה', value: '#2d2d2d' },
 ];
 
-export default function MoodBoardBuilder({ items, projectName, onClose }) {
+export default function MoodBoardBuilder({ items, projectName, projectId, onClose, onSaved }) {
   const [roomTitle, setRoomTitle] = useState('');
   const [bgColor, setBgColor] = useState('#f5f0ea');
   const [selectedIds, setSelectedIds] = useState(() =>
     new Set(items.filter(i => i.is_approved && i.file_url).map(i => i.id))
   );
   const [exporting, setExporting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [itemTitles, setItemTitles] = useState({});
   const exportRef = useRef(null);
 
@@ -52,6 +54,36 @@ export default function MoodBoardBuilder({ items, projectName, onClose }) {
       pdf.save(filename);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!exportRef.current || selectedItems.length === 0) return;
+    setSaving(true);
+    try {
+      const canvas = await html2canvas(exportRef.current, {
+        scale: 2, useCORS: true, allowTaint: true, backgroundColor: bgColor,
+      });
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], `moodboard_${roomTitle || 'board'}.jpg`, { type: 'image/jpeg' });
+        const uploadResult = await base44.integrations.Core.UploadFile({ file });
+        if (uploadResult?.file_url) {
+          await base44.entities.InspirationItem.create({
+            project_id: projectId,
+            uploader_role: 'staff',
+            type: 'moodboard',
+            file_url: uploadResult.file_url,
+            title: roomTitle ? `מוד בורד: ${roomTitle}` : 'מוד בורד',
+            is_approved: true,
+            order: 0,
+          });
+          onSaved?.();
+          onClose();
+        }
+        setSaving(false);
+      }, 'image/jpeg', 0.95);
+    } catch {
+      setSaving(false);
     }
   };
 
@@ -114,6 +146,9 @@ export default function MoodBoardBuilder({ items, projectName, onClose }) {
 
             <Button onClick={handleExportPDF} disabled={exporting || selectedItems.length === 0} className="w-full mt-auto">
               {exporting ? <><Loader2 size={14} className="animate-spin ml-1" /> מייצא...</> : <><Download size={14} className="ml-1" /> הורד PDF</>}
+            </Button>
+            <Button onClick={handleSave} disabled={saving || selectedItems.length === 0} variant="outline" className="w-full">
+              {saving ? <><Loader2 size={14} className="animate-spin ml-1" /> שומר...</> : '💾 שמור לתצוגה'}
             </Button>
           </div>
 

@@ -367,7 +367,9 @@ export default function InspirationBoardEditor({ projectId, project: projectProp
         <MoodBoardBuilder
           items={items}
           projectName={localProject?.name}
+          projectId={projectId}
           onClose={() => setShowMoodBoard(false)}
+          onSaved={() => { refetch(); setShowMoodBoard(false); }}
         />
       )}
       </div>

@@ -447,11 +447,13 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
         </div>
 
         {showMoodBoard && (
-        <MoodBoardBuilder
-          items={visibleItems}
-          projectName={localProject?.name}
-          onClose={() => setShowMoodBoard(false)}
-        />
+          <MoodBoardBuilder
+            items={visibleItems}
+            projectName={localProject?.name}
+            projectId={projectId}
+            onClose={() => setShowMoodBoard(false)}
+            onSaved={() => { refetch(); setShowMoodBoard(false); }}
+          />
         )}
         </div>
         );
