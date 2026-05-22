@@ -7,7 +7,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList, CalendarDays, Plus, Trash2, Pencil } from 'lucide-react';
+import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList, CalendarDays, Plus, Trash2, Pencil, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
@@ -27,6 +27,7 @@ import QuestionnaireResponsesView from '@/components/questionnaire/Questionnaire
 import DetailedQuestionnairePreview from '@/components/questionnaire/DetailedQuestionnairePreview';
 import MeetingsList from '@/components/meetings/MeetingsList';
 import ProjectOverview from '@/components/projects/ProjectOverview';
+import SendQuestionnaireDialog from '@/components/questionnaire/SendQuestionnaireDialog';
 
 
 export default function ProjectDetail() {
@@ -39,6 +40,7 @@ export default function ProjectDetail() {
   const [editPayment, setEditPayment] = React.useState(null);
   const [editTask, setEditTask] = React.useState(null);
   const [showAddTask, setShowAddTask] = React.useState(false);
+  const [showSendDetailedQ, setShowSendDetailedQ] = React.useState(false);
   const queryClient = useQueryClient();
 
   const updateProjectStatus = useMutation({
@@ -316,9 +318,30 @@ export default function ProjectDetail() {
 
         <TabsContent value="questionnaires">
           <div className="space-y-4">
+            {client && (
+              <div className="flex justify-end">
+                {client.portal_token && !client.portal_token_revoked ? (
+                  <Button size="sm" onClick={() => setShowSendDetailedQ(true)} className="gap-1">
+                    <Send className="w-4 h-4" />
+                    שלח שאלון מפורט
+                  </Button>
+                ) : (
+                  <p className="text-xs text-muted-foreground">⚠️ יש ליצור קישור פורטל ללקוח כדי לשלוח שאלון</p>
+                )}
+              </div>
+            )}
             <DetailedQuestionnairePreview questionnaires={projectQuestionnaires} projectId={projectId} clientId={clientId} />
             <QuestionnaireResponsesView questionnaires={projectQuestionnaires.filter(q => q.type !== 'detailed')} />
           </div>
+          {showSendDetailedQ && client?.portal_token && (
+            <SendQuestionnaireDialog
+              open={showSendDetailedQ}
+              onOpenChange={setShowSendDetailedQ}
+              client={client}
+              questionnaireType="detailed"
+              questionnaireLink={`${window.location.origin}/portal?token=${client.portal_token}`}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="communications">
