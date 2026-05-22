@@ -67,6 +67,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
   const [linkTitle, setLinkTitle] = useState('');
   const [selectedUploadType, setSelectedUploadType] = useState('inspiration');
   const [showMoodBoard, setShowMoodBoard] = useState(false);
+  const [zoomedItem, setZoomedItem] = useState(null);
 
   // Sync with prop when it changes from above
   useEffect(() => { setLocalProject(projectProp); }, [projectProp?.id, projectProp?.concept_status, projectProp?.concept_approved_categories?.length]);
@@ -243,7 +244,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
                 💡 הצעת רנדר: {item.ai_prompt}
               </div>
             ) : item.file_url ? (
-              <img src={item.file_url} alt={item.title || ''} className="w-full object-cover" />
+              <img src={item.file_url} alt={item.title || ''} className="w-full object-cover cursor-zoom-in" onClick={() => setZoomedItem(item.file_url)} />
             ) : item.external_url ? (
               <LinkPreviewCard url={item.external_url} title={item.title} />
             ) : null}
@@ -445,6 +446,12 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
           </>
         )}
         </div>
+
+        {zoomedItem && (
+          <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setZoomedItem(null)}>
+            <img src={zoomedItem} alt="" className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+          </div>
+        )}
 
         {showMoodBoard && (
           <MoodBoardBuilder

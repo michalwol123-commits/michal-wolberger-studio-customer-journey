@@ -59,6 +59,7 @@ export default function InspirationBoardEditor({ projectId, project: projectProp
   const [aiLoading, setAiLoading] = useState(false);
   const [revokingConcept, setRevokingConcept] = useState(false);
   const [showMoodBoard, setShowMoodBoard] = useState(false);
+  const [zoomedItem, setZoomedItem] = useState(null);
 
   useEffect(() => { setLocalProject(projectProp); }, [projectProp?.id, projectProp?.concept_status, projectProp?.concept_approved_categories?.length]);
 
@@ -299,7 +300,7 @@ export default function InspirationBoardEditor({ projectId, project: projectProp
                     💡 הצעת רנדר מהלקוחה: {item.ai_prompt}
                   </div>
                 ) : item.file_url ? (
-                  <img src={item.file_url} alt={item.title || ''} className="w-full h-full object-cover" />
+                  <img src={item.file_url} alt={item.title || ''} className="w-full h-full object-cover cursor-zoom-in" onClick={() => setZoomedItem(item.file_url)} />
                 ) : item.external_url ? (
                   <LinkPreviewCard url={item.external_url} title={item.title} />
                 ) : null}
@@ -360,6 +361,12 @@ export default function InspirationBoardEditor({ projectId, project: projectProp
             <Send size={16} className="ml-2" />
             פרסם הכל ({items.filter(i => !i.is_approved).length} פריטים)
           </Button>
+        </div>
+      )}
+
+      {zoomedItem && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setZoomedItem(null)}>
+          <img src={zoomedItem} alt="" className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
         </div>
       )}
 
