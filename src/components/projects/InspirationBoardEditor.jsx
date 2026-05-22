@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Upload, Link, Sparkles, Trash2, Eye, EyeOff, Send, XCircle, CheckCircle } from 'lucide-react';
+import MoodBoardBuilder from '@/components/projects/MoodBoardBuilder';
 
 function LinkPreviewCard({ url, title }) {
   const [preview, setPreview] = useState(null);
@@ -57,6 +58,7 @@ export default function InspirationBoardEditor({ projectId, project: projectProp
   const [isLoading, setIsLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [revokingConcept, setRevokingConcept] = useState(false);
+  const [showMoodBoard, setShowMoodBoard] = useState(false);
 
   useEffect(() => { setLocalProject(projectProp); }, [projectProp?.id, projectProp?.concept_status, projectProp?.concept_approved_categories?.length]);
 
@@ -245,7 +247,10 @@ export default function InspirationBoardEditor({ projectId, project: projectProp
         <Button size="sm" variant="outline" onClick={() => setAddMode(addMode === 'ai' ? null : 'ai')}>
           <Sparkles size={14} className="ml-1" /> רנדר AI
         </Button>
-      </div>
+        <Button size="sm" variant="outline" onClick={() => setShowMoodBoard(true)}>
+          📋 צור מוד בורד
+        </Button>
+        </div>
 
       {/* Upload panel */}
       {addMode === 'upload' && (
@@ -322,6 +327,18 @@ export default function InspirationBoardEditor({ projectId, project: projectProp
                   {item.uploader_role === 'client' && <span className="text-xs text-blue-600">מהלקוחה</span>}
                 </div>
                 {item.title && <p className="text-xs text-muted-foreground mt-1 truncate">{item.title}</p>}
+                <input
+                  type="text"
+                  placeholder="חדר..."
+                  defaultValue={item.room || ''}
+                  onBlur={async (e) => {
+                    if (e.target.value !== (item.room || '')) {
+                      await base44.entities.InspirationItem.update(item.id, { room: e.target.value });
+                    }
+                  }}
+                  className="w-full text-xs border-0 border-b border-dashed border-muted-foreground/30 bg-transparent outline-none mt-1 px-0 py-0.5 placeholder:text-muted-foreground/40"
+                  dir="rtl"
+                />
                 {item.client_reaction && item.client_reaction !== 'none' && (
                   <p className="text-xs mt-0.5">
                     {item.client_reaction === 'love' ? '❤️' : item.client_reaction === 'like' ? '👍' : item.client_reaction === 'neutral' ? '😐' : '👎'}
@@ -345,6 +362,14 @@ export default function InspirationBoardEditor({ projectId, project: projectProp
           </Button>
         </div>
       )}
-    </div>
-  );
-}
+
+      {showMoodBoard && (
+        <MoodBoardBuilder
+          items={items}
+          projectName={localProject?.name}
+          onClose={() => setShowMoodBoard(false)}
+        />
+      )}
+      </div>
+      );
+      }
