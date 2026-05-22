@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Upload, Link, CheckCircle, Clock, XCircle, Sparkles } from 'lucide-react';
+import MoodBoardBuilder from '@/components/projects/MoodBoardBuilder';
 
 function LinkPreviewCard({ url, title }) {
   const [preview, setPreview] = useState(null);
@@ -65,6 +66,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
   const [linkUrl, setLinkUrl] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
   const [selectedUploadType, setSelectedUploadType] = useState('inspiration');
+  const [showMoodBoard, setShowMoodBoard] = useState(false);
 
   // Sync with prop when it changes from above
   useEffect(() => { setLocalProject(projectProp); }, [projectProp?.id, projectProp?.concept_status, projectProp?.concept_approved_categories?.length]);
@@ -356,10 +358,14 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
             <input type="file" accept="image/*" className="hidden" onChange={handleClientUpload} disabled={uploading} />
           </label>
           <button onClick={() => setShowLinkForm(!showLinkForm)}
-            className="px-4 py-2 border border-primary text-primary rounded-lg text-sm hover:bg-accent/20">
-            🔗 הוסף קישור
-          </button>
-        </div>
+             className="px-4 py-2 border border-primary text-primary rounded-lg text-sm hover:bg-accent/20">
+              🔗 הוסף קישור
+            </button>
+            <button onClick={() => setShowMoodBoard(true)}
+              className="px-4 py-2 border border-primary text-primary rounded-lg text-sm hover:bg-accent/20">
+              📋 צור מוד בורד
+            </button>
+          </div>
         {showLinkForm && (
           <div className="mt-3 p-3 bg-muted/30 border rounded-lg space-y-2 text-right">
             <input placeholder="כתובת URL (Pinterest, Houzz...)" value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
@@ -438,7 +444,15 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
             </Button>
           </>
         )}
-      </div>
-    </div>
-  );
-}
+        </div>
+
+        {showMoodBoard && (
+        <MoodBoardBuilder
+          items={visibleItems}
+          projectName={localProject?.name}
+          onClose={() => setShowMoodBoard(false)}
+        />
+        )}
+        </div>
+        );
+        }
