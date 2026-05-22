@@ -21,6 +21,7 @@ export default function MoodBoardBuilder({ items, projectName, onClose }) {
     new Set(items.filter(i => i.is_approved && i.file_url).map(i => i.id))
   );
   const [exporting, setExporting] = useState(false);
+  const [itemTitles, setItemTitles] = useState({});
   const exportRef = useRef(null);
 
   const visibleItems = items.filter(i => i.file_url);
@@ -96,7 +97,13 @@ export default function MoodBoardBuilder({ items, projectName, onClose }) {
                       className="rounded"
                     />
                     <img src={item.file_url} alt="" className="w-10 h-10 object-cover rounded" />
-                    <span className="text-xs truncate flex-1">{item.title || TYPE_LABELS[item.type] || item.type}</span>
+                    <input
+                      type="text"
+                      value={itemTitles[item.id] ?? (item.title || TYPE_LABELS[item.type] || item.type)}
+                      onChange={(e) => setItemTitles(prev => ({ ...prev, [item.id]: e.target.value }))}
+                      className="text-xs flex-1 bg-transparent border-0 border-b border-dashed border-muted-foreground/40 outline-none min-w-0"
+                      dir="rtl"
+                    />
                   </label>
                 ))}
                 {visibleItems.length === 0 && (
@@ -136,7 +143,7 @@ export default function MoodBoardBuilder({ items, projectName, onClose }) {
                 )}
                 <ol style={{ fontSize: '13px', lineHeight: '2', color: bgColor === '#2d2d2d' ? '#ddd' : '#444', paddingRight: '16px' }}>
                   {selectedItems.map((item, i) => (
-                    <li key={item.id}>{i + 1}. {item.title || TYPE_LABELS[item.type] || ''}</li>
+                    <li key={item.id}>{i + 1}. {itemTitles[item.id] ?? (item.title || TYPE_LABELS[item.type] || '')}</li>
                   ))}
                 </ol>
               </div>
