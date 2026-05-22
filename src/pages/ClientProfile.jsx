@@ -28,6 +28,7 @@ export default function ClientProfile() {
   const [showUploadDoc, setShowUploadDoc] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showSendShortQ, setShowSendShortQ] = useState(false);
+  const [showSendDetailedQ, setShowSendDetailedQ] = useState(false);
   const queryClient = useQueryClient();
 
   const generateTokenMutation = useMutation({
@@ -338,12 +339,23 @@ export default function ClientProfile() {
         </TabsContent>
 
         <TabsContent value="questionnaires">
-          {isAdmin && ['lead', 'qualified'].includes(client.status) && (
-            <div className="flex justify-end mb-3">
-              <Button size="sm" onClick={() => setShowSendShortQ(true)} className="gap-1">
+          {isAdmin && (
+            <div className="flex justify-end gap-2 mb-3">
+              <Button size="sm" variant="outline" onClick={() => setShowSendShortQ(true)} className="gap-1">
                 <Send className="w-4 h-4" />
                 שלח שאלון קצר
               </Button>
+              {client.portal_token && !client.portal_token_revoked ? (
+                <Button size="sm" onClick={() => setShowSendDetailedQ(true)} className="gap-1">
+                  <Send className="w-4 h-4" />
+                  שלח שאלון מפורט
+                </Button>
+              ) : (
+                <Button size="sm" disabled className="gap-1" title="יש ליצור קישור פורטל קודם">
+                  <Send className="w-4 h-4" />
+                  שלח שאלון מפורט
+                </Button>
+              )}
             </div>
           )}
           <QuestionnaireResponsesView questionnaires={clientQuestionnaires} />
@@ -354,6 +366,15 @@ export default function ClientProfile() {
               client={client}
               questionnaireType="short"
               questionnaireLink={`${window.location.origin}/q?cid=${client.id}`}
+            />
+          )}
+          {showSendDetailedQ && client.portal_token && (
+            <SendQuestionnaireDialog
+              open={showSendDetailedQ}
+              onOpenChange={setShowSendDetailedQ}
+              client={client}
+              questionnaireType="detailed"
+              questionnaireLink={`${window.location.origin}/portal?token=${client.portal_token}`}
             />
           )}
         </TabsContent>
