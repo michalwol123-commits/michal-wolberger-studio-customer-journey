@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
           // Embed signature image (data: URL from canvas)
           let sigImageBytes;
           if (signature_image_url.startsWith('data:')) {
-            const base64Data = signature_image_url.split(',')[1];
+            const base64Data = signature_image_url.replace(/^data:image\/\w+;base64,/, '');
             const binary = atob(base64Data);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -140,7 +140,14 @@ Deno.serve(async (req) => {
     // --- Notify admin via Brevo ---
     try {
       const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
-      const adminHtml = `<div dir="rtl" style="font-family:Arial,sans-serif;padding:20px;max-width:500px;">
+      await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender: { name: 'סטודיו מיכל וולברגר', email: 'michalwol123@gmail.com' },
+          to: [{ email: 'michalwol123@gmail.com' }],
+          subject: `✍️ מסמך נחתם: ${doc.name}`,
+          htmlContent: `<div dir="rtl" style="font-family:Arial,sans-serif;padding:20px;max-width:500px;">
         <h2 style="color:#8B7355;">מסמך נחתם ✍️</h2>
         <p>המסמך <strong>${doc.name}</strong> נחתם דיגיטלית.</p>
         <table style="margin-top:12px;font-size:14px;">
@@ -152,18 +159,10 @@ Deno.serve(async (req) => {
             צפה ב-PDF החתום
           </a>
         </p>
-      </div>`;
-      await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sender: { name: 'סטודיו מיכל וולברגר', email: 'michalwol123@gmail.com' },
-          to: [{ email: 'michalwol123@gmail.com', name: 'מיכל' }],
-          subject: `✍️ מסמך נחתם: ${doc.name}`,
-          htmlContent: adminHtml,
-        }),
+      </div>`
+        })
       });
-    } catch (notifyErr) { console.error('Admin Brevo notification failed:', notifyErr.message); }
+    } catch (_) { /* notification failure should not block the main flow */ }
 
     return Response.json({ status: 'ok', file_url: updatedFileUrl });
   } catch (err) {
