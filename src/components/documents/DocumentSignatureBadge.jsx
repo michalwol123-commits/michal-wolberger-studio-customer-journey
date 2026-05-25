@@ -39,7 +39,6 @@ export default function DocumentSignatureBadge({ doc }) {
   const handleSendEmail = async () => {
     if (!doc.signature_token || !doc.client_id) return;
     setSending(true);
-    // Get client email
     const clients = await base44.entities.Client.filter({ id: doc.client_id });
     const client = clients[0];
     if (!client?.email) {
@@ -48,12 +47,18 @@ export default function DocumentSignatureBadge({ doc }) {
       return;
     }
     const url = getSignUrl(doc.signature_token);
-    await base44.integrations.Core.SendEmail({
-      to: client.email,
+    await base44.entities.Communication.create({
+      client_id: doc.client_id,
+      project_id: doc.project_id || undefined,
+      type: 'email',
+      direction: 'outbound',
       subject: `מסמך לחתימה: ${doc.name}`,
-      body: `שלום ${client.name},\n\nמסמך "${doc.name}" ממתין לחתימתך.\n\nלחתימה: ${url}\n\nבברכה,\nסטודיו מיכל וולברגר`,
+      content: `שלום ${client.name},\n\nנשלח לך מסמך לחתימה: "${doc.name}"\n\nלחתימה לחצ/י כאן:\n${url}\n\nבברכה,\nסטודיו מיכל וולברגר`,
+      sent_by: 'system',
+      status: 'pending',
+      channel: 'gmail',
     });
-    toast.success(`נשלח למייל ${client.email}`);
+    toast.success(`המייל יישלח בדקות הקרובות ל-${client.email}`);
     setSending(false);
   };
 
