@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,11 +11,14 @@ import StageAdvanceButton from './StageAdvanceButton';
 import StageChecklist from './StageChecklist';
 import ProjectDesignMap from '@/components/design/ProjectDesignMap';
 import InspirationBoardEditor from '@/components/projects/InspirationBoardEditor';
+import PlannedDaysInput from './PlannedDaysInput';
+import DaysProgressMetrics from './DaysProgressGauge';
 
 const VISUAL_STAGES = [8]; // stages that get gallery view
 
 export default function StagePanel({ project, stageNum, onNavigateTab }) {
   const [showUpload, setShowUpload] = useState(false);
+  const queryClient = useQueryClient();
   const stage = getStageByNum(stageNum);
   const stageStatus = project[stage?.key] || 'pending';
 
@@ -63,6 +66,16 @@ export default function StagePanel({ project, stageNum, onNavigateTab }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Planned days input (stages 4-5) */}
+      {[4, 5].includes(stageNum) && (
+        <PlannedDaysInput project={project} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['projects'] })} />
+      )}
+
+      {/* Days progress gauge (stages 9, 11, 12) */}
+      {[9, 11, 12].includes(stageNum) && (
+        <DaysProgressMetrics project={project} stageNum={stageNum} />
+      )}
 
       {/* Inspiration Board (stage 8) */}
       {stageNum === 8 && (
