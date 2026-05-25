@@ -28,6 +28,7 @@ import DetailedQuestionnairePreview from '@/components/questionnaire/DetailedQue
 import MeetingsList from '@/components/meetings/MeetingsList';
 import ProjectOverview from '@/components/projects/ProjectOverview';
 import SendQuestionnaireDialog from '@/components/questionnaire/SendQuestionnaireDialog';
+import DocumentSignatureBadge from '@/components/documents/DocumentSignatureBadge';
 
 
 export default function ProjectDetail() {
@@ -239,21 +240,24 @@ export default function ProjectDetail() {
             <div className="space-y-2">
               {projectDocs.map(doc => (
                 <Card key={doc.id}>
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{doc.name}</p>
-                      <p className="text-xs text-muted-foreground">{doc.type} • שלב {doc.stage || '—'} • גרסה {doc.version_number || 1}</p>
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{doc.name}</p>
+                        <p className="text-xs text-muted-foreground">{doc.type} • שלב {doc.stage || '—'} • גרסה {doc.version_number || 1}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {doc.file_url && <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">צפה</a>}
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => {
+                          if (confirm('למחוק מסמך זה?')) {
+                            base44.entities.Document.delete(doc.id).then(() => queryClient.invalidateQueries({ queryKey: ['documents'] }));
+                          }
+                        }}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {doc.file_url && <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">צפה</a>}
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => {
-                        if (confirm('למחוק מסמך זה?')) {
-                          base44.entities.Document.delete(doc.id).then(() => queryClient.invalidateQueries({ queryKey: ['documents'] }));
-                        }
-                      }}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <DocumentSignatureBadge doc={doc} />
                   </CardContent>
                 </Card>
               ))}

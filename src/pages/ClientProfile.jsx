@@ -19,6 +19,7 @@ import DeleteButton from '@/components/shared/DeleteButton';
 import QuestionnaireResponsesView from '@/components/questionnaire/QuestionnaireResponsesView';
 import MeetingsList from '@/components/meetings/MeetingsList';
 import SendQuestionnaireDialog from '@/components/questionnaire/SendQuestionnaireDialog';
+import DocumentSignatureBadge from '@/components/documents/DocumentSignatureBadge';
 
 export default function ClientProfile() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -308,29 +309,32 @@ export default function ClientProfile() {
             <div className="space-y-2">
               {clientDocs.filter(d => d.is_current !== false).map(doc => (
                 <Card key={doc.id}>
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{doc.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {doc.type} • גרסה {doc.version_number || 1}
-                        {doc.stage ? ` • שלב ${doc.stage}` : ''}
-                      </p>
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{doc.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {doc.type} • גרסה {doc.version_number || 1}
+                          {doc.stage ? ` • שלב ${doc.stage}` : ''}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {doc.file_url && (
+                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">
+                            צפה
+                          </a>
+                        )}
+                        <DeleteButton
+                          entityLabel="מסמך"
+                          onDelete={async () => {
+                            await base44.entities.Document.delete(doc.id);
+                            queryClient.invalidateQueries({ queryKey: ['documents', clientId] });
+                          }}
+                          size="sm"
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {doc.file_url && (
-                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">
-                          צפה
-                        </a>
-                      )}
-                      <DeleteButton
-                        entityLabel="מסמך"
-                        onDelete={async () => {
-                          await base44.entities.Document.delete(doc.id);
-                          queryClient.invalidateQueries({ queryKey: ['documents', clientId] });
-                        }}
-                        size="sm"
-                      />
-                    </div>
+                    <DocumentSignatureBadge doc={doc} />
                   </CardContent>
                 </Card>
               ))}
