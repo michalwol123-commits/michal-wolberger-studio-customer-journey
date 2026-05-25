@@ -110,8 +110,12 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
       docData.parent_doc_id = versioningDoc.parent_doc_id || versioningDoc.id;
       docData.version_number = (versioningDoc.version_number || 1) + 1;
 
-      // Mark old doc as not current
-      await updateMutation.mutateAsync({ id: versioningDoc.id, data: { is_current: false } });
+      // Mark old doc as not current (ignore if already deleted)
+      try {
+        await updateMutation.mutateAsync({ id: versioningDoc.id, data: { is_current: false } });
+      } catch (e) {
+        // Document was already deleted, continue
+      }
       createMutation.mutate(docData);
     } else {
       docData.version_number = 1;
