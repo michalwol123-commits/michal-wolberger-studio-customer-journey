@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 export default function SignDocument() {
   const token = new URLSearchParams(window.location.search).get('token');
@@ -109,7 +110,7 @@ export default function SignDocument() {
       // Client-side PDF signing
       if (docData.file_url) {
         try {
-          const { PDFDocument, rgb, StandardFonts } = await import('pdf-lib');
+          // pdf-lib imported at top of file
 
           const pdfRes = await fetch(docData.file_url);
           const existingPdfBytes = await pdfRes.arrayBuffer();
