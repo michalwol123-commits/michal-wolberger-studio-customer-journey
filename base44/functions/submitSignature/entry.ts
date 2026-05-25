@@ -27,8 +27,16 @@ Deno.serve(async (req) => {
     try {
       const pdfDoc = await PDFDocument.create();
       const page = pdfDoc.addPage([595, 842]); // A4
-      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      
+      // Download and embed Rubik font (supports Hebrew)
+      const fontUrl = 'https://fonts.gstatic.com/s/rubik/v21/iJWnBXVfYWd97iFWDBwcuIlIbsI.ttf';
+      const fontBoldUrl = 'https://fonts.gstatic.com/s/rubik/v21/iJWnBXVfYWd97iFWHBwcuIlIbsI.ttf';
+      
+      const fontBytes = await fetch(fontUrl).then(r => r.arrayBuffer());
+      const fontBoldBytes = await fetch(fontBoldUrl).then(r => r.arrayBuffer());
+      
+      const font = await pdfDoc.embedFont(fontBytes);
+      const fontBold = await pdfDoc.embedFont(fontBoldBytes);
 
       const brown = rgb(0.545, 0.451, 0.333); // #8B7355
       const darkGray = rgb(0.15, 0.15, 0.15);
