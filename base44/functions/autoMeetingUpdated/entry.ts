@@ -17,6 +17,7 @@ const MEETING_TYPE_LABELS = {
 
 Deno.serve(async (req) => {
   try {
+    const clonedReq = req.clone();
     const body = await req.json();
     const { data, old_data, event, changed_fields } = body;
 
@@ -34,7 +35,7 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'skipped', reason: 'meeting is cancelled/no_show' });
     }
 
-    const base44 = createClientFromRequest(req);
+    const base44 = createClientFromRequest(clonedReq);
 
     // Get client details
     const clients = await base44.asServiceRole.entities.Client.filter({ id: data.client_id });
@@ -81,6 +82,10 @@ Deno.serve(async (req) => {
         body: JSON.stringify(calendarEvent),
       });
       const calData = await calRes.json();
+      if (!calRes.ok) {
+        console.error('Google Calendar update error:', calData);
+        throw new Error(`Calendar update failed: ${calData.error?.message || JSON.stringify(calData)}`);
+      }
       console.log('Calendar event updated:', calData.id);
     } else {
       // Create new Google Calendar event
@@ -93,6 +98,10 @@ Deno.serve(async (req) => {
         body: JSON.stringify(calendarEvent),
       });
       const calData = await calRes.json();
+      if (!calRes.ok) {
+        console.error('Google Calendar create error:', calData);
+        throw new Error(`Calendar create failed: ${calData.error?.message || JSON.stringify(calData)}`);
+      }
       googleEventId = calData.id;
       console.log('Calendar event created:', calData.id);
 

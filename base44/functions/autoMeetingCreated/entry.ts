@@ -21,6 +21,7 @@ function generateToken() {
 
 Deno.serve(async (req) => {
   try {
+    const clonedReq = req.clone();
     const body = await req.json();
     const { data, event } = body;
 
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'skipped', reason: 'not a create event' });
     }
 
-    const base44 = createClientFromRequest(req);
+    const base44 = createClientFromRequest(clonedReq);
 
     // Always generate a scheduling_token for new meetings
     const schedulingToken = generateToken();
@@ -160,6 +161,10 @@ Deno.serve(async (req) => {
     });
 
     const calData = await calRes.json();
+    if (!calRes.ok) {
+      console.error('Google Calendar create error:', calData);
+      throw new Error(`Calendar create failed: ${calData.error?.message || JSON.stringify(calData)}`);
+    }
     console.log('Calendar event created:', calData.id);
 
     // Save google_event_id on the meeting record
