@@ -9,7 +9,11 @@ Deno.serve(async (req) => {
     if (!token) return Response.json({ error: 'missing_token' }, { status: 400 });
 
     // Find document by signature_token (service role — public page)
-    const docs = await base44.asServiceRole.entities.Document.filter({ signature_token: token });
+    let docs = await base44.asServiceRole.entities.Document.filter({ signature_token: token });
+    if (!docs || docs.length === 0) {
+      const pending = await base44.asServiceRole.entities.Document.filter({ signature_status: 'pending_signature' });
+      docs = pending.filter(d => d.signature_token === token);
+    }
     const doc = docs[0];
     if (!doc) return Response.json({ error: 'not_found' }, { status: 404 });
     if (doc.signature_status === 'signed') return Response.json({ error: 'already_signed' }, { status: 410 });
