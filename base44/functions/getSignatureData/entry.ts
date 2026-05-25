@@ -4,8 +4,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
     const { token } = await req.json();
+    const base44 = createClientFromRequest(req);
     if (!token) return Response.json({ error: 'missing_token' }, { status: 400 });
 
     // Find document by signature_token (service role — public page)

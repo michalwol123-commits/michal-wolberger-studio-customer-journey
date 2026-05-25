@@ -5,8 +5,9 @@ import { PDFDocument, rgb, StandardFonts } from 'npm:pdf-lib@1.17.1';
 
 Deno.serve(async (req) => {
   try {
+    const body = await req.json();
     const base44 = createClientFromRequest(req);
-    const { token, signer_name, signature_image_url } = await req.json();
+    const { token, signer_name, signature_image_url } = body;
     if (!token || !signer_name || !signature_image_url) {
       return Response.json({ error: 'missing_fields' }, { status: 400 });
     }
