@@ -1,179 +1,165 @@
-// Generate a styled PDF quote for Michal Wolberger Interior Design
-// Called from frontend: base44.functions.invoke('generateQuotePDF', { client_id, title, package_type, total_amount, scope, meeting_date })
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 
-const LOGO_URL = 'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/a6efb9133_image1.png';
-
-const PACKAGE_LABELS = { basic: 'בסיסי', mid: 'בינוני', premium: 'פרימיום' };
-
-// Brand colors from Michal's website
-const COLORS = {
-  brown: [139, 115, 85],       // #8B7355
-  darkBrown: [90, 70, 50],     // #5A4632
-  beige: [250, 248, 245],      // #FAF8F5
-  cream: [245, 240, 234],      // #F5F0EA
-  dark: [44, 44, 44],          // #2C2C2C
-  white: [255, 255, 255],
-};
-
 Deno.serve(async (req) => {
   try {
+    const body = await req.json();
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const { token, signer_name, signature_image_url } = body;
 
-    const { client_id, quote_id, title, package_type, total_amount, scope, meeting_date } = await req.json();
+    if (!token || !signer_name || !signature_image_url) {
+      return Response.json({ error: 'missing_fields' }, { status: 400 });
+    }
 
-    // Fetch client
-    const clients = await base44.asServiceRole.entities.Client.filter({ id: client_id });
-    if (clients.length === 0) return Response.json({ error: 'Client not found' }, { status: 404 });
-    const client = clients[0];
+    let docs = await base44.asServiceRole.entities.Document.filter({ signature_token: token });
+    if (!docs?.length) {
+      const pending = await base44.asServiceRole.entities.Document.filter({ signature_status: 'pending_signature' });
+      docs = pending.filter((d: any) => d.signature_token === token);
+    }
+    if (!docs?.length) return Response.json({ error: 'not_found' }, { status: 404 });
+    const doc = docs[0];
+    if (doc.signature_status === 'signed') return Response.json({ error: 'already_signed' }, { status: 410 });
 
-    // Load Hebrew Heebo font for proper Hebrew/RTL rendering
-    let heeboBase64 = '';
+    const signedAt = new Date().toISOString();
+    const signedAtDisplay = new Date().toLocaleString('he-IL');
+    let signedFileUrl = doc.file_url;
+
     try {
-      const cssResp = await fetch(
-        'https://fonts.googleapis.com/css?family=Heebo&subset=hebrew',
-        { headers: { 'User-Agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)' } }
-      );
-      const css = await cssResp.text();
-      const ttfLines = css.split('\n').filter(l => l.includes('.ttf'));
-      const ttfUrl = ttfLines[0] && ttfLines[0].match(/url\(([^)]+)\)/)?.[1]?.replace(/['"]/g, '');
-      if (ttfUrl) {
-        const fontResp = await fetch(ttfUrl);
-        const fontBuf = await fontResp.arrayBuffer();
-        const fontArr = new Uint8Array(fontBuf);
-        let binary = '';
-        fontArr.forEach(b => { binary += String.fromCharCode(b); });
-        heeboBase64 = btoa(binary);
+      let heeboBase64 = '';
+      try {
+        const cssResp = await fetch(
+          'https://fonts.googleapis.com/css?family=Heebo&subset=hebrew',
+          { headers: { 'User-Agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)' } }
+        );
+        const css = await cssResp.text();
+        const ttfLines = css.split('\n').filter((l: string) => l.includes('.ttf'));
+        const ttfUrl = ttfLines[0]?.match(/url\(([^)]+)\)/)?.[1]?.replace(/['"]/g, '');
+        if (ttfUrl) {
+          const fontResp = await fetch(ttfUrl);
+          const fontBuf = await fontResp.arrayBuffer();
+          const fontArr = new Uint8Array(fontBuf);
+          let binary = '';
+          fontArr.forEach((b: number) => { binary += String.fromCharCode(b); });
+          heeboBase64 = btoa(binary);
+        }
+      } catch (fontErr) {
+        console.error('Font fetch failed:', fontErr);
       }
-    } catch (fontErr) {
-      console.error('Hebrew font fetch failed:', fontErr);
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      if (heeboBase64) {
+        pdf.addFileToVFS('Heebo.ttf', heeboBase64);
+        pdf.addFont('Heebo.ttf', 'Heebo', 'normal');
+        pdf.setFont('Heebo');
+      }
+
+      const pageW = 210, pageH = 297, margin = 20;
+
+      pdf.setFillColor(139, 115, 85);
+      pdf.rect(0, 0, pageW, 45, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.text('סטודיו מיכל וולברגר', pageW - margin, 22, { align: 'right' });
+      pdf.setFontSize(11);
+      pdf.text('אישור חתימה דיגיטלית', pageW - margin, 33, { align: 'right' });
+
+      let y = 65;
+      pdf.setFontSize(11);
+
+      const drawRow = (label: string, value: string) => {
+        pdf.setTextColor(139, 115, 85);
+        pdf.text(label, pageW - margin, y, { align: 'right' });
+        pdf.setTextColor(44, 44, 44);
+        pdf.text(value, pageW - margin - 32, y, { align: 'right' });
+        y += 10;
+      };
+
+      drawRow('מסמך:', doc.name || 'מסמך לחתימה');
+      drawRow('חותם/ת:', signer_name);
+      drawRow('תאריך:', signedAtDisplay);
+
+      pdf.setDrawColor(200, 190, 180);
+      pdf.setLineWidth(0.3);
+      pdf.line(margin, y + 5, pageW - margin, y + 5);
+      y += 18;
+
+      pdf.setTextColor(139, 115, 85);
+      pdf.setFontSize(11);
+      pdf.text('חתימה:', pageW - margin, y, { align: 'right' });
+      y += 6;
+      pdf.setFillColor(248, 246, 243);
+      pdf.setDrawColor(200, 190, 180);
+      pdf.setLineWidth(0.5);
+      pdf.roundedRect(margin, y, 100, 40, 2, 2, 'FD');
+
+      const base64Only = signature_image_url.replace(/^data:image\/\w+;base64,/, '');
+      pdf.addImage(base64Only, 'PNG', margin + 2, y + 2, 96, 36);
+
+      y += 44;
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(9);
+      pdf.text(signer_name, margin + 50, y, { align: 'center' });
+
+      pdf.setFillColor(139, 115, 85);
+      pdf.rect(0, pageH - 20, pageW, 20, 'F');
+      pdf.setTextColor(245, 240, 234);
+      pdf.setFontSize(8);
+      pdf.text('Michal Wolberger Interior Design', pageW / 2, pageH - 8, { align: 'center' });
+
+      const pdfBytes = pdf.output('arraybuffer');
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const file = new File([blob], `חתום_${(doc.name || 'מסמך').replace(/\s/g, '_')}.pdf`, { type: 'application/pdf' });
+      const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+      if (uploadResult?.file_url) signedFileUrl = uploadResult.file_url;
+
+    } catch (pdfErr) {
+      console.error('PDF error:', pdfErr.message);
     }
 
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    if (heeboBase64) {
-      doc.addFileToVFS('Heebo.ttf', heeboBase64);
-      doc.addFont('Heebo.ttf', 'Heebo', 'normal');
-      doc.setFont('Heebo');
-    }
-    const pageW = 210;
-    const pageH = 297;
-    const margin = 20;
-    const contentW = pageW - margin * 2;
-
-    // --- Header background ---
-    doc.setFillColor(...COLORS.brown);
-    doc.rect(0, 0, pageW, 50, 'F');
-
-    // Header text (RTL - right aligned)
-    doc.setTextColor(...COLORS.white);
-    doc.setFontSize(24);
-    doc.text('Michal Wolberger', pageW - margin, 22, { align: 'right' });
-    doc.setFontSize(11);
-    doc.text('Interior Design', pageW - margin, 30, { align: 'right' });
-
-    // --- Decorative line ---
-    doc.setFillColor(...COLORS.cream);
-    doc.rect(0, 50, pageW, 4, 'F');
-
-    // --- Quote title ---
-    let y = 68;
-    doc.setTextColor(...COLORS.darkBrown);
-    doc.setFontSize(20);
-    doc.text('proposal', pageW / 2, y, { align: 'center' });
-    
-    y += 6;
-    doc.setFontSize(12);
-    doc.setTextColor(...COLORS.brown);
-    doc.text(title || '', pageW / 2, y + 6, { align: 'center' });
-
-    // --- Date line ---
-    y += 18;
-    doc.setDrawColor(...COLORS.cream);
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageW - margin, y);
-
-    // --- Client details section ---
-    y += 10;
-    doc.setFontSize(10);
-    doc.setTextColor(...COLORS.dark);
-
-    const today = new Date().toLocaleDateString('he-IL');
-    const rows = [
-      [':', today, 'date'],
-      [':', client.name || '', 'client'],
-      [':', client.phone || '', 'phone'],
-    ];
-    if (client.email) rows.push([':', client.email, 'email']);
-    if (meeting_date) {
-      const md = new Date(meeting_date).toLocaleDateString('he-IL');
-      rows.push([':', md, 'meeting date']);
-    }
-
-    rows.forEach(([sep, val, label]) => {
-      doc.setTextColor(...COLORS.brown);
-      doc.text(label, pageW - margin, y, { align: 'right' });
-      doc.setTextColor(...COLORS.dark);
-      doc.text(`${val}`, pageW - margin - 40, y, { align: 'right' });
-      y += 7;
+    await base44.asServiceRole.entities.Document.update(doc.id, {
+      signature_status: 'signed',
+      signed_at: signedAt,
+      signer_name,
+      signature_image_url,
+      file_url: signedFileUrl,
     });
 
-    // --- Package & Amount box ---
-    y += 5;
-    doc.setFillColor(...COLORS.cream);
-    doc.roundedRect(margin, y, contentW, 28, 3, 3, 'F');
-
-    doc.setFontSize(13);
-    doc.setTextColor(...COLORS.darkBrown);
-    const pkgLabel = PACKAGE_LABELS[package_type] || package_type || '';
-    doc.text(`${pkgLabel} package`, pageW - margin - 8, y + 11, { align: 'right' });
-
-    doc.setFontSize(18);
-    doc.setTextColor(...COLORS.brown);
-    const amountStr = `${Number(total_amount).toLocaleString('he-IL')} ILS`;
-    doc.text(amountStr, pageW - margin - 8, y + 22, { align: 'right' });
-
-    // --- Scope / Description ---
-    y += 38;
-    if (scope) {
-      doc.setFontSize(12);
-      doc.setTextColor(...COLORS.darkBrown);
-      doc.text('Scope of Work', pageW - margin, y, { align: 'right' });
-      y += 8;
-
-      doc.setFontSize(10);
-      doc.setTextColor(...COLORS.dark);
-      const lines = doc.splitTextToSize(scope, contentW - 10);
-      lines.forEach((line) => {
-        if (y > pageH - 40) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.text(line, pageW - margin, y, { align: 'right' });
-        y += 6;
+    if (doc.client_id) {
+      await base44.asServiceRole.entities.Communication.create({
+        client_id: doc.client_id,
+        project_id: doc.project_id || undefined,
+        type: 'note',
+        direction: 'inbound',
+        content: `✍️ המסמך "${doc.name}" נחתם דיגיטלית על ידי ${signer_name} ב-${signedAtDisplay}`,
+        sent_by: 'system',
+        status: 'sent',
+        channel: 'base44_native',
       });
     }
 
-    // --- Footer ---
-    const footerY = pageH - 20;
-    doc.setFillColor(...COLORS.brown);
-    doc.rect(0, footerY - 5, pageW, 25, 'F');
-    doc.setTextColor(...COLORS.cream);
-    doc.setFontSize(9);
-    doc.text('Michal Wolberger | Interior Design | 052-468-7812', pageW / 2, footerY + 4, { align: 'center' });
-    doc.text('This proposal is valid for 14 days from the date above', pageW / 2, footerY + 10, { align: 'center' });
+    try {
+      const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
+      if (BREVO_API_KEY) {
+        await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sender: { name: 'סטודיו מיכל וולברגר', email: 'michalwol123@gmail.com' },
+            to: [{ email: 'michalwol123@gmail.com' }],
+            subject: `✍️ מסמך נחתם: ${doc.name}`,
+            htmlContent: `<div dir="rtl" style="font-family:Arial,sans-serif;padding:20px;">
+              <h2 style="color:#8B7355;">מסמך נחתם ✍️</h2>
+              <p><strong>${doc.name}</strong> נחתם על ידי <strong>${signer_name}</strong> ב-${signedAtDisplay}</p>
+              <p><a href="${signedFileUrl}" style="background:#8B7355;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;display:inline-block;">צפה ב-PDF החתום</a></p>
+            </div>`
+          })
+        });
+      }
+    } catch (_) {}
 
-    // Convert to binary and upload
-    const pdfBytes = doc.output('arraybuffer');
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const file = new File([blob], `quote_${client.name}_${Date.now()}.pdf`, { type: 'application/pdf' });
-
-    const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
-
-    return Response.json({ success: true, file_url });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ status: 'ok', file_url: signedFileUrl });
+  } catch (err) {
+    console.error('submitSignature error:', err.message);
+    return Response.json({ error: err.message }, { status: 500 });
   }
 });
