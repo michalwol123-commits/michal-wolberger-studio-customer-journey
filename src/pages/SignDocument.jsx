@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 export default function SignDocument() {
   const token = new URLSearchParams(window.location.search).get('token');
@@ -104,75 +103,12 @@ export default function SignDocument() {
 
     setSubmitting(true);
     try {
+      // canvas.toDataURL() returns a data: URL — fetch() can handle this
       const signature_image_url = canvasRef.current.toDataURL('image/png');
-      let signed_file_url = null;
-
-      // Client-side PDF signing
-      if (docData.file_url) {
-        try {
-          // pdf-lib imported at top of file
-
-          const pdfRes = await fetch(docData.file_url);
-          const existingPdfBytes = await pdfRes.arrayBuffer();
-          const pdfDoc = await PDFDocument.load(existingPdfBytes);
-
-          const pages = pdfDoc.getPages();
-          const lastPage = pages[pages.length - 1];
-          const { width } = lastPage.getSize();
-          const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-          // Convert data URL to Uint8Array
-          const base64Data = signature_image_url.split(',')[1];
-          const sigImageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-          const sigImage = await pdfDoc.embedPng(sigImageBytes);
-
-          const sigW = 160, sigH = 60;
-          const sigX = width - sigW - 40;
-          const sigY = 60;
-
-          lastPage.drawRectangle({
-            x: sigX - 5, y: sigY - 18,
-            width: sigW + 10, height: sigH + 28,
-            color: rgb(0.97, 0.97, 0.97),
-            borderColor: rgb(0.75, 0.75, 0.75),
-            borderWidth: 0.5,
-          });
-
-          lastPage.drawImage(sigImage, { x: sigX, y: sigY, width: sigW, height: sigH });
-
-          lastPage.drawLine({
-            start: { x: sigX - 2, y: sigY - 2 },
-            end: { x: sigX + sigW + 2, y: sigY - 2 },
-            thickness: 0.7, color: rgb(0.4, 0.4, 0.4),
-          });
-
-          lastPage.drawText(signerName.trim(), {
-            x: sigX, y: sigY - 14, size: 9, font, color: rgb(0.15, 0.15, 0.15),
-          });
-          lastPage.drawText(new Date().toLocaleDateString('he-IL'), {
-            x: sigX + sigW - 50, y: sigY - 14, size: 9, font, color: rgb(0.5, 0.5, 0.5),
-          });
-          lastPage.drawText('Digital Signature', {
-            x: sigX, y: sigY + sigH + 5, size: 7, font, color: rgb(0.65, 0.65, 0.65),
-          });
-
-          const signedPdfBytes = await pdfDoc.save();
-          const blob = new Blob([signedPdfBytes], { type: 'application/pdf' });
-          const file = new File([blob], `signed_${docData.name || 'document'}.pdf`, { type: 'application/pdf' });
-          const uploadResult = await base44.integrations.Core.UploadFile({ file });
-          if (uploadResult?.file_url) {
-            signed_file_url = uploadResult.file_url;
-          }
-        } catch (pdfErr) {
-          console.error('Client-side PDF signing failed:', pdfErr);
-        }
-      }
-
       await base44.functions.invoke('submitSignature', {
         token,
         signer_name: signerName.trim(),
         signature_image_url,
-        signed_file_url,
       });
       setSuccess(true);
     } catch (e) {
