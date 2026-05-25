@@ -121,8 +121,9 @@ export default function SignDocument() {
           const { width } = lastPage.getSize();
           const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-          // Embed signature image
-          const sigImageBytes = await fetch(signature_image_url).then(r => r.arrayBuffer());
+          // Convert data URL to Uint8Array
+          const base64Data = signature_image_url.split(',')[1];
+          const sigImageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
           const sigImage = await pdfDoc.embedPng(sigImageBytes);
 
           const sigW = 160, sigH = 60;
