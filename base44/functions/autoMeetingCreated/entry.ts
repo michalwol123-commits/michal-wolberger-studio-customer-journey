@@ -87,10 +87,11 @@ Deno.serve(async (req) => {
           project_id: data.project_id || undefined,
           type: 'email',
           direction: 'outbound',
+          subject: `תיאום ${meetingLabel}`,
           content: emailContent,
           sent_by: 'system',
           status: 'pending',
-          channel: 'gmail',
+          channel: 'base44_native',
         });
       }
 

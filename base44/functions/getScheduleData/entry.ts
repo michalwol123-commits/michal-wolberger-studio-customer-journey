@@ -2,14 +2,17 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
-    const { token } = await req.json();
+    // Clone the request so we can read body AND pass original to SDK
+    const cloned = req.clone();
+    const { token } = await cloned.json();
 
     if (!token) {
       return Response.json({ error: 'Missing token' }, { status: 400 });
     }
 
-    // Find meeting by scheduling_token (service role — no auth needed)
+    const base44 = createClientFromRequest(req);
+
+    // Find meeting by scheduling_token (service role — public page, no auth)
     const meetings = await base44.asServiceRole.entities.Meeting.filter({ scheduling_token: token });
     const meeting = meetings[0];
 

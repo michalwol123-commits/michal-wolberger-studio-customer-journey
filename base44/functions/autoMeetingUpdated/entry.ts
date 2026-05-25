@@ -1,7 +1,8 @@
-// Automation — Sync meeting to Google Calendar when admin updates scheduled_at
-// Trigger: Meeting entity updated
-// If no google_event_id → create calendar event + send email
+// Automation — Sync meeting to Google Calendar when meeting's scheduled_at is updated
+// Trigger: Meeting entity updated (scheduled_at changed)
+// If no google_event_id → create calendar event
 // If google_event_id exists → update the existing calendar event
+// Emails sent via Brevo (Communication pending → sendEmail picks it up)
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const MEETING_TYPE_LABELS = {
@@ -47,6 +48,7 @@ Deno.serve(async (req) => {
     const duration = data.duration || 45;
     const endTime = new Date(scheduledAt.getTime() + duration * 60 * 1000);
 
+    // --- 1. Google Calendar sync ---
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
 
     const calendarEvent = {
@@ -80,59 +82,6 @@ Deno.serve(async (req) => {
       });
       const calData = await calRes.json();
       console.log('Calendar event updated:', calData.id);
-
-      // Send reschedule email to client
-      if (client.email) {
-        const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        const timeStr = scheduledAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-
-        const emailBody = `
-<div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <h2 style="color: #8B6F47;">שלום ${client.name},</h2>
-  <p>מועד הפגישה שלך עודכן:</p>
-  <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
-    <tr><td style="padding: 8px; font-weight: bold; color: #555;">סוג פגישה:</td><td style="padding: 8px;">${meetingLabel}</td></tr>
-    <tr><td style="padding: 8px; font-weight: bold; color: #555;">תאריך חדש:</td><td style="padding: 8px;">${dateStr}</td></tr>
-    <tr><td style="padding: 8px; font-weight: bold; color: #555;">שעה:</td><td style="padding: 8px;">${timeStr}</td></tr>
-    <tr><td style="padding: 8px; font-weight: bold; color: #555;">משך:</td><td style="padding: 8px;">${duration} דקות</td></tr>
-    ${data.location ? `<tr><td style="padding: 8px; font-weight: bold; color: #555;">מיקום:</td><td style="padding: 8px;">${data.location}</td></tr>` : ''}
-  </table>
-  <p style="color: #999; font-size: 12px; margin-top: 24px;">הודעה זו נשלחה אוטומטית מהסטודיו</p>
-</div>`;
-
-        const subject = `עדכון מועד — ${meetingLabel} — ${dateStr}`;
-        const { accessToken: gmailToken } = await base44.asServiceRole.connectors.getConnection('gmail');
-        const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
-        const emailRaw = [
-          `From: "סטודיו מיכל וולברגר" <me>`,
-          `To: ${client.email}`,
-          `Subject: ${subjectEncoded}`,
-          `MIME-Version: 1.0`,
-          `Content-Type: text/html; charset=utf-8`,
-          ``,
-          emailBody
-        ].join('\r\n');
-        const raw = btoa(unescape(encodeURIComponent(emailRaw)))
-          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-        const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw }),
-        });
-        if (!gmailRes.ok) throw new Error(`Gmail error: ${JSON.stringify(await gmailRes.json())}`);
-
-        await base44.asServiceRole.entities.Communication.create({
-          client_id: client.id,
-          project_id: data.project_id || undefined,
-          type: 'email',
-          direction: 'outbound',
-          content: `עדכון מועד ${meetingLabel} נשלח ללקוח — ${dateStr} בשעה ${timeStr}`,
-          sent_by: 'system',
-          status: 'sent',
-          channel: 'gmail',
-        });
-      }
     } else {
       // Create new Google Calendar event
       const calRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
@@ -151,68 +100,38 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.Meeting.update(event.entity_id, {
         google_event_id: googleEventId,
       });
-
-      // Send email invitation to client (only on first sync, not on reschedule)
-      if (client.email) {
-        const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        const timeStr = scheduledAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-
-        const priceRow = (data.type === 'quote_presentation' && data.meeting_price)
-          ? `<tr><td style="padding: 8px; font-weight: bold; color: #555;">מחיר פגישה:</td><td style="padding: 8px;">${data.meeting_price}₪</td></tr>`
-          : '';
-
-        const emailBody = `
-          <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #8B6F47;">שלום ${client.name},</h2>
-            <p>נקבעה עבורך פגישה חדשה:</p>
-            <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
-              <tr><td style="padding: 8px; font-weight: bold; color: #555;">סוג פגישה:</td><td style="padding: 8px;">${meetingLabel}</td></tr>
-              <tr><td style="padding: 8px; font-weight: bold; color: #555;">תאריך:</td><td style="padding: 8px;">${dateStr}</td></tr>
-              <tr><td style="padding: 8px; font-weight: bold; color: #555;">שעה:</td><td style="padding: 8px;">${timeStr}</td></tr>
-              <tr><td style="padding: 8px; font-weight: bold; color: #555;">משך:</td><td style="padding: 8px;">${duration} דקות</td></tr>
-              ${data.location ? `<tr><td style="padding: 8px; font-weight: bold; color: #555;">מיקום:</td><td style="padding: 8px;">${data.location}</td></tr>` : ''}
-              ${priceRow}
-            </table>
-            <p>נשמח לראות אותך! 😊</p>
-            <p style="color: #999; font-size: 12px; margin-top: 24px;">הודעה זו נשלחה אוטומטית מהסטודיו</p>
-          </div>
-        `;
-
-        const subject = `הזמנה ל${meetingLabel} — ${dateStr}`;
-        const { accessToken: gmailToken } = await base44.asServiceRole.connectors.getConnection('gmail');
-        const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
-        const emailRaw = [
-          `From: "סטודיו מיכל וולברגר" <me>`,
-          `To: ${client.email}`,
-          `Subject: ${subjectEncoded}`,
-          `MIME-Version: 1.0`,
-          `Content-Type: text/html; charset=utf-8`,
-          ``,
-          emailBody
-        ].join('\r\n');
-        const raw = btoa(unescape(encodeURIComponent(emailRaw)))
-          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw }),
-        });
-        if (!gmailRes.ok) throw new Error(`Gmail error: ${JSON.stringify(await gmailRes.json())}`);
-
-        await base44.asServiceRole.entities.Communication.create({
-          client_id: client.id,
-          project_id: data.project_id || undefined,
-          type: 'email',
-          direction: 'outbound',
-          content: `הזמנה ל${meetingLabel} נשלחה ללקוח — ${dateStr} בשעה ${timeStr}`,
-          sent_by: 'system',
-          status: 'sent',
-          channel: 'base44_native',
-        });
-      }
     }
 
-    // Sync meeting date to linked Quote (if quote_presentation with quote_id)
+    // --- 2. Send email via Brevo (Communication pending) ---
+    if (client.email) {
+      const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const timeStr = scheduledAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+      const isReschedule = !!data.google_event_id && old_data?.scheduled_at;
+      const subject = isReschedule
+        ? `עדכון מועד — ${meetingLabel} — ${dateStr}`
+        : `הזמנה ל${meetingLabel} — ${dateStr}`;
+
+      const priceRow = (data.type === 'quote_presentation' && data.meeting_price)
+        ? `<tr><td style="padding: 8px; font-weight: bold; color: #555;">מחיר פגישה:</td><td style="padding: 8px;">${data.meeting_price}₪</td></tr>`
+        : '';
+
+      const emailContent = `שלום ${client.name},\n\n${isReschedule ? 'מועד הפגישה שלך עודכן:' : 'נקבעה עבורך פגישה חדשה:'}\n\nסוג פגישה: ${meetingLabel}\nתאריך: ${dateStr}\nשעה: ${timeStr}\nמשך: ${duration} דקות${data.location ? '\nמיקום: ' + data.location : ''}${data.type === 'quote_presentation' && data.meeting_price ? '\nמחיר פגישה: ' + data.meeting_price + '₪' : ''}\n\nנשמח לראות אותך! 😊`;
+
+      await base44.asServiceRole.entities.Communication.create({
+        client_id: client.id,
+        project_id: data.project_id || undefined,
+        type: 'email',
+        direction: 'outbound',
+        subject: subject,
+        content: emailContent,
+        sent_by: 'system',
+        status: 'pending',
+        channel: 'base44_native',
+      });
+    }
+
+    // --- 3. Sync meeting date to linked Quote ---
     if (data.type === 'quote_presentation' && data.quote_id) {
       const meetingDate = scheduledAt.toISOString().split('T')[0];
       await base44.asServiceRole.entities.Quote.update(data.quote_id, {

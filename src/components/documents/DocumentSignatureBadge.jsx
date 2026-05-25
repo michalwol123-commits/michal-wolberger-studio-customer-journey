@@ -88,7 +88,7 @@ export default function DocumentSignatureBadge({ doc }) {
         `,
         sent_by: 'system',
         status: 'pending',
-        channel: 'gmail',
+        channel: 'base44_native',
       });
       toast.success(`מייל יישלח בדקות הקרובות ל-${client.email}`);
     } catch (e) {

@@ -137,10 +137,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // --- Notify admin via Gmail (send to self) ---
+    // --- Notify admin via Brevo ---
     try {
-      const { accessToken: gmailToken } = await base44.asServiceRole.connectors.getConnection('gmail');
-      const adminSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(`✍️ מסמך נחתם: ${doc.name}`)))}?=`;
+      const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
       const adminHtml = `<div dir="rtl" style="font-family:Arial,sans-serif;padding:20px;max-width:500px;">
         <h2 style="color:#8B7355;">מסמך נחתם ✍️</h2>
         <p>המסמך <strong>${doc.name}</strong> נחתם דיגיטלית.</p>
@@ -154,23 +153,17 @@ Deno.serve(async (req) => {
           </a>
         </p>
       </div>`;
-      const adminEmailRaw = [
-        `From: "מערכת CRM" <me>`,
-        `To: me`,
-        `Subject: ${adminSubject}`,
-        `MIME-Version: 1.0`,
-        `Content-Type: text/html; charset=utf-8`,
-        ``,
-        adminHtml,
-      ].join('\r\n');
-      const adminRaw = btoa(unescape(encodeURIComponent(adminEmailRaw)))
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw: adminRaw }),
+        headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender: { name: 'סטודיו מיכל וולברגר', email: 'michalwol123@gmail.com' },
+          to: [{ email: 'michalwol123@gmail.com', name: 'מיכל' }],
+          subject: `✍️ מסמך נחתם: ${doc.name}`,
+          htmlContent: adminHtml,
+        }),
       });
-    } catch (notifyErr) { console.error('Admin Gmail notification failed:', notifyErr.message); }
+    } catch (notifyErr) { console.error('Admin Brevo notification failed:', notifyErr.message); }
 
     return Response.json({ status: 'ok', file_url: updatedFileUrl });
   } catch (err) {
