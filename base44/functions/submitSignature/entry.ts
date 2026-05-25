@@ -1,182 +1,146 @@
-// Public function — creates a separate signature certificate PDF and marks document as signed
-// Does NOT modify the original document PDF (avoids memory issues with large files)
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { PDFDocument, rgb, StandardFonts } from 'npm:pdf-lib@1.17.1';
+import { jsPDF } from 'npm:jspdf@4.0.0';
 
 Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const base44 = createClientFromRequest(req);
     const { token, signer_name, signature_image_url } = body;
+
     if (!token || !signer_name || !signature_image_url) {
       return Response.json({ error: 'missing_fields' }, { status: 400 });
     }
 
-    // Find document by signature_token
-    const docs = await base44.asServiceRole.entities.Document.filter({ signature_token: token });
+    let docs = await base44.asServiceRole.entities.Document.filter({ signature_token: token });
+    if (!docs?.length) {
+      const pending = await base44.asServiceRole.entities.Document.filter({ signature_status: 'pending_signature' });
+      docs = pending.filter(d => d.signature_token === token);
+    }
+    if (!docs?.length) return Response.json({ error: 'not_found' }, { status: 404 });
     const doc = docs[0];
-    if (!doc) return Response.json({ error: 'not_found' }, { status: 404 });
     if (doc.signature_status === 'signed') return Response.json({ error: 'already_signed' }, { status: 410 });
 
     const signedAt = new Date().toISOString();
-    const signedDate = new Date().toLocaleDateString('he-IL');
-    const signedTime = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+    const signedAtDisplay = new Date().toLocaleString('he-IL');
+    let signedFileUrl = doc.file_url;
 
-    // --- Create signature certificate PDF (small, single page) ---
-    let signedPdfUrl = null;
     try {
-      const pdfDoc = await PDFDocument.create();
-      const page = pdfDoc.addPage([595, 842]); // A4
-      
-      // Download and embed Rubik font (supports Hebrew)
-      const fontUrl = 'https://fonts.gstatic.com/s/rubik/v21/iJWnBXVfYWd97iFWDBwcuIlIbsI.ttf';
-      const fontBoldUrl = 'https://fonts.gstatic.com/s/rubik/v21/iJWnBXVfYWd97iFWHBwcuIlIbsI.ttf';
-      
-      const fontBytes = await fetch(fontUrl).then(r => r.arrayBuffer());
-      const fontBoldBytes = await fetch(fontBoldUrl).then(r => r.arrayBuffer());
-      
-      const font = await pdfDoc.embedFont(fontBytes);
-      const fontBold = await pdfDoc.embedFont(fontBoldBytes);
+      let heeboBase64 = '';
+      try {
+        const cssResp = await fetch(
+          'https://fonts.googleapis.com/css?family=Heebo&subset=hebrew',
+          { headers: { 'User-Agent': 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)' } }
+        );
+        const css = await cssResp.text();
+        const ttfLines = css.split('\n').filter(l => l.includes('.ttf'));
+        const ttfUrl = ttfLines[0]?.match(/url\(([^)]+)\)/)?.[1]?.replace(/['"]/g, '');
+        if (ttfUrl) {
+          const fontResp = await fetch(ttfUrl);
+          const fontBuf = await fontResp.arrayBuffer();
+          const fontArr = new Uint8Array(fontBuf);
+          let binary = '';
+          fontArr.forEach(b => { binary += String.fromCharCode(b); });
+          heeboBase64 = btoa(binary);
+        }
+      } catch (fontErr) {
+        console.error('Font fetch failed:', fontErr);
+      }
 
-      const brown = rgb(0.545, 0.451, 0.333); // #8B7355
-      const darkGray = rgb(0.15, 0.15, 0.15);
-      const gray = rgb(0.5, 0.5, 0.5);
-      const lightBg = rgb(0.98, 0.97, 0.96);
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      if (heeboBase64) {
+        pdf.addFileToVFS('Heebo.ttf', heeboBase64);
+        pdf.addFont('Heebo.ttf', 'Heebo', 'normal');
+        pdf.setFont('Heebo');
+      }
 
-      // Header bar
-      page.drawRectangle({ x: 0, y: 742, width: 595, height: 100, color: brown });
-      page.drawText('Digital Signature Certificate', {
-        x: 40, y: 800, size: 22, font: fontBold, color: rgb(1, 1, 1),
-      });
-      page.drawText('Michal Wolberger Interior Design', {
-        x: 40, y: 775, size: 11, font, color: rgb(1, 1, 1, 0.8),
-      });
-      page.drawText('Certificate ID: ' + token.slice(0, 12).toUpperCase(), {
-        x: 40, y: 755, size: 9, font, color: rgb(1, 1, 1, 0.6),
-      });
+      const pageW = 210;
+      const pageH = 297;
+      const margin = 20;
 
-      // Document info section
-      let y = 710;
-      page.drawText('Document Details', { x: 40, y, size: 14, font: fontBold, color: darkGray });
-      y -= 28;
+      pdf.setFillColor(139, 115, 85);
+      pdf.rect(0, 0, pageW, 45, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.text('סטודיו מיכל וולברגר', pageW - margin, 22, { align: 'right' });
+      pdf.setFontSize(11);
+      pdf.text('אישור חתימה דיגיטלית', pageW - margin, 33, { align: 'right' });
 
-      const drawField = (label, value, yPos) => {
-        page.drawText(label, { x: 40, y: yPos, size: 10, font, color: gray });
-        page.drawText(value || '-', { x: 170, y: yPos, size: 11, font: fontBold, color: darkGray });
-        return yPos - 22;
+      let y = 65;
+
+      const drawRow = (label, value) => {
+        pdf.setTextColor(139, 115, 85);
+        pdf.text(label, pageW - margin, y, { align: 'right' });
+        pdf.setTextColor(44, 44, 44);
+        pdf.text(value, pageW - margin - 32, y, { align: 'right' });
+        y += 10;
       };
 
-      y = drawField('Document Name:', doc.name || 'N/A', y);
-      y = drawField('Document Type:', doc.type || 'N/A', y);
-      y = drawField('Signed By:', signer_name, y);
-      y = drawField('Date:', signedDate, y);
-      y = drawField('Time:', signedTime, y);
+      pdf.setFontSize(11);
+      drawRow('מסמך:', doc.name || 'מסמך לחתימה');
+      drawRow('חותם/ת:', signer_name);
+      drawRow('תאריך:', signedAtDisplay);
 
-      // Separator
-      y -= 10;
-      page.drawLine({ start: { x: 40, y }, end: { x: 555, y }, thickness: 0.5, color: rgb(0.85, 0.85, 0.85) });
-      y -= 30;
+      pdf.setDrawColor(200, 190, 180);
+      pdf.setLineWidth(0.3);
+      pdf.line(margin, y + 5, pageW - margin, y + 5);
 
-      // Signature section
-      page.drawText('Signature', { x: 40, y, size: 14, font: fontBold, color: darkGray });
-      y -= 15;
+      y += 18;
+      pdf.setTextColor(139, 115, 85);
+      pdf.setFontSize(11);
+      pdf.text('חתימה:', pageW - margin, y, { align: 'right' });
 
-      // Embed signature image (always a URL — uploaded by frontend)
-      const sigImageBytes = await fetch(signature_image_url).then(r => r.arrayBuffer());
+      y += 6;
+      pdf.setFillColor(248, 246, 243);
+      pdf.setDrawColor(200, 190, 180);
+      pdf.setLineWidth(0.5);
+      pdf.roundedRect(margin, y, 100, 40, 2, 2, 'FD');
 
-      const sigImage = await pdfDoc.embedPng(sigImageBytes);
+      pdf.addImage(signature_image_url, 'PNG', margin + 2, y + 2, 96, 36);
 
-      // Signature box
-      const sigBoxX = 40;
-      const sigBoxY = y - 100;
-      const sigBoxW = 300;
-      const sigBoxH = 100;
+      y += 44;
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(9);
+      pdf.text(signer_name, margin + 50, y, { align: 'center' });
 
-      page.drawRectangle({
-        x: sigBoxX, y: sigBoxY, width: sigBoxW, height: sigBoxH,
-        color: lightBg, borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 0.5,
-      });
+      pdf.setFillColor(139, 115, 85);
+      pdf.rect(0, pageH - 20, pageW, 20, 'F');
+      pdf.setTextColor(245, 240, 234);
+      pdf.setFontSize(8);
+      pdf.text('Michal Wolberger Interior Design', pageW / 2, pageH - 8, { align: 'center' });
 
-      // Scale signature to fit box with padding
-      const scale = Math.min((sigBoxW - 20) / sigImage.width, (sigBoxH - 20) / sigImage.height);
-      const sigW = sigImage.width * scale;
-      const sigH = sigImage.height * scale;
-      page.drawImage(sigImage, {
-        x: sigBoxX + (sigBoxW - sigW) / 2,
-        y: sigBoxY + (sigBoxH - sigH) / 2,
-        width: sigW,
-        height: sigH,
-      });
-
-      // Line under signature
-      page.drawLine({
-        start: { x: sigBoxX + 10, y: sigBoxY + 12 },
-        end: { x: sigBoxX + sigBoxW - 10, y: sigBoxY + 12 },
-        thickness: 0.7, color: gray,
-      });
-
-      // Signer name under box
-      y = sigBoxY - 18;
-      page.drawText(signer_name, { x: sigBoxX, y, size: 11, font: fontBold, color: darkGray });
-
-      // Legal text at bottom
-      y = 120;
-      page.drawLine({ start: { x: 40, y: y + 10 }, end: { x: 555, y: y + 10 }, thickness: 0.5, color: rgb(0.85, 0.85, 0.85) });
-      page.drawText('This certificate confirms that the above-named person has digitally signed the referenced document.', {
-        x: 40, y: y - 10, size: 9, font, color: gray,
-      });
-      page.drawText('The signature was captured electronically and is legally binding as per the signer\'s consent.', {
-        x: 40, y: y - 24, size: 9, font, color: gray,
-      });
-      page.drawText('Generated by Michal Wolberger Interior Design Management System', {
-        x: 40, y: y - 48, size: 8, font, color: rgb(0.7, 0.7, 0.7),
-      });
-
-      // Save and upload
-      const pdfBytes = await pdfDoc.save();
+      const pdfBytes = pdf.output('arraybuffer');
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const file = new File([blob], `signature_certificate_${doc.name || 'doc'}.pdf`, { type: 'application/pdf' });
+      const file = new File([blob], `חתום_${(doc.name || 'מסמך').replace(/\s/g, '_')}.pdf`, { type: 'application/pdf' });
       const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({ file });
-      if (uploadResult?.file_url) {
-        signedPdfUrl = uploadResult.file_url;
-      }
-    } catch (certErr) {
-      console.error('Certificate PDF creation failed:', certErr.message);
-      // Continue — signature is still saved even if certificate creation fails
+      if (uploadResult?.file_url) signedFileUrl = uploadResult.file_url;
+
+    } catch (pdfErr) {
+      console.error('PDF error:', pdfErr.message);
     }
 
-    // --- Update document (file_url stays unchanged!) ---
-    const updateData = {
+    await base44.asServiceRole.entities.Document.update(doc.id, {
       signature_status: 'signed',
       signed_at: signedAt,
       signer_name,
       signature_image_url,
-    };
-    if (signedPdfUrl) {
-      updateData.signed_pdf_url = signedPdfUrl;
-    }
-    await base44.asServiceRole.entities.Document.update(doc.id, updateData);
+      file_url: signedFileUrl,
+    });
 
-    // --- Log communication ---
     if (doc.client_id) {
       await base44.asServiceRole.entities.Communication.create({
         client_id: doc.client_id,
         project_id: doc.project_id || undefined,
         type: 'note',
         direction: 'inbound',
-        content: `✍️ המסמך "${doc.name}" נחתם דיגיטלית על ידי ${signer_name} ב-${signedDate} ${signedTime}`,
+        content: `✍️ המסמך "${doc.name}" נחתם דיגיטלית על ידי ${signer_name} ב-${signedAtDisplay}`,
         sent_by: 'system',
         status: 'sent',
         channel: 'base44_native',
       });
     }
 
-    // --- Notify admin via Brevo ---
     try {
       const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
-      const certLink = signedPdfUrl
-        ? `<p style="margin-top:12px;"><a href="${signedPdfUrl}" style="background:#8B7355;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;display:inline-block;">צפה באישור החתימה (PDF)</a></p>`
-        : '';
       await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
@@ -184,20 +148,16 @@ Deno.serve(async (req) => {
           sender: { name: 'סטודיו מיכל וולברגר', email: 'michalwol123@gmail.com' },
           to: [{ email: 'michalwol123@gmail.com' }],
           subject: `✍️ מסמך נחתם: ${doc.name}`,
-          htmlContent: `<div dir="rtl" style="font-family:Arial,sans-serif;padding:20px;max-width:500px;">
+          htmlContent: `<div dir="rtl" style="font-family:Arial,sans-serif;padding:20px;">
             <h2 style="color:#8B7355;">מסמך נחתם ✍️</h2>
-            <p>המסמך <strong>${doc.name}</strong> נחתם דיגיטלית.</p>
-            <table style="margin-top:12px;font-size:14px;">
-              <tr><td style="color:#888;padding:4px 12px 4px 0;">חותם:</td><td><strong>${signer_name}</strong></td></tr>
-              <tr><td style="color:#888;padding:4px 12px 4px 0;">תאריך:</td><td>${signedDate} ${signedTime}</td></tr>
-            </table>
-            ${certLink}
+            <p><strong>${doc.name}</strong> נחתם על ידי <strong>${signer_name}</strong> ב-${signedAtDisplay}</p>
+            <p><a href="${signedFileUrl}" style="background:#8B7355;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;display:inline-block;">צפה ב-PDF החתום</a></p>
           </div>`
         })
       });
-    } catch (_) { /* notification failure should not block */ }
+    } catch (_) {}
 
-    return Response.json({ status: 'ok', signed_pdf_url: signedPdfUrl });
+    return Response.json({ status: 'ok', file_url: signedFileUrl });
   } catch (err) {
     console.error('submitSignature error:', err.message);
     return Response.json({ error: err.message }, { status: 500 });
