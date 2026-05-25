@@ -73,17 +73,8 @@ Deno.serve(async (req) => {
       page.drawText('Signature', { x: 40, y, size: 14, font: fontBold, color: darkGray });
       y -= 15;
 
-      // Embed signature image
-      let sigImageBytes;
-      if (signature_image_url.startsWith('data:')) {
-        const base64Data = signature_image_url.replace(/^data:image\/\w+;base64,/, '');
-        const binary = atob(base64Data);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        sigImageBytes = bytes.buffer;
-      } else {
-        sigImageBytes = await fetch(signature_image_url).then(r => r.arrayBuffer());
-      }
+      // Embed signature image (always a URL — uploaded by frontend)
+      const sigImageBytes = await fetch(signature_image_url).then(r => r.arrayBuffer());
 
       const sigImage = await pdfDoc.embedPng(sigImageBytes);
 

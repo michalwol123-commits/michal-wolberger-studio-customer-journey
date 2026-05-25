@@ -103,12 +103,16 @@ export default function SignDocument() {
 
     setSubmitting(true);
     try {
-      // canvas.toDataURL() returns a data: URL — fetch() can handle this
-      const signature_image_url = canvasRef.current.toDataURL('image/png');
+      // Convert canvas to blob, upload as file, then send URL (not base64)
+      const canvas = canvasRef.current;
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      const file = new File([blob], 'signature.png', { type: 'image/png' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
       await base44.functions.invoke('submitSignature', {
         token,
         signer_name: signerName.trim(),
-        signature_image_url,
+        signature_image_url: file_url,
       });
       setSuccess(true);
     } catch (e) {
