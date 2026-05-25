@@ -116,13 +116,17 @@
       "type": "string",
       "description": "\u05ea\u05de\u05d5\u05e0\u05ea \u05d7\u05ea\u05d9\u05de\u05d4"
     },
+    "signed_pdf_url": {
+      "type": "string",
+      "description": "PDF \u05d0\u05d9\u05e9\u05d5\u05e8 \u05d7\u05ea\u05d9\u05de\u05d4 \u05e0\u05e4\u05e8\u05d3 (certificate)"
+    },
     "owner": {
       "type": "string",
       "description": "\u05d1\u05e2\u05dc\u05d9\u05dd (user)"
     },
     "updated_by": {
       "type": "string",
-      "description": "\u05e2\u05d5\u05d3\u05db\u05df \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4 \u05e2\"\u05d9 (user)"
+      "description": "\u05e2\u05d5\u05d3\u05db\u05df \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4 \u05e2\u05f4\u05d9 (user)"
     }
   },
   "required": [

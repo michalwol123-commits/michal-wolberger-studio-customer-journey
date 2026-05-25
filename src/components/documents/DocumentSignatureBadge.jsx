@@ -112,7 +112,13 @@ export default function DocumentSignatureBadge({ doc }) {
         {doc.file_url && (
           <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
             className="text-xs text-primary hover:underline">
-            PDF חתום ↗
+            📄 מסמך מקורי ↗
+          </a>
+        )}
+        {doc.signed_pdf_url && (
+          <a href={doc.signed_pdf_url} target="_blank" rel="noopener noreferrer"
+            className="text-xs text-green-700 hover:underline font-medium">
+            ✍️ אישור חתימה ↗
           </a>
         )}
       </div>
