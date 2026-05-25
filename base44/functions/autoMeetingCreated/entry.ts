@@ -189,25 +189,21 @@ Deno.serve(async (req) => {
       `;
 
       const subject = `הזמנה ל${meetingLabel} — ${dateStr}`;
-      const { accessToken: gmailToken } = await base44.asServiceRole.connectors.getConnection('gmail');
-      const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
-      const emailRaw = [
-        `From: "סטודיו מיכל וולברגר" <me>`,
-        `To: ${client.email}`,
-        `Subject: ${subjectEncoded}`,
-        `MIME-Version: 1.0`,
-        `Content-Type: text/html; charset=utf-8`,
-        ``,
-        emailBody
-      ].join('\r\n');
-      const raw = btoa(unescape(encodeURIComponent(emailRaw)))
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
+      const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw }),
+        headers: {
+          'api-key': BREVO_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: 'סטודיו מיכל וולברגר', email: 'michalwol123@gmail.com' },
+          to: [{ email: client.email, name: client.name || '' }],
+          subject: subject,
+          htmlContent: emailBody,
+        }),
       });
-      if (!gmailRes.ok) throw new Error(`Gmail error: ${JSON.stringify(await gmailRes.json())}`);
+      if (!brevoRes.ok) throw new Error(`Brevo error: ${JSON.stringify(await brevoRes.json())}`);
 
       // 3. Log communication
       await base44.asServiceRole.entities.Communication.create({

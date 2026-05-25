@@ -65,9 +65,8 @@ Deno.serve(async (req) => {
     // Send email directly via Gmail API (with PDF attachment if available)
     if (sendVia === 'email' || sendVia === 'both') {
       if (client.email) {
-        const { accessToken: gmailToken } = await base44.asServiceRole.connectors.getConnection('gmail');
+        const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
         const subject = `הצעת מחיר — ${title}`;
-        const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
 
         const htmlBody = `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
           <div style="background:#8B7355;padding:32px;text-align:center;color:white;">
@@ -83,55 +82,30 @@ Deno.serve(async (req) => {
           <div style="text-align:center;font-size:12px;color:#999;padding:16px;">סטודיו מיכל וולברגר | עיצוב פנים<br/>הודעה זו נשלחה אוטומטית</div>
         </div>`;
 
-        let rawEmail;
+        const brevoPayload = {
+          sender: { name: 'סטודיו מיכל וולברגר', email: 'michalwol123@gmail.com' },
+          to: [{ email: client.email, name: clientName }],
+          subject: subject,
+          htmlContent: htmlBody,
+        };
 
+        // Add PDF attachment if available
         if (pdfUrl) {
-          // Send with PDF attachment
           const pdfRes = await fetch(pdfUrl);
           const pdfBuffer = await pdfRes.arrayBuffer();
           const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
-          const boundary = 'boundary_' + Date.now();
-          const mimeEmail = [
-            `From: "סטודיו מיכל וולברגר" <me>`,
-            `To: ${client.email}`,
-            `Subject: ${subjectEncoded}`,
-            `MIME-Version: 1.0`,
-            `Content-Type: multipart/mixed; boundary="${boundary}"`,
-            ``,
-            `--${boundary}`,
-            `Content-Type: text/html; charset=utf-8`,
-            ``,
-            htmlBody,
-            ``,
-            `--${boundary}`,
-            `Content-Type: application/pdf`,
-            `Content-Transfer-Encoding: base64`,
-            `Content-Disposition: attachment; filename="quote_${clientName}.pdf"`,
-            ``,
-            pdfBase64,
-            `--${boundary}--`,
-          ].join('\r\n');
-          rawEmail = btoa(unescape(encodeURIComponent(mimeEmail))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        } else {
-          // Send without attachment
-          const emailRaw = [
-            `From: "סטודיו מיכל וולברגר" <me>`,
-            `To: ${client.email}`,
-            `Subject: ${subjectEncoded}`,
-            `MIME-Version: 1.0`,
-            `Content-Type: text/html; charset=utf-8`,
-            ``,
-            htmlBody,
-          ].join('\r\n');
-          rawEmail = btoa(unescape(encodeURIComponent(emailRaw))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          brevoPayload.attachment = [{ content: pdfBase64, name: `quote_${clientName}.pdf` }];
         }
 
-        const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw: rawEmail }),
+          headers: {
+            'api-key': BREVO_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(brevoPayload),
         });
-        if (!gmailRes.ok) throw new Error(`Gmail error: ${JSON.stringify(await gmailRes.json())}`);
+        if (!brevoRes.ok) throw new Error(`Brevo error: ${JSON.stringify(await brevoRes.json())}`);
 
         // Log email communication as sent
         await base44.asServiceRole.entities.Communication.create({
@@ -145,7 +119,7 @@ Deno.serve(async (req) => {
           channel: 'gmail',
           attachment_url: pdfUrl || undefined,
         });
-        results.push('email sent directly via Gmail');
+        results.push('email sent via Brevo');
       } else {
         results.push('email skipped — no email address');
       }
