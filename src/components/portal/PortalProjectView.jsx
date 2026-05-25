@@ -11,6 +11,7 @@ import PortalStageView from './PortalStageView';
 import PortalGanttView from './PortalGanttView';
 import PortalBudgetView from './PortalBudgetView';
 import PortalDocApproval from './PortalDocApproval';
+import PortalDaysMetrics from './PortalDaysMetrics';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 
@@ -101,6 +102,9 @@ export default function PortalProjectView({ project, onBack }) {
             payments={payments}
             questionnaires={questionnaires}
           />
+
+          {/* Days metrics (visible from stage 9+) */}
+          {selectedStage >= 9 && <PortalDaysMetrics project={project} />}
 
           {/* Gantt timeline (visible from stage 6+) */}
           {selectedStage >= 6 && <PortalGanttView project={project} />}
