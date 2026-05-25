@@ -36,7 +36,16 @@ Deno.serve(async (req) => {
           const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
           // Embed signature image (data: URL from canvas)
-          const sigImageBytes = await fetch(signature_image_url).then(r => r.arrayBuffer());
+          let sigImageBytes;
+          if (signature_image_url.startsWith('data:')) {
+            const base64Data = signature_image_url.split(',')[1];
+            const binary = atob(base64Data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            sigImageBytes = bytes.buffer;
+          } else {
+            sigImageBytes = await fetch(signature_image_url).then(r => r.arrayBuffer());
+          }
           const sigImage = await pdfDoc.embedPng(sigImageBytes);
 
           // Draw signature box at bottom-right
@@ -157,7 +166,7 @@ Deno.serve(async (req) => {
         headers: { 'Authorization': `Bearer ${gmailToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ raw: adminRaw }),
       });
-    } catch (_) { /* notification failure should not block the main flow */ }
+    } catch (notifyErr) { console.error('Admin Gmail notification failed:', notifyErr.message); }
 
     return Response.json({ status: 'ok', file_url: updatedFileUrl });
   } catch (err) {
