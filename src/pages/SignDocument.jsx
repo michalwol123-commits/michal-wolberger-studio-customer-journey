@@ -158,12 +158,13 @@ export default function SignDocument() {
     try {
       // 1. Upload signature image
       const canvas = canvasRef.current;
+      const sigBase64 = canvas.toDataURL('image/png');
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       const file = new File([blob], 'signature.png', { type: 'image/png' });
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      // 2. Generate certificate PDF client-side (html2canvas — Hebrew works perfectly)
-      const signedPdfUrl = await generateCertificatePDF(file_url);
+      // 2. Generate certificate PDF client-side using base64 signature (avoids CORS issues with html2canvas)
+      const signedPdfUrl = await generateCertificatePDF(sigBase64);
 
       // 3. Single call to submitSignature with everything
       await base44.functions.invoke('submitSignature', {
