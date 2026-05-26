@@ -30,9 +30,15 @@ Deno.serve(async (req) => {
         const { width, height } = lastPage.getSize();
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-        // ✅ THE FIX: decode base64 directly — fetch(data:URL) doesn't work in Deno
-        const cleanBase64 = signature_image_url.replace(/^data:image\/\w+;base64,/, '');
-        const sigImageBytes = Uint8Array.from(atob(cleanBase64), c => c.charCodeAt(0));
+        // Handle both data: URLs (base64 decode) and HTTPS URLs (fetch)
+        let sigImageBytes: Uint8Array;
+        if (signature_image_url.startsWith('data:')) {
+          const cleanBase64 = signature_image_url.replace(/^data:image\/\w+;base64,/, '');
+          sigImageBytes = Uint8Array.from(atob(cleanBase64), c => c.charCodeAt(0));
+        } else {
+          const imgRes = await fetch(signature_image_url);
+          sigImageBytes = new Uint8Array(await imgRes.arrayBuffer());
+        }
         const sigImage = await pdfDoc.embedPng(sigImageBytes);
 
         // Draw signature box at bottom-right
