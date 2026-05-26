@@ -66,9 +66,9 @@ Deno.serve(async (req) => {
         size: 7, font, color: rgb(0.65, 0.65, 0.65),
       });
       const dateStr = new Date().toLocaleDateString('en-GB');
-      lastPage.drawText(dateStr, {
-        x: sigX, y: sigY - 14,
-        size: 9, font, color: rgb(0.5, 0.5, 0.5),
+      lastPage.drawText('Signed: ' + dateStr, {
+        x: sigX, y: sigY - 18,
+        size: 8, font, color: rgb(0.4, 0.4, 0.4),
       });
 
       const signedPdfBytes = await pdfDoc.save();
