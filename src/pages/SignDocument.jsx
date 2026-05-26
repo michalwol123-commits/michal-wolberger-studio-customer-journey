@@ -133,6 +133,12 @@ export default function SignDocument() {
     document.body.appendChild(div);
 
     try {
+      // Wait for signature image to fully load before capturing
+      const img = div.querySelector('img');
+      if (img && !img.complete) {
+        await new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+      }
+
       const canvas = await html2canvas(div.firstElementChild, { scale: 2, useCORS: true, logging: false });
       const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       const imgData = canvas.toDataURL('image/jpeg', 0.92);
