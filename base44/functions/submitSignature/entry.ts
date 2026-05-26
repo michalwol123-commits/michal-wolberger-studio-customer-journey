@@ -65,7 +65,8 @@ Deno.serve(async (req) => {
         x: sigX, y: sigY + sigH + 5,
         size: 7, font, color: rgb(0.65, 0.65, 0.65),
       });
-      lastPage.drawText(signer_name, {
+      const dateStr = new Date().toLocaleDateString('en-GB');
+      lastPage.drawText(dateStr, {
         x: sigX, y: sigY - 14,
         size: 9, font, color: rgb(0.5, 0.5, 0.5),
       });
