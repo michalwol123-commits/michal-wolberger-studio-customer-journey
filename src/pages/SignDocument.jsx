@@ -1,6 +1,4 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { base44 } from '@/api/base44Client';
 
 export default function SignDocument() {
@@ -98,63 +96,6 @@ export default function SignDocument() {
     setHasSignature(false);
   };
 
-  const generateCertificatePDF = async (signatureImageUrl) => {
-    const signedAtDisplay = new Date().toLocaleString('he-IL');
-    const name = signerName.trim();
-
-    // Build certificate HTML
-    const div = document.createElement('div');
-    div.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:white;';
-    div.innerHTML = `<div style="width:794px;min-height:1123px;background:#fff;font-family:Arial,'Arial Hebrew',sans-serif;direction:rtl;color:#1a1a1a;">
-      <div style="background:#8B7355;padding:40px 50px;color:white;">
-        <div style="font-size:28px;font-weight:700;">סטודיו מיכל וולברגר</div>
-        <div style="font-size:14px;margin-top:4px;">אישור חתימה דיגיטלית</div>
-      </div>
-      <div style="padding:40px 50px;">
-        <div style="text-align:right;margin-bottom:24px;line-height:2.2;font-size:15px;">
-          <div><strong>מסמך:</strong> ${docData.name || 'מסמך לחתימה'}</div>
-          <div><strong>חותם/ת:</strong> ${name}</div>
-          <div><strong>תאריך:</strong> ${signedAtDisplay}</div>
-          ${docData.client_name ? `<div><strong>לקוח:</strong> ${docData.client_name}</div>` : ''}
-          ${docData.project_name ? `<div><strong>פרויקט:</strong> ${docData.project_name}</div>` : ''}
-        </div>
-        <div style="border-top:2px solid #C9A96E;padding-top:24px;margin-top:10px;">
-          <div style="font-size:14px;font-weight:600;color:#8B7355;margin-bottom:12px;">חתימה:</div>
-          <div style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:10px;display:inline-block;">
-            <img src="${signatureImageUrl}" style="max-width:300px;max-height:120px;" crossorigin="anonymous" />
-          </div>
-          <div style="font-size:13px;color:#666;margin-top:8px;">${name}</div>
-        </div>
-      </div>
-      <div style="text-align:center;font-size:12px;color:#888;border-top:1px solid #eee;padding:16px 50px 0;position:absolute;bottom:30px;left:0;right:0;">
-        Michal Wolberger Interior Design
-      </div>
-    </div>`;
-    document.body.appendChild(div);
-
-    try {
-      // Wait for signature image to fully load before capturing
-      const img = div.querySelector('img');
-      if (img && !img.complete) {
-        await new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
-      }
-
-      const canvas = await html2canvas(div.firstElementChild, { scale: 2, useCORS: true, logging: false });
-      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = (canvas.height * pageW) / canvas.width;
-      pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
-
-      const pdfBlob = pdf.output('blob');
-      const pdfFile = new File([pdfBlob], `certificate_${(docData.name || 'doc').replace(/\s/g, '_')}.pdf`, { type: 'application/pdf' });
-      const { file_url: pdfUrl } = await base44.integrations.Core.UploadFile({ file: pdfFile });
-      return pdfUrl;
-    } finally {
-      document.body.removeChild(div);
-    }
-  };
-
   const handleSubmit = async () => {
     if (!signerName.trim()) { alert('נא להזין שם מלא'); return; }
     if (!agreed) { alert('נא לאשר שקראת את המסמך'); return; }
@@ -162,22 +103,17 @@ export default function SignDocument() {
 
     setSubmitting(true);
     try {
-      // 1. Upload signature image
+      // Upload signature image
       const canvas = canvasRef.current;
-      const sigBase64 = canvas.toDataURL('image/png');
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       const file = new File([blob], 'signature.png', { type: 'image/png' });
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      // 2. Generate certificate PDF client-side using base64 signature (avoids CORS issues with html2canvas)
-      const signedPdfUrl = await generateCertificatePDF(sigBase64);
-
-      // 3. Single call to submitSignature with everything
+      // Backend will embed the signature into the original PDF using pdf-lib
       await base44.functions.invoke('submitSignature', {
         token,
         signer_name: signerName.trim(),
         signature_image_url: file_url,
-        signed_pdf_url: signedPdfUrl,
       });
       setSuccess(true);
     } catch (e) {
