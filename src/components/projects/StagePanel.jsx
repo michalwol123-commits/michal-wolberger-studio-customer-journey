@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, FileText, Download, Eye } from 'lucide-react';
+import DeleteButton from '@/components/shared/DeleteButton';
 import { getStageByNum } from '@/lib/stageConfig';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import StageGallery from './StageGallery';
@@ -131,6 +132,14 @@ export default function StagePanel({ project, stageNum, onNavigateTab }) {
                         </Button>
                       </a>
                     )}
+                    <DeleteButton
+                      entityLabel="מסמך"
+                      onDelete={async () => {
+                        await base44.entities.Document.delete(doc.id);
+                        queryClient.invalidateQueries({ queryKey: ['documents'] });
+                      }}
+                      size="sm"
+                    />
                   </div>
                 </div>
               ))}
