@@ -19,8 +19,15 @@ import { he } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 const typeLabels = {
-  intro: 'היכרות', qualifying: 'אפיון', quote_presentation: 'הצגת הצעה',
-  stage_review: 'סקירת שלב', site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב'
+  intro: 'היכרות',
+  qualifying: 'אפיון',
+  quote_presentation: 'הצגת הצעה',
+  stage_review: 'סקירת שלב',
+  site_visit: 'ביקור אתר',
+  zoom: 'Zoom',
+  design_approval: 'אישור עיצוב',
+  floor_plan_approval: 'אישור תכנית עמדה',
+  installation_day: 'יום התקנה',
 };
 
 export default function Meetings() {
@@ -80,7 +87,6 @@ export default function Meetings() {
   const completeMutation = useMutation({
     mutationFn: async (meeting) => {
       await base44.entities.Meeting.update(meeting.id, { status: 'completed' });
-
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
@@ -118,14 +124,35 @@ export default function Meetings() {
     }
   };
 
+  // B2 FIX: sync deletion to Google Calendar if meeting has google_event_id
+  const deleteFromCalendar = async (meeting) => {
+    if (!meeting?.google_event_id) return;
+    try {
+      await base44.functions.invoke('autoMeetingDeleted', {
+        data: meeting,
+        event: { type: 'delete' },
+      });
+    } catch (e) {
+      console.warn('Google Calendar sync failed (non-critical):', e?.message);
+    }
+  };
+
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Meeting.delete(id),
+    mutationFn: async (id) => {
+      const meeting = meetings.find(m => m.id === id);
+      await deleteFromCalendar(meeting);
+      return base44.entities.Meeting.delete(id);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['meetings'] }),
   });
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids) => {
-      for (const id of ids) await base44.entities.Meeting.delete(id);
+      for (const id of ids) {
+        const meeting = meetings.find(m => m.id === id);
+        await deleteFromCalendar(meeting);
+        await base44.entities.Meeting.delete(id);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
@@ -140,7 +167,6 @@ export default function Meetings() {
     { value: 'table', icon: List, title: 'טבלה' },
   ];
 
-  // For non-weekly views, show all meetings (including those without dates)
   const displayMeetings = view === 'weekly' ? weekMeetings : filtered;
 
   const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
