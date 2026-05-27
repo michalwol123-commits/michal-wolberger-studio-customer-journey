@@ -8,6 +8,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList, CalendarDays, Plus, Trash2, Pencil, Send } from 'lucide-react';
+import DeleteButton from '@/components/shared/DeleteButton';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
@@ -248,13 +249,14 @@ export default function ProjectDetail() {
                       </div>
                       <div className="flex items-center gap-2">
                         {doc.file_url && <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">צפה</a>}
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => {
-                          if (confirm('למחוק מסמך זה?')) {
-                            base44.entities.Document.delete(doc.id).then(() => queryClient.invalidateQueries({ queryKey: ['documents'] }));
-                          }
-                        }}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <DeleteButton
+                          entityLabel="מסמך"
+                          onDelete={async () => {
+                            await base44.entities.Document.delete(doc.id);
+                            queryClient.invalidateQueries({ queryKey: ['documents'] });
+                          }}
+                          size="sm"
+                        />
                       </div>
                     </div>
                     <DocumentSignatureBadge doc={doc} />

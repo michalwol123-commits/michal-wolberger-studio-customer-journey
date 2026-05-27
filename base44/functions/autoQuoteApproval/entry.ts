@@ -29,12 +29,17 @@ Deno.serve(async (req) => {
     if (allClientProjects.length > 0) {
       // Prefer active project, otherwise use the first one found
       project = allClientProjects.find(p => p.status === 'active') || allClientProjects[0];
-      // Re-activate if needed
-      if (project.status !== 'active') {
-        await base44.asServiceRole.entities.Project.update(project.id, { status: 'active' });
-      }
+      // Re-activate if needed + sync package fields
+      const pkgType = data.package_type || project.package_type || null;
+      const projectUpdates = {
+        package_type: pkgType,
+        budget_managed_by_designer: pkgType === 'large',
+      };
+      if (project.status !== 'active') projectUpdates.status = 'active';
+      await base44.asServiceRole.entities.Project.update(project.id, projectUpdates);
     } else {
       isNewProject = true;
+      const pkgType = data.package_type || null;
       project = await base44.asServiceRole.entities.Project.create({
         client_id: clientId,
         name: data.title || `פרויקט — ${client.name}`,
@@ -46,6 +51,8 @@ Deno.serve(async (req) => {
         s1_status: 'completed',
         s2_status: 'completed',
         s3_status: 'completed',
+        package_type: pkgType,
+        budget_managed_by_designer: pkgType === 'large',
       });
     }
 
