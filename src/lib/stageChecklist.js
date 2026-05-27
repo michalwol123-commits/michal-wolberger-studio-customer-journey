@@ -9,6 +9,7 @@
  *  - run_function: invokes a backend function
  *  - auto_check_questionnaire: auto-checked when detailed questionnaire is submitted
  *  - auto_check_payments: auto-checked when all payments are paid
+ *  - auto_check_floor_plan: auto-checked when project.floor_plan_locked = true
  */
 
 const STAGE_CHECKLISTS = {
@@ -34,14 +35,13 @@ const STAGE_CHECKLISTS = {
     ]
   },
   6: {
-    title: 'פגישת תכנית + גאנט/תקציב',
+    title: 'תכנית העמדה',
     items: [
-      { id: 's6_1', label: 'הצגת אלטרנטיבות עיצוביות', type: 'manual', required: false },
-      { id: 's6_2', label: 'העלאת קונספט / מצגת', type: 'button', required: false, action: { type: 'upload_doc', docType: 'concept', stage: 6 } },
-      { id: 's6_3', label: 'עדכון גאנט', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'gantt' } },
-      { id: 's6_4', label: 'עדכון תקציב', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'budget' } },
-      { id: 's6_5', label: 'אישור קונספט ע"י הלקוח', type: 'manual', required: true, milestone_key: 'stage_6_approval' },
-      { id: 's6_6', label: 'פגישת סקירה', type: 'button', required: false, action: { type: 'add_meeting', meetingType: 'stage_review' } },
+      { id: 's6_1', label: 'הכנת תכנית העמדה (עד 3 אלטרנטיבות)', type: 'button', required: true, action: { type: 'upload_doc', docType: 'floor_plan', stage: 6 } },
+      { id: 's6_2', label: 'שליחת התכניות ללקוח לבחירה', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'documents' } },
+      { id: 's6_3', label: 'פגישת אישור תכנית עמדה', type: 'button', required: false, action: { type: 'add_meeting', meetingType: 'floor_plan_approval' } },
+      { id: 's6_4', label: 'אישור הלקוח + חתימה דיגיטלית', type: 'auto', required: true, action: { type: 'auto_check_floor_plan' } },
+      { id: 's6_5', label: 'עדכון גאנט', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'gantt' } },
     ]
   },
   7: {
@@ -97,7 +97,7 @@ const STAGE_CHECKLISTS = {
   12: {
     title: 'ימי התקנה ותיאום ספקים',
     items: [
-      { id: 's12_1', label: 'תיאום התקנות', type: 'button', required: true, action: { type: 'add_meeting', meetingType: 'site_visit' } },
+      { id: 's12_1', label: 'תיאום התקנות', type: 'button', required: true, action: { type: 'add_meeting', meetingType: 'installation_day' } },
       { id: 's12_2', label: 'ביצוע התקנה — עבודה בשטח', type: 'manual', required: true },
       { id: 's12_3', label: 'בדיקות איכות — בקרת גמר', type: 'manual', required: true },
       { id: 's12_4', label: 'העלאת דוח פיקוח', type: 'button', required: false, action: { type: 'upload_doc', docType: 'inspection_report', stage: 12 } },
