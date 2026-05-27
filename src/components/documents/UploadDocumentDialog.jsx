@@ -11,6 +11,7 @@ import { Upload, Loader2, FileText } from 'lucide-react';
 import useCurrentUser from '@/lib/useCurrentUser';
 
 const docTypes = [
+  { value: 'floor_plan', label: 'תכנית העמדה' },
   { value: 'plan', label: 'תוכנית' },
   { value: 'concept', label: 'קונספט' },
   { value: 'render', label: 'רנדר' },
@@ -41,7 +42,6 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
     queryFn: () => base44.entities.Document.list('-created_date', 500),
   });
 
-  // Find matching existing docs for versioning check
   const matchingDocs = existingDocs.filter(d =>
     d.is_current !== false &&
     d.name === form.name &&
@@ -60,7 +60,7 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
 
   const handleNameChange = (name) => {
     setForm(prev => ({ ...prev, name }));
-    setVersioningDoc(null); // reset versioning choice on name change
+    setVersioningDoc(null);
   };
 
   const createMutation = useMutation({
@@ -89,7 +89,6 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
 
     setUploading(true);
 
-    // Upload file
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
     const docData = {
@@ -106,16 +105,11 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
     };
 
     if (versioningDoc) {
-      // New version flow
       docData.parent_doc_id = versioningDoc.parent_doc_id || versioningDoc.id;
       docData.version_number = (versioningDoc.version_number || 1) + 1;
-
-      // Mark old doc as not current (ignore if already deleted)
       try {
         await updateMutation.mutateAsync({ id: versioningDoc.id, data: { is_current: false } });
-      } catch (e) {
-        // Document was already deleted, continue
-      }
+      } catch (e) {}
       createMutation.mutate(docData);
     } else {
       docData.version_number = 1;
@@ -138,7 +132,6 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* File picker */}
           <div>
             <Label>קובץ *</Label>
             <div
@@ -158,41 +151,25 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
                 </div>
               )}
             </div>
-            <input
-              ref={fileRef}
-              type="file"
-              className="hidden"
-              onChange={handleFileChange}
-            />
+            <input ref={fileRef} type="file" className="hidden" onChange={handleFileChange} />
           </div>
 
-          {/* Name */}
           <div>
             <Label>שם המסמך *</Label>
             <Input value={form.name} onChange={e => handleNameChange(e.target.value)} required />
           </div>
 
-          {/* Versioning prompt */}
           {showVersionPrompt && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-sm font-medium text-amber-800 mb-2">
                 קיים מסמך בשם "{form.name}" (גרסה {matchingDocs[0].version_number || 1})
               </p>
               <div className="flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setVersioningDoc(matchingDocs[0])}
-                >
+                <Button type="button" size="sm" variant="outline" onClick={() => setVersioningDoc(matchingDocs[0])}>
                   העלה כגרסה {(matchingDocs[0].version_number || 1) + 1}
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setForm(prev => ({ ...prev, name: prev.name + ' (עותק)' }))}
-                >
+                <Button type="button" size="sm" variant="ghost"
+                  onClick={() => setForm(prev => ({ ...prev, name: prev.name + ' (עותק)' }))}>
                   מסמך חדש
                 </Button>
               </div>
@@ -206,7 +183,6 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            {/* Type */}
             <div>
               <Label>סוג מסמך</Label>
               <Select value={form.type} onValueChange={v => update('type', v)}>
@@ -219,7 +195,6 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
               </Select>
             </div>
 
-            {/* Stage */}
             <div>
               <Label>שלב פרויקט</Label>
               <Select value={form.stage} onValueChange={v => update('stage', v)}>
@@ -230,7 +205,7 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
                   <SelectItem value="3">3 — הצעת מחיר</SelectItem>
                   <SelectItem value="4">4 — סגירת פרויקט</SelectItem>
                   <SelectItem value="5">5 — שאלון מפורט</SelectItem>
-                  <SelectItem value="6">6 — תכנית + גאנט</SelectItem>
+                  <SelectItem value="6">6 — תכנית העמדה</SelectItem>
                   <SelectItem value="7">7 — תכניות עבודה</SelectItem>
                   <SelectItem value="8">8 — קונספט עיצובי</SelectItem>
                   <SelectItem value="9">9 — ימי קניות</SelectItem>
@@ -243,7 +218,6 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
             </div>
           </div>
 
-          {/* Visible to client */}
           <div className="flex items-center gap-2">
             <Checkbox
               id="visible_to_client"
@@ -258,9 +232,7 @@ export default function UploadDocumentDialog({ open, onOpenChange, projectId, cl
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={resetAndClose}>ביטול</Button>
             <Button type="submit" disabled={!file || !form.name || uploading}>
-              {uploading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> מעלה...</>
-              ) : 'העלה מסמך'}
+              {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> מעלה...</> : 'העלה מסמך'}
             </Button>
           </div>
         </form>
