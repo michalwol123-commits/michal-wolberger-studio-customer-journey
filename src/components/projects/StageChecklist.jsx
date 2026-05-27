@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { Upload, ArrowLeft, Calendar, Play, ExternalLink, CheckCircle2, Circle, Lock } from 'lucide-react';
+import { Upload, ArrowLeft, Calendar, Play, ExternalLink, CheckCircle2, Circle, Lock, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getStageChecklist, getChecklistCompletion } from '@/lib/stageChecklist';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
@@ -17,14 +17,14 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   const [uploadConfig, setUploadConfig] = useState(null);
   const [meetingConfig, setMeetingConfig] = useState(null);
 
-  // Parse stored checklist data
   const checklistData = useMemo(() => {
     try { return JSON.parse(project.stage_checklist_data || '{}'); } catch { return {}; }
   }, [project.stage_checklist_data]);
 
   const stageData = checklistData[stageNum] || {};
 
-  // Auto-checks: questionnaire submitted
+  const isDeleted = (itemId) => !!stageData[`_del_${itemId}`];
+
   const { data: questionnaires = [] } = useQuery({
     queryKey: ['questionnaires', project.client_id],
     queryFn: () => base44.entities.Questionnaire.filter({ client_id: project.client_id }),
@@ -32,7 +32,6 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   });
   const detailedSubmitted = questionnaires.some(q => q.type === 'detailed' && q.status === 'submitted');
 
-  // Auto-checks: all payments paid
   const { data: payments = [] } = useQuery({
     queryKey: ['payments', project.id],
     queryFn: () => base44.entities.Payment.filter({ project_id: project.id }),
@@ -40,7 +39,6 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   });
   const allPaymentsPaid = payments.length > 0 && payments.every(p => p.status === 'paid');
 
-  // Auto-checks: stage_review meeting exists for project
   const { data: projectMeetings = [] } = useQuery({
     queryKey: ['meetings-stage-review', project.id],
     queryFn: () => base44.entities.Meeting.filter({ project_id: project.id }),
@@ -48,11 +46,11 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   });
   const hasStageReviewMeeting = projectMeetings.some(m => m.type === 'stage_review');
 
-  // Compute auto-check state
   const getAutoState = (item) => {
     if (item.action?.type === 'auto_check_questionnaire') return detailedSubmitted;
     if (item.action?.type === 'auto_check_payments') return allPaymentsPaid;
     if (item.action?.type === 'auto_check_stage_review') return hasStageReviewMeeting;
+    if (item.action?.type === 'auto_check_floor_plan') return !!project.floor_plan_locked;
     return false;
   };
 
@@ -61,12 +59,10 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
     return !!stageData[item.id];
   };
 
-  // Persist auto-check results to stage_checklist_data so StageAdvanceButton can see them
   React.useEffect(() => {
     if (!config) return;
     const autoItems = visibleItems.filter(i => i.type === 'auto');
     if (autoItems.length === 0) return;
-
     let needsUpdate = false;
     const newData = { ...stageData };
     for (const item of autoItems) {
@@ -76,20 +72,18 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
         needsUpdate = true;
       }
     }
-    if (needsUpdate) {
-      saveMutation.mutate(newData);
-    }
-  }, [detailedSubmitted, allPaymentsPaid, hasStageReviewMeeting]);
+    if (needsUpdate) saveMutation.mutate(newData);
+  }, [detailedSubmitted, allPaymentsPaid, hasStageReviewMeeting, project.floor_plan_locked]);
 
-  // Filter shopping day items based on quota
   const visibleItems = useMemo(() => {
     if (!config) return [];
     const quota = project.shopping_days_quota || 5;
     return config.items.filter(item => {
-      if (item.shoppingDay) return item.shoppingDay <= quota;
+      if (item.shoppingDay && item.shoppingDay > quota) return false;
+      if (isDeleted(item.id)) return false;
       return true;
     });
-  }, [config, project.shopping_days_quota]);
+  }, [config, project.shopping_days_quota, stageData]);
 
   const completion = useMemo(() => {
     if (!config) return { total: 0, completed: 0, percent: 0, requiredMet: true };
@@ -97,20 +91,16 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
     const completed = visibleItems.filter(item => isChecked(item)).length;
     const requiredMet = visibleItems.filter(i => i.required).every(i => isChecked(i));
     return { total, completed, percent: total > 0 ? Math.round((completed / total) * 100) : 0, requiredMet };
-  }, [visibleItems, stageData, detailedSubmitted, allPaymentsPaid]);
+  }, [visibleItems, stageData, detailedSubmitted, allPaymentsPaid, project.floor_plan_locked]);
 
-  // Save mutation
   const saveMutation = useMutation({
     mutationFn: (newStageData) => {
       const updated = { ...checklistData, [stageNum]: newStageData };
-      return base44.entities.Project.update(project.id, {
-        stage_checklist_data: JSON.stringify(updated),
-      });
+      return base44.entities.Project.update(project.id, { stage_checklist_data: JSON.stringify(updated) });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
   });
 
-  // Shopping day mutation — updates shopping_days_used
   const shoppingMutation = useMutation({
     mutationFn: (usedCount) => base44.entities.Project.update(project.id, { shopping_days_used: usedCount }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
@@ -119,8 +109,6 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   const handleToggle = async (item, checked) => {
     const newData = { ...stageData, [item.id]: checked };
     saveMutation.mutate(newData);
-
-    // Handle shopping days
     if (item.shoppingDay) {
       const quota = project.shopping_days_quota || 5;
       const shoppingItems = visibleItems.filter(i => i.shoppingDay);
@@ -130,21 +118,19 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
       }).length;
       shoppingMutation.mutate(usedCount);
     }
-
-    // Handle concept approval timestamp
     if (stageNum === 8 && item.id === 's8_3' && checked) {
       base44.entities.Project.update(project.id, { concept_approved_at: new Date().toISOString() });
     }
-
-    // Handle client signoff
     if (stageNum === 13 && item.id === 's13_5' && checked) {
       base44.entities.Project.update(project.id, { client_signoff: true });
     }
+    if (item.milestone_key) updateMilestoneFromChecklist(item, checked);
+  };
 
-    // Auto-update matching milestone in Gantt
-    if (item.milestone_key) {
-      updateMilestoneFromChecklist(item, checked);
-    }
+  const handleDeleteItem = (item) => {
+    const newData = { ...stageData, [`_del_${item.id}`]: true };
+    saveMutation.mutate(newData);
+    toast.success(`הפריט "${item.label}" הוסר מהצ'קליסט`);
   };
 
   const updateMilestoneFromChecklist = async (item, checked) => {
@@ -163,7 +149,6 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   const handleAction = async (item) => {
     const action = item.action;
     if (!action) return;
-
     switch (action.type) {
       case 'upload_doc':
         setUploadConfig({ docType: action.docType, stage: action.stage });
@@ -176,10 +161,7 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
         break;
       case 'run_function':
         toast.info('מפעיל...');
-        await base44.functions.invoke(action.functionName, {
-          client_id: project.client_id,
-          project_id: project.id,
-        });
+        await base44.functions.invoke(action.functionName, { client_id: project.client_id, project_id: project.id });
         toast.success('בוצע בהצלחה');
         break;
     }
@@ -225,15 +207,13 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
             const checked = isChecked(item);
             const isAuto = item.type === 'auto';
             const isButton = item.type === 'button';
-
             return (
               <div
                 key={item.id}
-                className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${
+                className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors group/row ${
                   checked ? 'bg-green-50/50 border-green-200' : 'bg-card border-border hover:bg-muted/30'
                 }`}
               >
-                {/* Checkbox / Auto indicator */}
                 {isAuto ? (
                   <div className="flex items-center justify-center w-5 h-5">
                     {checked
@@ -247,33 +227,29 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
                     className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                   />
                 )}
-
-                {/* Label */}
                 <span className={`flex-1 text-sm ${checked ? 'line-through text-muted-foreground' : ''}`}>
                   {item.label}
-                  {item.required && !checked && (
-                    <span className="text-destructive text-xs mr-1">*</span>
-                  )}
+                  {item.required && !checked && <span className="text-destructive text-xs mr-1">*</span>}
                   {isAuto && <span className="text-xs text-muted-foreground mr-1">(אוטומטי)</span>}
                 </span>
-
-                {/* Action button */}
                 {isButton && item.action && !checked && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs gap-1"
-                    onClick={() => handleAction(item)}
-                  >
+                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleAction(item)}>
                     {actionIcon(item)}
                     {actionLabel(item)}
                   </Button>
                 )}
+                {!item.required && (
+                  <button
+                    onClick={() => handleDeleteItem(item)}
+                    title="הסר פריט מהצ'קליסט"
+                    className="opacity-0 group-hover/row:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 hover:text-destructive text-muted-foreground/50"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             );
           })}
-
-          {/* Required warning */}
           {!completion.requiredMet && (
             <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-2.5 mt-2">
               <Lock className="w-4 h-4" />
@@ -283,7 +259,6 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
         </CardContent>
       </Card>
 
-      {/* Upload dialog */}
       {uploadConfig && (
         <UploadDocumentDialog
           open={!!uploadConfig}
@@ -294,16 +269,11 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
         />
       )}
 
-      {/* Meeting dialog */}
       {meetingConfig && (
         <AddMeetingDialog
           open={!!meetingConfig}
           onOpenChange={(open) => { if (!open) setMeetingConfig(null); }}
-          initialData={{
-            client_id: project.client_id,
-            project_id: project.id,
-            type: meetingConfig.type,
-          }}
+          initialData={{ client_id: project.client_id, project_id: project.id, type: meetingConfig.type }}
           onCreated={() => {
             queryClient.invalidateQueries({ queryKey: ['meetings'] });
             toast.success('הפגישה נוצרה — קישור תיאום נשלח ללקוח אוטומטית');
