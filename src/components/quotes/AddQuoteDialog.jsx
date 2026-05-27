@@ -11,9 +11,9 @@ import { FileText, Link, Upload, Loader2, Calendar } from 'lucide-react';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 
 const packageOptions = [
-  { value: 'basic', label: 'בסיסי' },
-  { value: 'mid', label: 'בינוני' },
-  { value: 'premium', label: 'פרימיום' },
+  { value: 'small', label: 'S — ליווי בסיסי' },
+  { value: 'medium', label: 'M — ליווי מלא' },
+  { value: 'large', label: 'L — פרימיום (מיכל מנהלת תקציב)' },
 ];
 
 const quoteTypeOptions = [
@@ -23,7 +23,7 @@ const quoteTypeOptions = [
 ];
 
 const defaultForm = {
-  client_id: '', title: '', quote_type: 'generated', package_type: 'mid',
+  client_id: '', title: '', quote_type: 'generated', package_type: 'medium',
   total_amount: '', scope: '', url: '', file_url: '', meeting_date: '',
   send_via: 'email', status: 'draft', notes: '', version: 1,
 };
@@ -66,7 +66,7 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
         client_id: initialData.client_id || '',
         title: initialData.title || '',
         quote_type: initialData.quote_type || 'generated',
-        package_type: initialData.package_type || 'mid',
+        package_type: initialData.package_type || 'medium',
         total_amount: initialData.total_amount || '',
         scope: initialData.scope || '',
         url: initialData.url || '',

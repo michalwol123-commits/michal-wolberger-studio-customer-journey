@@ -7,7 +7,7 @@ import { jsPDF } from 'npm:jspdf@4.0.0';
 const LOGO_URL = 'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/a6efb9133_image1.png';
 
 
-const PACKAGE_LABELS = { basic: 'בסיסי', mid: 'בינוני', premium: 'פרימיום' };
+const PACKAGE_LABELS = { small: 'S — ליווי בסיסי', medium: 'M — ליווי מלא', large: 'L — פרימיום' };
 
 
 // Brand colors from Michal's website
@@ -202,4 +202,3 @@ Deno.serve(async (req) => {
    return Response.json({ error: error.message }, { status: 500 });
  }
 });
-
