@@ -91,6 +91,13 @@ Deno.serve(async (req) => {
       signed_pdf_url: signedPdfUrl,
     });
 
+    // --- Lock floor plan if applicable ---
+    if (doc.type === 'floor_plan' && doc.project_id) {
+      await base44.asServiceRole.entities.Project.update(doc.project_id, {
+        floor_plan_locked: true,
+      });
+    }
+
     // --- Log communication ---
     if (doc.client_id) {
       await base44.asServiceRole.entities.Communication.create({

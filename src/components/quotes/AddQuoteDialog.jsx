@@ -109,7 +109,9 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
         : await base44.entities.Quote.create(data);
       // If meeting exists, link quote to it
       if (meetingId && result?.id) {
-        await base44.entities.Meeting.update(meetingId, { quote_id: result.id });
+        try {
+          await base44.entities.Meeting.update(meetingId, { quote_id: result.id });
+        } catch (_) { /* meeting may have been deleted — ignore */ }
       }
       return result;
     },

@@ -28,9 +28,10 @@ export default function AddSupplierDialog({ open, onOpenChange, initialData }) {
   const queryClient = useQueryClient();
   const isEdit = !!initialData;
 
-  const [form, setForm] = useState(initialData || {
-    name: '', category: 'other', phone: '', email: '', rating: '', price_level: 'mid', notes: '',
-  });
+  const [form, setForm] = useState(initialData
+    ? { ...initialData, commission_rate: initialData.commission_rate || '' }
+    : { name: '', category: 'other', phone: '', email: '', rating: '', price_level: 'mid', notes: '', commission_rate: '' }
+  );
 
   const mutation = useMutation({
     mutationFn: (data) => isEdit
@@ -46,6 +47,7 @@ export default function AddSupplierDialog({ open, onOpenChange, initialData }) {
     e.preventDefault();
     const payload = { ...form };
     if (payload.rating) payload.rating = Number(payload.rating);
+    if (payload.commission_rate !== '' && payload.commission_rate != null) payload.commission_rate = Number(payload.commission_rate);
     mutation.mutate(payload);
   };
 
@@ -94,9 +96,15 @@ export default function AddSupplierDialog({ open, onOpenChange, initialData }) {
               <Input type="number" min="1" max="5" value={form.rating} onChange={e => update('rating', e.target.value)} />
             </div>
           </div>
-          <div>
-            <Label>מייל</Label>
-            <Input type="email" value={form.email} onChange={e => update('email', e.target.value)} />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>מייל</Label>
+              <Input type="email" value={form.email} onChange={e => update('email', e.target.value)} />
+            </div>
+            <div>
+              <Label>אחוז עמלה (%)</Label>
+              <Input type="number" min="0" max="100" placeholder="5" value={form.commission_rate} onChange={e => update('commission_rate', e.target.value)} />
+            </div>
           </div>
           <div>
             <Label>הערות</Label>

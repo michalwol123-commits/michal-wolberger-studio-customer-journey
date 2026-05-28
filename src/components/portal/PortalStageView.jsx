@@ -15,12 +15,12 @@ import InspirationBoardViewer from './InspirationBoardViewer';
 import PortalQuoteView from './PortalQuoteView';
 
 const STAGE_CONTENT = {
-  1: { questionnaire: 'short' },
+  1: { questionnaire: 'short', docs: true },
   2: { meetings: true, docs: true },
   3: { meetings: true, payments: true, docs: true, quotes: true },
   4: { docs: true, quotes: true },
   5: { questionnaire: 'detailed', docs: true },
-  6: { floor_plan: true, meetings: true },
+  6: { floor_plan: true, meetings: true, docs: true },
   8: { meetings: true, docs: true, payments: true, inspiration: true },
   13: { payments: true, docs: true, completion: true },
 };
@@ -311,7 +311,7 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
             ) : (
               <div className="grid gap-2">
                 {stageDocs.map(doc => (
-                  <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer"
+                  <a key={doc.id} href={doc.signed_pdf_url || doc.file_url} target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-between p-3 rounded-xl border border-border hover:bg-muted/50 hover:border-primary/30 transition-all group">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">

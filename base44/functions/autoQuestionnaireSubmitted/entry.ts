@@ -92,6 +92,8 @@ Deno.serve(async (req) => {
             : values[0];
         }
       }
+      if (responses.birth_date) clientUpdate.birthday = responses.birth_date;
+      if (responses.wedding_date) clientUpdate.anniversary = responses.wedding_date;
 
       const summaryParts = [];
       if (responses.household) summaryParts.push(`נפשות בבית: ${responses.household}`);
