@@ -12,7 +12,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'lead', initialData = null }) {
   const queryClient = useQueryClient();
   const { user } = useCurrentUser();
-  const emptyForm = { name: '', phone: '', email: '', source: '', source_detail: '', budget_range: '', property_type: '', notes: '', birthday: '', anniversary: '' };
+  const emptyForm = { name: '', phone: '', email: '', source: '', source_detail: '', budget_range: '', property_type: '', notes: '' };
   const [form, setForm] = useState(emptyForm);
 
   React.useEffect(() => {
@@ -26,8 +26,6 @@ export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'l
         budget_range: initialData.budget_range || '',
         property_type: initialData.property_type || '',
         notes: initialData.notes || '',
-        birthday: initialData.birthday || '',
-        anniversary: initialData.anniversary || '',
       });
     } else {
       setForm(emptyForm);
@@ -120,16 +118,6 @@ export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'l
                 <SelectItem value="above_500k">מעל ₪500K</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>יום הולדת</Label>
-              <Input type="date" value={form.birthday} onChange={e => update('birthday', e.target.value)} />
-            </div>
-            <div>
-              <Label>יום נישואין</Label>
-              <Input type="date" value={form.anniversary} onChange={e => update('anniversary', e.target.value)} />
-            </div>
           </div>
           <div>
             <Label>הערות</Label>

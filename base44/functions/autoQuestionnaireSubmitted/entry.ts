@@ -93,9 +93,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      if (responses.birth_date) clientUpdate.birthday = responses.birth_date;
-      if (responses.wedding_date) clientUpdate.anniversary = responses.wedding_date;
-
       const summaryParts = [];
       if (responses.household) summaryParts.push(`נפשות בבית: ${responses.household}`);
       if (responses.property_size_age) summaryParts.push(`שטח/גיל נכס: ${responses.property_size_age}`);

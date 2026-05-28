@@ -15,12 +15,12 @@ import InspirationBoardViewer from './InspirationBoardViewer';
 import PortalQuoteView from './PortalQuoteView';
 
 const STAGE_CONTENT = {
-  1: { questionnaire: 'short', docs: true },
+  1: { questionnaire: 'short' },
   2: { meetings: true, docs: true },
   3: { meetings: true, payments: true, docs: true, quotes: true },
   4: { docs: true, quotes: true },
   5: { questionnaire: 'detailed', docs: true },
-  6: { floor_plan: true, meetings: true, docs: true },
+  6: { floor_plan: true, meetings: true },
   8: { meetings: true, docs: true, payments: true, inspiration: true },
   13: { payments: true, docs: true, completion: true },
 };
