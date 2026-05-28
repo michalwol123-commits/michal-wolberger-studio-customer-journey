@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { FileText, Link, Upload, Loader2, Calendar } from 'lucide-react';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
+import { toast } from 'sonner';
 
 const packageOptions = [
   { value: 'small', label: 'S — ליווי בסיסי' },
@@ -47,8 +48,9 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
     queryFn: () => base44.entities.Meeting.list('-created_date', 200),
   });
 
-  // When dialog opens: populate form from initialData or reset
+  // When dialog opens: populate form from initialData or reset + clear stale mutation state
   useEffect(() => {
+    mutation.reset();
     if (initialData) {
       const mid = initialData.meeting_id || null;
       setMeetingId(mid);
@@ -115,6 +117,9 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
       onOpenChange(false);
+    },
+    onError: (err) => {
+      toast.error('שגיאה בשמירת ההצעה: ' + (err?.message || 'נסי שוב'));
     },
   });
 

@@ -22,7 +22,7 @@ import AddQuoteDialog from '@/components/quotes/AddQuoteDialog';
 import QuotesTable from '@/components/quotes/QuotesTable';
 import { toast } from 'sonner';
 
-const packageLabels = { basic: 'בסיסי', mid: 'בינוני', premium: 'פרימיום' };
+const packageLabels = { small: 'ליווי בסיסי', medium: 'ליווי מלא', large: 'פרימיום' };
 
 export default function Quotes() {
   const { user, isAdmin } = useCurrentUser();

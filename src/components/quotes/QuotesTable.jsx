@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { ExternalLink, FileText, Upload, Link, Calendar } from 'lucide-react';
 
-const packageLabels = { basic: 'בסיסי', mid: 'בינוני', premium: 'פרימיום' };
+const packageLabels = { small: 'ליווי בסיסי', medium: 'ליווי מלא', large: 'פרימיום' };
 const typeIcons = { generated: FileText, link: Link, uploaded: Upload };
 const typeLabels = { generated: 'מערכת', link: 'לינק', uploaded: 'PDF' };
 
