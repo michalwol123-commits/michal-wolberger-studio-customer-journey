@@ -40,8 +40,10 @@ Deno.serve(async (req) => {
 
     // 3. Add signature page (same logic as submitSignature)
     log('Step 3: Adding signature page...');
+    const lastOrigPage = pages[pages.length - 1];
+    const { width: origW, height: origH } = lastOrigPage.getSize();
     const lastPage = pages.length >= 2
-      ? pdfDoc.addPage([595, 200])
+      ? pdfDoc.addPage([origW, origH])
       : pages[0];
     const { width, height } = lastPage.getSize();
     log(`  Target page size: ${width} x ${height}`);
