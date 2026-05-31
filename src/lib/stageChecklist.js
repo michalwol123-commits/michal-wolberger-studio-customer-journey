@@ -107,9 +107,7 @@ const STAGE_CHECKLISTS = {
   13: {
     title: 'סיום פרויקט ומסירה',
     items: [
-      { id: 's13_1', label: 'צ\'קליסט מסירה סופי', type: 'manual', required: true },
       { id: 's13_2', label: 'סגירה פיננסית — כל התשלומים שולמו', type: 'auto', required: true, action: { type: 'auto_check_payments' } },
-      { id: 's13_3', label: 'סקר שביעות רצון (NPS)', type: 'manual', required: false },
       { id: 's13_4', label: 'תיעוד לקחים', type: 'manual', required: false },
       { id: 's13_5', label: 'אישור סיום ע"י לקוח', type: 'manual', required: true, milestone_key: 'stage_13_signoff' },
     ]

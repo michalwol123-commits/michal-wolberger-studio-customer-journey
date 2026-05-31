@@ -13,6 +13,7 @@ import DetailedQuestionnaireResults from './DetailedQuestionnaireResults';
 import PortalDesignMap from './PortalDesignMap';
 import InspirationBoardViewer from './InspirationBoardViewer';
 import PortalQuoteView from './PortalQuoteView';
+import PortalDaysMetrics from './PortalDaysMetrics';
 
 const STAGE_CONTENT = {
   1: { questionnaire: 'short', docs: true },
@@ -22,6 +23,9 @@ const STAGE_CONTENT = {
   5: { questionnaire: 'detailed', docs: true },
   6: { floor_plan: true, meetings: true, docs: true },
   8: { meetings: true, docs: true, payments: true, inspiration: true },
+  9: { days: true },
+  11: { days: true },
+  12: { days: true },
   13: { payments: true, docs: true, completion: true },
 };
 function getStageContent(stageNum) {
@@ -291,6 +295,7 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
       )}
       {content.quotes && <PortalQuoteView projectId={project.id} clientId={project.client_id} stageNum={stageNum} />}
       {content.floor_plan && <PortalFloorPlanApproval project={project} />}
+      {content.days && <PortalDaysMetrics project={project} />}
       {content.meetings && <PortalStageMeetings meetings={meetings} stageNum={stageNum} />}
 
       {content.docs && (

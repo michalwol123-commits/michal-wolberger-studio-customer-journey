@@ -77,13 +77,13 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
 
   const visibleItems = useMemo(() => {
     if (!config) return [];
-    const quota = project.shopping_days_quota || 5;
+    const quota = project.shopping_days_planned || 5;
     return config.items.filter(item => {
       if (item.shoppingDay && item.shoppingDay > quota) return false;
       if (isDeleted(item.id)) return false;
       return true;
     });
-  }, [config, project.shopping_days_quota, stageData]);
+  }, [config, project.shopping_days_planned, stageData]);
 
   const completion = useMemo(() => {
     if (!config) return { total: 0, completed: 0, percent: 0, requiredMet: true };
@@ -102,7 +102,7 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   });
 
   const shoppingMutation = useMutation({
-    mutationFn: (usedCount) => base44.entities.Project.update(project.id, { shopping_days_used: usedCount }),
+    mutationFn: (usedCount) => base44.entities.Project.update(project.id, { shopping_days_actual: usedCount }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
   });
 
@@ -110,7 +110,7 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
     const newData = { ...stageData, [item.id]: checked };
     saveMutation.mutate(newData);
     if (item.shoppingDay) {
-      const quota = project.shopping_days_quota || 5;
+      const quota = project.shopping_days_planned || 5;
       const shoppingItems = visibleItems.filter(i => i.shoppingDay);
       const usedCount = shoppingItems.filter(i => {
         if (i.id === item.id) return checked;
