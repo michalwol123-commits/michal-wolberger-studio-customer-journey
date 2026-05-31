@@ -55,12 +55,12 @@ export default function TutorialCard({
       {/* Header */}
       <div className={`p-4 bg-gradient-to-l ${step.bgColor}`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl bg-white/80 flex items-center justify-center ${step.iconColor}`}>
+          <div className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-lg bg-white/80 flex items-center justify-center ${step.iconColor}`}>
               {step.iconEmoji ? (
-                <span className="text-xl">{step.iconEmoji}</span>
+                <span className="text-lg">{step.iconEmoji}</span>
               ) : (
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4" />
               )}
             </div>
             <div>
