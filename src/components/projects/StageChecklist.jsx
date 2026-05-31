@@ -78,12 +78,16 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   const visibleItems = useMemo(() => {
     if (!config) return [];
     const quota = project.shopping_days_planned || 5;
+    const supQuota = project.supervision_days_planned || 0;
+    const instQuota = project.installation_days_planned || 0;
     return config.items.filter(item => {
       if (item.shoppingDay && item.shoppingDay > quota) return false;
+      if (item.supervisionDay && item.supervisionDay > supQuota) return false;
+      if (item.installationDay && item.installationDay > instQuota) return false;
       if (isDeleted(item.id)) return false;
       return true;
     });
-  }, [config, project.shopping_days_planned, stageData]);
+  }, [config, project.shopping_days_planned, project.supervision_days_planned, project.installation_days_planned, stageData]);
 
   const completion = useMemo(() => {
     if (!config) return { total: 0, completed: 0, percent: 0, requiredMet: true };
@@ -106,17 +110,42 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
   });
 
+  const supervisionMutation = useMutation({
+    mutationFn: (usedCount) => base44.entities.Project.update(project.id, { supervision_days_actual: usedCount }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
+  });
+
+  const installationMutation = useMutation({
+    mutationFn: (usedCount) => base44.entities.Project.update(project.id, { installation_days_actual: usedCount }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
+  });
+
   const handleToggle = async (item, checked) => {
     const newData = { ...stageData, [item.id]: checked };
     saveMutation.mutate(newData);
     if (item.shoppingDay) {
-      const quota = project.shopping_days_planned || 5;
       const shoppingItems = visibleItems.filter(i => i.shoppingDay);
       const usedCount = shoppingItems.filter(i => {
         if (i.id === item.id) return checked;
         return !!stageData[i.id];
       }).length;
       shoppingMutation.mutate(usedCount);
+    }
+    if (item.supervisionDay) {
+      const supItems = visibleItems.filter(i => i.supervisionDay);
+      const usedCount = supItems.filter(i => {
+        if (i.id === item.id) return checked;
+        return !!stageData[i.id];
+      }).length;
+      supervisionMutation.mutate(usedCount);
+    }
+    if (item.installationDay) {
+      const instItems = visibleItems.filter(i => i.installationDay);
+      const usedCount = instItems.filter(i => {
+        if (i.id === item.id) return checked;
+        return !!stageData[i.id];
+      }).length;
+      installationMutation.mutate(usedCount);
     }
     if (stageNum === 8 && item.id === 's8_3' && checked) {
       base44.entities.Project.update(project.id, { concept_approved_at: new Date().toISOString() });

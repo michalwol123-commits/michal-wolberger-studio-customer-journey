@@ -92,6 +92,16 @@ const STAGE_CHECKLISTS = {
       { id: 's11_2', label: 'תיעוד ליקויים / חריגות', type: 'button', required: false, action: { type: 'upload_doc', docType: 'inspection_report', stage: 11 } },
       { id: 's11_3', label: 'עדכון גאנט ותקציב', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'gantt' } },
       { id: 's11_4', label: 'דיווח ללקוח', type: 'manual', required: false },
+      { id: 's11_sup_1', label: 'יום פיקוח 1', type: 'manual', supervisionDay: 1 },
+      { id: 's11_sup_2', label: 'יום פיקוח 2', type: 'manual', supervisionDay: 2 },
+      { id: 's11_sup_3', label: 'יום פיקוח 3', type: 'manual', supervisionDay: 3 },
+      { id: 's11_sup_4', label: 'יום פיקוח 4', type: 'manual', supervisionDay: 4 },
+      { id: 's11_sup_5', label: 'יום פיקוח 5', type: 'manual', supervisionDay: 5 },
+      { id: 's11_sup_6', label: 'יום פיקוח 6', type: 'manual', supervisionDay: 6 },
+      { id: 's11_sup_7', label: 'יום פיקוח 7', type: 'manual', supervisionDay: 7 },
+      { id: 's11_sup_8', label: 'יום פיקוח 8', type: 'manual', supervisionDay: 8 },
+      { id: 's11_sup_9', label: 'יום פיקוח 9', type: 'manual', supervisionDay: 9 },
+      { id: 's11_sup_10', label: 'יום פיקוח 10', type: 'manual', supervisionDay: 10 },
     ]
   },
   12: {
@@ -102,6 +112,16 @@ const STAGE_CHECKLISTS = {
       { id: 's12_3', label: 'בדיקות איכות — בקרת גמר', type: 'manual', required: true },
       { id: 's12_4', label: 'העלאת דוח פיקוח', type: 'button', required: false, action: { type: 'upload_doc', docType: 'inspection_report', stage: 12 } },
       { id: 's12_5', label: 'קבלת לקוח — אישור סופי', type: 'manual', required: true, milestone_key: 'stage_12_final' },
+      { id: 's12_inst_1', label: 'יום התקנה 1', type: 'manual', installationDay: 1 },
+      { id: 's12_inst_2', label: 'יום התקנה 2', type: 'manual', installationDay: 2 },
+      { id: 's12_inst_3', label: 'יום התקנה 3', type: 'manual', installationDay: 3 },
+      { id: 's12_inst_4', label: 'יום התקנה 4', type: 'manual', installationDay: 4 },
+      { id: 's12_inst_5', label: 'יום התקנה 5', type: 'manual', installationDay: 5 },
+      { id: 's12_inst_6', label: 'יום התקנה 6', type: 'manual', installationDay: 6 },
+      { id: 's12_inst_7', label: 'יום התקנה 7', type: 'manual', installationDay: 7 },
+      { id: 's12_inst_8', label: 'יום התקנה 8', type: 'manual', installationDay: 8 },
+      { id: 's12_inst_9', label: 'יום התקנה 9', type: 'manual', installationDay: 9 },
+      { id: 's12_inst_10', label: 'יום התקנה 10', type: 'manual', installationDay: 10 },
     ]
   },
   13: {
