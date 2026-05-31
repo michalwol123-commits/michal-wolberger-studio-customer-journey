@@ -201,6 +201,9 @@ export default function ProjectDetail() {
                       </div>
                       <div className="flex items-center gap-2">
                         <StatusBadge status={p.status} />
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={(e) => { e.stopPropagation(); setEditPayment(p); }}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={(e) => {
                           e.stopPropagation();
                           if (confirm('למחוק תשלום זה?')) {
