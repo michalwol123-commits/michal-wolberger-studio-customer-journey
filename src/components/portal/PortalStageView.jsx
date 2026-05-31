@@ -23,9 +23,9 @@ const STAGE_CONTENT = {
   5: { questionnaire: 'detailed', docs: true },
   6: { floor_plan: true, meetings: true, docs: true },
   8: { meetings: true, docs: true, payments: true, inspiration: true },
-  9: { days: true },
-  11: { days: true },
-  12: { days: true },
+  9: { days: true, meetings: true, docs: true, payments: true },
+  11: { days: true, meetings: true, docs: true, payments: true },
+  12: { days: true, meetings: true, docs: true, payments: true },
   13: { payments: true, docs: true, completion: true },
 };
 function getStageContent(stageNum) {
