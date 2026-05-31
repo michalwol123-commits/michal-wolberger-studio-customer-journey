@@ -295,7 +295,7 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
       )}
       {content.quotes && <PortalQuoteView projectId={project.id} clientId={project.client_id} stageNum={stageNum} />}
       {content.floor_plan && <PortalFloorPlanApproval project={project} />}
-      {content.days && <PortalDaysMetrics project={project} />}
+      {content.days && <PortalDaysMetrics project={project} stageNum={Number(stageNum)} />}
       {content.meetings && <PortalStageMeetings meetings={meetings} stageNum={stageNum} />}
 
       {content.docs && (

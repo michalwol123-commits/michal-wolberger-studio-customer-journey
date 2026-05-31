@@ -37,8 +37,15 @@ function DayRing({ label, icon, planned, actual }) {
   );
 }
 
-export default function PortalDaysMetrics({ project }) {
-  const hasAny = project.shopping_days_planned || project.supervision_days_planned || project.installation_days_planned;
+export default function PortalDaysMetrics({ project, stageNum }) {
+  const show = {
+    shopping:     stageNum === 9 || stageNum === 12 || (!stageNum),
+    supervision:  stageNum === 11 || stageNum === 12 || (!stageNum),
+    installation: stageNum === 12 || (!stageNum),
+  };
+  const hasAny = (show.shopping && project.shopping_days_planned)
+    || (show.supervision && project.supervision_days_planned)
+    || (show.installation && project.installation_days_planned);
   if (!hasAny) return null;
 
   return (
@@ -51,24 +58,9 @@ export default function PortalDaysMetrics({ project }) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-3">
-          <DayRing
-            label="ימי קניות"
-            icon="🛒"
-            planned={project.shopping_days_planned}
-            actual={project.shopping_days_actual || 0}
-          />
-          <DayRing
-            label="ימי פיקוח"
-            icon="👁️"
-            planned={project.supervision_days_planned}
-            actual={project.supervision_days_actual || 0}
-          />
-          <DayRing
-            label="ימי התקנות"
-            icon="🔨"
-            planned={project.installation_days_planned}
-            actual={project.installation_days_actual || 0}
-          />
+          {show.shopping && <DayRing label="ימי קניות" icon="🛒" planned={project.shopping_days_planned} actual={project.shopping_days_actual || 0} />}
+          {show.supervision && <DayRing label="ימי פיקוח" icon="👁️" planned={project.supervision_days_planned} actual={project.supervision_days_actual || 0} />}
+          {show.installation && <DayRing label="ימי התקנות" icon="🔨" planned={project.installation_days_planned} actual={project.installation_days_actual || 0} />}
         </div>
       </CardContent>
     </Card>
