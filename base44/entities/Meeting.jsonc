@@ -42,7 +42,10 @@
         "stage_review",
         "site_visit",
         "zoom",
-        "design_approval"
+        "design_approval",
+        "floor_plan_approval",
+        "installation_day",
+        "shopping_day"
       ],
       "description": "\u05e1\u05d5\u05d2 \u05e4\u05d2\u05d9\u05e9\u05d4"
     },
@@ -83,6 +86,25 @@
     "summary": {
       "type": "string",
       "description": "\u05e1\u05d9\u05db\u05d5\u05dd \u05e4\u05d2\u05d9\u05e9\u05d4"
+    },
+    "michal_present": {
+      "type": "boolean",
+      "default": true,
+      "description": "\u05d4\u05d0\u05dd \u05de\u05d9\u05db\u05dc \u05e0\u05d5\u05db\u05d7\u05ea (\u05d9\u05de\u05d9 \u05e4\u05d9\u05e7\u05d5\u05d7/\u05d4\u05ea\u05e7\u05e0\u05d5\u05ea)"
+    },
+    "who_attends": {
+      "type": "string",
+      "enum": [
+        "michal_only",
+        "contractor_only",
+        "both",
+        "client_too"
+      ],
+      "description": "\u05de\u05d9 \u05e0\u05d5\u05db\u05d7 \u05d1\u05e4\u05d2\u05d9\u05e9\u05d4/\u05d1\u05d9\u05e7\u05d5\u05e8"
+    },
+    "installation_type": {
+      "type": "string",
+      "description": "\u05e1\u05d5\u05d2 \u05d4\u05d4\u05ea\u05e7\u05e0\u05d4 (\u05e8\u05d9\u05d4\u05d5\u05d8/\u05d7\u05e9\u05de\u05dc/\u05d0\u05d9\u05e0\u05e1\u05d8\u05dc\u05e6\u05d9\u05d4/\u05d5\u05db\u05d5')"
     },
     "reminder_d1_sent": {
       "type": "boolean",

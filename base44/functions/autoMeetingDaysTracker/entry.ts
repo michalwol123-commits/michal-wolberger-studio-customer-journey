@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
     }
 
     const type = data.type;
-    if (type !== 'site_visit' && type !== 'installation_day') {
+    if (!['site_visit', 'installation_day', 'shopping_day'].includes(type)) {
       return Response.json({ skipped: 'not a days type' });
     }
 
@@ -25,9 +25,10 @@ Deno.serve(async (req) => {
     if (!project) return Response.json({ skipped: 'project not found' });
 
     const isSup = type === 'site_visit';
-    const actualKey = isSup ? 'supervision_days_actual' : 'installation_days_actual';
-    const itemPrefix = isSup ? 's11_sup_' : 's12_inst_';
-    const stageNum = isSup ? 11 : 12;
+    const isInst = type === 'installation_day';
+    const actualKey = isSup ? 'supervision_days_actual' : isInst ? 'installation_days_actual' : 'shopping_days_actual';
+    const itemPrefix = isSup ? 's11_sup_' : isInst ? 's12_inst_' : 's9_shopping_';
+    const stageNum = isSup ? 11 : isInst ? 12 : 9;
 
     const currentActual = project[actualKey] || 0;
     const newActual = currentActual + 1;

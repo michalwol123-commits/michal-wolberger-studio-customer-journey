@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { AlertTriangle, Loader2, Send, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -15,15 +16,27 @@ const typeOptions = [
   { value: 'qualifying', label: 'אפיון' },
   { value: 'quote_presentation', label: 'הצגת הצעת מחיר' },
   { value: 'stage_review', label: 'סקירת שלב' },
-  { value: 'site_visit', label: 'ביקור אתר' },
+  { value: 'site_visit', label: 'פגישת פיקוח' },
+  { value: 'installation_day', label: 'יום התקנה' },
+  { value: 'shopping_day', label: 'יום קניות' },
   { value: 'zoom', label: 'Zoom' },
   { value: 'design_approval', label: 'אישור עיצוב' },
+];
+
+const FIELD_TYPES = ['site_visit', 'installation_day', 'shopping_day'];
+
+const whoAttendsOptions = [
+  { value: 'michal_only', label: 'מיכל בלבד' },
+  { value: 'contractor_only', label: 'קבלן בלבד' },
+  { value: 'both', label: 'מיכל + קבלן' },
+  { value: 'client_too', label: 'גם הלקוח' },
 ];
 
 const defaultForm = {
   client_id: '', project_id: '', quote_id: '', type: 'intro',
   scheduled_at: '', duration: 45, location: '',
-  status: 'scheduled', summary: '', meeting_price: ''
+  status: 'scheduled', summary: '', meeting_price: '',
+  michal_present: true, who_attends: '',
 };
 
 export default function AddMeetingDialog({ open, onOpenChange, initialData, onCreated }) {
@@ -53,6 +66,8 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
         status: initialData.status || 'scheduled',
         summary: initialData.summary || '',
         meeting_price: initialData.meeting_price || '',
+        michal_present: initialData.michal_present !== undefined ? initialData.michal_present : true,
+        who_attends: initialData.who_attends || '',
       });
     } else {
       setForm(defaultForm);
@@ -146,6 +161,11 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
     if (!payload.project_id) delete payload.project_id;
     if (!payload.quote_id) delete payload.quote_id;
     if (!payload.meeting_price) delete payload.meeting_price;
+    if (!FIELD_TYPES.includes(payload.type)) {
+      delete payload.michal_present;
+      delete payload.who_attends;
+    }
+    if (!payload.who_attends) delete payload.who_attends;
     setConflictWarning(null);
     mutation.mutate(payload);
   };
@@ -233,6 +253,28 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
             <div>
               <Label>מחיר פגישה (₪)</Label>
               <Input type="number" value={form.meeting_price} onChange={e => setForm(p => ({ ...p, meeting_price: e.target.value }))} placeholder="250" min={0} />
+            </div>
+          )}
+
+          {FIELD_TYPES.includes(form.type) && (
+            <div className="space-y-3 p-3 bg-muted/30 rounded-lg border">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="michal_present"
+                  checked={form.michal_present}
+                  onCheckedChange={(val) => setForm(p => ({ ...p, michal_present: !!val }))}
+                />
+                <Label htmlFor="michal_present" className="cursor-pointer">מיכל נוכחת</Label>
+              </div>
+              <div>
+                <Label>מי נוכח</Label>
+                <Select value={form.who_attends} onValueChange={v => setForm(p => ({ ...p, who_attends: v }))}>
+                  <SelectTrigger><SelectValue placeholder="בחר" /></SelectTrigger>
+                  <SelectContent>
+                    {whoAttendsOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 

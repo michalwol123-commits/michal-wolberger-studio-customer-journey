@@ -29,7 +29,7 @@ function DayRing({ label, icon, planned, actual }) {
           strokeLinecap="round"
         />
       </svg>
-      <p className="text-lg font-bold" style={{ color }}>{actual}/{planned}</p>
+      <p className="text-lg font-bold" dir="ltr" style={{ color }}>{actual}/{planned}</p>
       <p className="text-[11px] text-muted-foreground">
         {remaining > 0 ? `נותרו ${remaining} ימים` : '✓ הושלם'}
       </p>
