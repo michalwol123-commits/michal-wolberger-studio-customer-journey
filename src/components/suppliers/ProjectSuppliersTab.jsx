@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,15 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Phone, Upload, FileText, ExternalLink, Loader2 } from 'lucide-react';
 import EmptyState from '@/components/shared/EmptyState';
-import StatusBadge from '@/components/shared/StatusBadge';
-import SupplierCategoryBadge, { categoryLabel } from './SupplierCategoryBadge';
+import { categoryLabel } from './SupplierCategoryBadge';
+import AddSupplierDialog from './AddSupplierDialog';
 
 export default function ProjectSuppliersTab({ projectId }) {
   const queryClient = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
+  const [showNewSupplier, setShowNewSupplier] = useState(false);
   const [form, setForm] = useState({ supplier_id: '', quoted_amount: '', agreed_amount: '', notes: '' });
+  const [uploadingId, setUploadingId] = useState(null);
+  const fileRef = useRef(null);
 
   const { data: projectSuppliers = [] } = useQuery({
     queryKey: ['project-suppliers', projectId],
@@ -66,6 +69,18 @@ export default function ProjectSuppliersTab({ projectId }) {
     updateMutation.mutate({ id: ps.id, data: { status: newStatus } });
   };
 
+  const handleInlineAmount = (ps, field, value) => {
+    const num = value === '' ? null : Number(value);
+    updateMutation.mutate({ id: ps.id, data: { [field]: num } });
+  };
+
+  const handleFileUpload = async (ps, file) => {
+    setUploadingId(ps.id);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    await updateMutation.mutateAsync({ id: ps.id, data: { attachment_url: file_url } });
+    setUploadingId(null);
+  };
+
   // Group by category
   const grouped = {};
   projectSuppliers.forEach(ps => {
@@ -79,7 +94,10 @@ export default function ProjectSuppliersTab({ projectId }) {
 
   return (
     <div>
-      <div className="flex justify-end mb-3">
+      <div className="flex justify-end gap-2 mb-3">
+        <Button size="sm" variant="outline" onClick={() => setShowNewSupplier(true)} className="gap-1">
+          <Plus className="w-4 h-4" />ספק חדש
+        </Button>
         <Button size="sm" onClick={() => setShowAdd(true)} className="gap-1">
           <Plus className="w-4 h-4" />הוסף ספק לפרויקט
         </Button>
@@ -92,14 +110,16 @@ export default function ProjectSuppliersTab({ projectId }) {
           {Object.entries(grouped).map(([cat, items]) => (
             <div key={cat}>
               <h4 className="font-heading font-semibold text-sm mb-2">{categoryLabel(cat)}</h4>
-              <div className="bg-card rounded-xl border overflow-hidden">
+              <div className="bg-card rounded-xl border overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="text-right px-4 py-2 font-medium">ספק</th>
-                      <th className="text-right px-4 py-2 font-medium">הצעה</th>
-                      <th className="text-right px-4 py-2 font-medium">סגור</th>
+                      <th className="text-right px-4 py-2 font-medium w-10">☎</th>
+                      <th className="text-right px-4 py-2 font-medium">הצעה (₪)</th>
+                      <th className="text-right px-4 py-2 font-medium">סגור (₪)</th>
                       <th className="text-right px-4 py-2 font-medium">סטטוס</th>
+                      <th className="text-right px-4 py-2 font-medium">קובץ</th>
                       <th className="w-10"></th>
                     </tr>
                   </thead>
@@ -109,8 +129,29 @@ export default function ProjectSuppliersTab({ projectId }) {
                       return (
                         <tr key={ps.id} className="border-b last:border-0">
                           <td className="px-4 py-2 font-medium">{supplier?.name || '—'}</td>
-                          <td className="px-4 py-2">{ps.quoted_amount ? `₪${ps.quoted_amount.toLocaleString()}` : '—'}</td>
-                          <td className="px-4 py-2">{ps.agreed_amount ? `₪${ps.agreed_amount.toLocaleString()}` : '—'}</td>
+                          <td className="px-2 py-2">
+                            {supplier?.phone && (
+                              <a href={`tel:${supplier.phone}`} className="text-primary hover:text-primary/80">
+                                <Phone className="w-4 h-4" />
+                              </a>
+                            )}
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              type="number"
+                              className="h-7 w-24 text-xs"
+                              defaultValue={ps.quoted_amount || ''}
+                              onBlur={(e) => handleInlineAmount(ps, 'quoted_amount', e.target.value)}
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              type="number"
+                              className="h-7 w-24 text-xs"
+                              defaultValue={ps.agreed_amount || ''}
+                              onBlur={(e) => handleInlineAmount(ps, 'agreed_amount', e.target.value)}
+                            />
+                          </td>
                           <td className="px-4 py-2">
                             <Select value={ps.status} onValueChange={v => handleStatusChange(ps, v)}>
                               <SelectTrigger className="h-7 text-xs w-28"><SelectValue /></SelectTrigger>
@@ -122,6 +163,44 @@ export default function ProjectSuppliersTab({ projectId }) {
                                 <SelectItem value="completed">הושלם</SelectItem>
                               </SelectContent>
                             </Select>
+                          </td>
+                          <td className="px-4 py-2">
+                            {uploadingId === ps.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                            ) : ps.attachment_url ? (
+                              <div className="flex items-center gap-1">
+                                <a href={ps.attachment_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
+                                <button
+                                  className="text-muted-foreground hover:text-primary"
+                                  onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.onchange = (e) => {
+                                      if (e.target.files?.[0]) handleFileUpload(ps, e.target.files[0]);
+                                    };
+                                    input.click();
+                                  }}
+                                >
+                                  <Upload className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs"
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.onchange = (e) => {
+                                    if (e.target.files?.[0]) handleFileUpload(ps, e.target.files[0]);
+                                  };
+                                  input.click();
+                                }}
+                              >
+                                <Upload className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </td>
                           <td className="px-2">
                             <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(ps.id)}>
@@ -139,6 +218,7 @@ export default function ProjectSuppliersTab({ projectId }) {
         </div>
       )}
 
+      {/* Add existing supplier to project */}
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-md" dir="rtl">
           <DialogHeader>
@@ -173,6 +253,9 @@ export default function ProjectSuppliersTab({ projectId }) {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Add brand new supplier */}
+      <AddSupplierDialog open={showNewSupplier} onOpenChange={setShowNewSupplier} />
     </div>
   );
 }

@@ -23,7 +23,7 @@ import StagePanel from '@/components/projects/StagePanel';
 import ProjectSuppliersTab from '@/components/suppliers/ProjectSuppliersTab';
 import GanttChart from '@/components/projects/GanttChart';
 import BudgetOverview from '@/components/projects/BudgetOverview';
-import ProjectPurchaseOrders from '@/components/purchases/ProjectPurchaseOrders';
+
 import QuestionnaireResponsesView from '@/components/questionnaire/QuestionnaireResponsesView';
 import DetailedQuestionnairePreview from '@/components/questionnaire/DetailedQuestionnairePreview';
 import MeetingsList from '@/components/meetings/MeetingsList';
@@ -170,8 +170,7 @@ export default function ProjectDetail() {
           <TabsTrigger value="tasks">משימות</TabsTrigger>
           <TabsTrigger value="gantt">גאנט</TabsTrigger>
           <TabsTrigger value="budget">תקציב</TabsTrigger>
-          <TabsTrigger value="suppliers">ספקים</TabsTrigger>
-          <TabsTrigger value="purchases">רכש</TabsTrigger>
+          <TabsTrigger value="suppliers">ספקים ורכש</TabsTrigger>
           <TabsTrigger value="questionnaires">שאלונים</TabsTrigger>
           <TabsTrigger value="communications">תקשורת</TabsTrigger>
         </TabsList>
@@ -319,10 +318,6 @@ export default function ProjectDetail() {
 
         <TabsContent value="suppliers">
           <ProjectSuppliersTab projectId={projectId} />
-        </TabsContent>
-
-        <TabsContent value="purchases">
-          <ProjectPurchaseOrders projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="questionnaires">

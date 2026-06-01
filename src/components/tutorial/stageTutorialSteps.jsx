@@ -384,7 +384,7 @@ const STAGE_TUTORIAL_STEPS = [
   // ─── שלב 10 ───
   {
     id: 'stage-10',
-    title: 'תרגול שלב 10 — תמחור קבלנים ובחירת ספקים ⚖️',
+    title: 'תרגול שלב 10 — תמחור קבלנים/ספקים ⚖️',
     iconEmoji: '⚖️',
     iconColor: 'text-cyan-600',
     bgColor: 'from-cyan-50 to-blue-50',
