@@ -101,6 +101,45 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     },
   });
 
+  const extractAndFillForm = async (file_url) => {
+    try {
+      const res = await base44.functions.invoke('extractSupplierQuote', {
+        file_url,
+        extract_only: true,
+      });
+      const ext = res?.data?.extracted;
+      if (!ext) return;
+      const updates = {};
+      if (ext.amount) updates.quoted_amount = ext.amount;
+      if (ext.budget_category && BUDGET_CATEGORIES.some(c => c.value === ext.budget_category)) {
+        updates.budget_category = ext.budget_category;
+      }
+      // Try to match supplier by name, or create new one
+      if (ext.supplier_name) {
+        const nameTrimmed = ext.supplier_name.trim();
+        const match = activeSuppliers.find(s =>
+          s.name === nameTrimmed ||
+          s.name.includes(nameTrimmed) ||
+          nameTrimmed.includes(s.name)
+        );
+        if (match) {
+          updates.supplier_id = match.id;
+        } else {
+          const newSupplier = await base44.entities.Supplier.create({
+            name: nameTrimmed,
+            phone: ext.supplier_phone || '',
+            category: ext.supplier_category || 'other',
+          });
+          await queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+          updates.supplier_id = newSupplier.id;
+        }
+      }
+      setForm(prev => ({ ...prev, ...updates }));
+    } finally {
+      setExtracting(false);
+    }
+  };
+
   const handleFileUpload = async (file) => {
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -119,40 +158,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     } else {
       // New mode: extract and fill form fields
       setExtracting(true);
-      base44.functions.invoke('extractSupplierQuote', {
-        file_url,
-        extract_only: true,
-      }).then(async (res) => {
-        const ext = res?.data?.extracted;
-        if (!ext) return;
-        const updates = {};
-        if (ext.amount) updates.quoted_amount = ext.amount;
-        if (ext.budget_category && BUDGET_CATEGORIES.some(c => c.value === ext.budget_category)) {
-          updates.budget_category = ext.budget_category;
-        }
-        // Try to match supplier by name, or create new one
-        if (ext.supplier_name) {
-          const nameTrimmed = ext.supplier_name.trim();
-          const match = activeSuppliers.find(s =>
-            s.name === nameTrimmed ||
-            s.name.includes(nameTrimmed) ||
-            nameTrimmed.includes(s.name)
-          );
-          if (match) {
-            updates.supplier_id = match.id;
-          } else {
-            // Auto-create new supplier
-            const newSupplier = await base44.entities.Supplier.create({
-              name: nameTrimmed,
-              phone: ext.supplier_phone || '',
-              category: ext.supplier_category || 'other',
-            });
-            queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-            updates.supplier_id = newSupplier.id;
-          }
-        }
-        setForm(prev => ({ ...prev, ...updates }));
-      }).finally(() => setExtracting(false));
+      extractAndFillForm(file_url);
     }
   };
 
@@ -197,7 +203,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
                 <Select value={form.supplier_id} onValueChange={v => update('supplier_id', v)}>
                   <SelectTrigger className="flex-1"><SelectValue placeholder="בחר ספק" /></SelectTrigger>
                   <SelectContent>
-                    {activeSuppliers.map(s => (
+                    {activeSuppliers.filter(s => s.id).map(s => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name} — {categoryLabel(s.category)}
                       </SelectItem>
