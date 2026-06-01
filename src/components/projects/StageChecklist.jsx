@@ -5,17 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { Upload, ArrowLeft, Calendar, Play, ExternalLink, CheckCircle2, Circle, Lock, Trash2 } from 'lucide-react';
+import { Upload, ArrowLeft, Calendar, Play, ExternalLink, CheckCircle2, Circle, Lock, Trash2, HardDrive, Monitor } from 'lucide-react';
 import { toast } from 'sonner';
 import { getStageChecklist, getChecklistCompletion } from '@/lib/stageChecklist';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
+import ImportDrivePhotosDialog from '@/components/projects/ImportDrivePhotosDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   const queryClient = useQueryClient();
   const config = getStageChecklist(stageNum);
   const [uploadConfig, setUploadConfig] = useState(null);
   const [meetingConfig, setMeetingConfig] = useState(null);
+  const [showSourcePicker, setShowSourcePicker] = useState(null); // holds {docType, stage} when picker is open
+  const [showDriveImport, setShowDriveImport] = useState(false);
 
   const checklistData = useMemo(() => {
     try { return JSON.parse(project.stage_checklist_data || '{}'); } catch { return {}; }
@@ -194,6 +198,9 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
       case 'upload_doc':
         setUploadConfig({ docType: action.docType, stage: action.stage });
         break;
+      case 'upload_doc_or_drive':
+        setShowSourcePicker({ docType: action.docType, stage: action.stage });
+        break;
       case 'navigate_tab':
         onNavigateTab?.(action.tab);
         break;
@@ -213,7 +220,7 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   const actionIcon = (item) => {
     const a = item.action;
     if (!a) return null;
-    if (a.type === 'upload_doc') return <Upload className="w-3.5 h-3.5" />;
+    if (a.type === 'upload_doc' || a.type === 'upload_doc_or_drive') return <Upload className="w-3.5 h-3.5" />;
     if (a.type === 'navigate_tab') return <ExternalLink className="w-3.5 h-3.5" />;
     if (a.type === 'add_meeting') return <Calendar className="w-3.5 h-3.5" />;
     if (a.type === 'run_function') return <Play className="w-3.5 h-3.5" />;
@@ -223,7 +230,7 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   const actionLabel = (item) => {
     const a = item.action;
     if (!a) return null;
-    if (a.type === 'upload_doc') return 'העלאה';
+    if (a.type === 'upload_doc' || a.type === 'upload_doc_or_drive') return 'העלאה';
     if (a.type === 'navigate_tab') return 'מעבר';
     if (a.type === 'add_meeting') return 'תיאום';
     if (a.type === 'run_function') return 'הפעלה';
@@ -320,6 +327,47 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
             toast.success('הפגישה נוצרה — קישור תיאום נשלח ללקוח אוטומטית');
             onNavigateTab?.('meetings');
           }}
+        />
+      )}
+
+      {/* Source picker: computer vs Drive */}
+      <Dialog open={!!showSourcePicker} onOpenChange={(open) => { if (!open) setShowSourcePicker(null); }}>
+        <DialogContent className="max-w-xs" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-center">בחרי מקור העלאה</DialogTitle>
+          </DialogHeader>
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => {
+                const cfg = showSourcePicker;
+                setShowSourcePicker(null);
+                setUploadConfig({ docType: cfg.docType, stage: cfg.stage });
+              }}
+              className="flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all"
+            >
+              <Monitor className="w-8 h-8 text-primary" />
+              <span className="text-sm font-medium">מהמחשב</span>
+            </button>
+            <button
+              onClick={() => {
+                setShowSourcePicker(null);
+                setShowDriveImport(true);
+              }}
+              className="flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all"
+            >
+              <HardDrive className="w-8 h-8 text-primary" />
+              <span className="text-sm font-medium">מ-Google Drive</span>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {showDriveImport && (
+        <ImportDrivePhotosDialog
+          open={showDriveImport}
+          onOpenChange={setShowDriveImport}
+          projectId={project.id}
+          stage={13}
         />
       )}
     </>

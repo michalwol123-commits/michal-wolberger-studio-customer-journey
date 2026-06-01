@@ -127,7 +127,7 @@ const STAGE_CHECKLISTS = {
   13: {
     title: 'סיום פרויקט ומסירה',
     items: [
-      { id: 's13_collage', label: 'העלאת תמונות לקולאז׳ סיום', type: 'button', required: false, action: { type: 'upload_doc', docType: 'photo', stage: 13 } },
+      { id: 's13_collage', label: 'העלאת תמונות לקולאז׳ סיום', type: 'button', required: false, action: { type: 'upload_doc_or_drive', docType: 'photo', stage: 13 } },
       { id: 's13_2', label: 'סגירה פיננסית — כל התשלומים שולמו', type: 'auto', required: true, action: { type: 'auto_check_payments' } },
       { id: 's13_4', label: 'תיעוד לקחים', type: 'manual', required: false },
     ]
