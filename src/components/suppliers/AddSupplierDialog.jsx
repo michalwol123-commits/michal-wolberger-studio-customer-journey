@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -24,22 +24,32 @@ const categories = [
   { value: 'other', label: 'אחר' },
 ];
 
-export default function AddSupplierDialog({ open, onOpenChange, initialData }) {
-  const queryClient = useQueryClient();
-  const isEdit = !!initialData;
+const emptyForm = { name: '', category: 'other', phone: '', email: '', rating: '', price_level: 'mid', notes: '', commission_rate: '' };
 
-  const [form, setForm] = useState(initialData
-    ? { ...initialData, commission_rate: initialData.commission_rate || '' }
-    : { name: '', category: 'other', phone: '', email: '', rating: '', price_level: 'mid', notes: '', commission_rate: '' }
-  );
+export default function AddSupplierDialog({ open, onOpenChange, initialData, onCreated }) {
+  const queryClient = useQueryClient();
+  const isEdit = !!initialData?.id;
+
+  const [form, setForm] = useState(emptyForm);
+
+  // Reset form when dialog opens/closes or initialData changes
+  React.useEffect(() => {
+    if (open) {
+      setForm(initialData?.id
+        ? { ...initialData, commission_rate: initialData.commission_rate || '' }
+        : { ...emptyForm, ...(initialData || {}) }
+      );
+    }
+  }, [open, initialData]);
 
   const mutation = useMutation({
     mutationFn: (data) => isEdit
       ? base44.entities.Supplier.update(initialData.id, data)
       : base44.entities.Supplier.create(data),
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       onOpenChange(false);
+      if (onCreated && !isEdit) onCreated(result);
     },
   });
 

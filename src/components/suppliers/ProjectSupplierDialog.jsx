@@ -122,27 +122,36 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
       base44.functions.invoke('extractSupplierQuote', {
         file_url,
         extract_only: true,
-      }).then((res) => {
+      }).then(async (res) => {
         const ext = res?.data?.extracted;
         if (!ext) return;
-        setForm(prev => {
-          const updates = { ...prev };
-          if (ext.amount) updates.quoted_amount = ext.amount;
-          if (ext.budget_category && BUDGET_CATEGORIES.some(c => c.value === ext.budget_category)) {
-            updates.budget_category = ext.budget_category;
+        const updates = {};
+        if (ext.amount) updates.quoted_amount = ext.amount;
+        if (ext.budget_category && BUDGET_CATEGORIES.some(c => c.value === ext.budget_category)) {
+          updates.budget_category = ext.budget_category;
+        }
+        // Try to match supplier by name, or create new one
+        if (ext.supplier_name) {
+          const nameTrimmed = ext.supplier_name.trim();
+          const match = activeSuppliers.find(s =>
+            s.name === nameTrimmed ||
+            s.name.includes(nameTrimmed) ||
+            nameTrimmed.includes(s.name)
+          );
+          if (match) {
+            updates.supplier_id = match.id;
+          } else {
+            // Auto-create new supplier
+            const newSupplier = await base44.entities.Supplier.create({
+              name: nameTrimmed,
+              phone: ext.supplier_phone || '',
+              category: ext.supplier_category || 'other',
+            });
+            queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+            updates.supplier_id = newSupplier.id;
           }
-          // Try to match supplier by name
-          if (ext.supplier_name) {
-            const nameLower = ext.supplier_name.trim();
-            const match = activeSuppliers.find(s =>
-              s.name === nameLower ||
-              s.name.includes(nameLower) ||
-              nameLower.includes(s.name)
-            );
-            if (match) updates.supplier_id = match.id;
-          }
-          return updates;
-        });
+        }
+        setForm(prev => ({ ...prev, ...updates }));
       }).finally(() => setExtracting(false));
     }
   };
@@ -311,7 +320,15 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
         </DialogContent>
       </Dialog>
 
-      <AddSupplierDialog open={showNewSupplier} onOpenChange={setShowNewSupplier} />
+      <AddSupplierDialog
+        open={showNewSupplier}
+        onOpenChange={setShowNewSupplier}
+        onCreated={(newSupplier) => {
+          if (newSupplier?.id) {
+            setForm(prev => ({ ...prev, supplier_id: newSupplier.id }));
+          }
+        }}
+      />
     </>
   );
 }

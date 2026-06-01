@@ -27,7 +27,11 @@ Deno.serve(async (req) => {
 
 4. **budget_category** — הקטגוריה התקציבית המתאימה ביותר מהרשימה הבאה בלבד:
 מטבח, נגרות, חשמל, אינסטלציה, ריצוף, צבע, מזגנים, תאורה, טקסטיל, זגגות, נירוסטה, קבלן, אחר
-בחר קטגוריה אחת בלבד על פי תוכן ההצעה. אם לא ברור, החזר null.`,
+בחר קטגוריה אחת בלבד על פי תוכן ההצעה. אם לא ברור, החזר null.
+
+5. **supplier_category** — קטגוריית הספק (לא תקציבית) מהרשימה הבאה בלבד:
+carpenter, electrician, plumber, painter, ac, kitchen, flooring, stainless, glass, textile, lighting, contractor, other
+בחר ערך אחד בלבד על פי סוג הספק. אם לא ברור, החזר "other".`,
       file_urls: [file_url],
       response_json_schema: {
         type: "object",
@@ -35,7 +39,8 @@ Deno.serve(async (req) => {
           total_amount: { type: "number", description: "סכום סופי לתשלום כולל מע״מ" },
           supplier_name: { type: "string", description: "שם הספק/העסק" },
           supplier_phone: { type: "string", description: "טלפון הספק" },
-          budget_category: { type: "string", description: "קטגוריה תקציבית" }
+          budget_category: { type: "string", description: "קטגוריה תקציבית" },
+          supplier_category: { type: "string", description: "קטגוריית ספק: carpenter/electrician/plumber/painter/ac/kitchen/flooring/stainless/glass/textile/lighting/contractor/other" }
         }
       }
     });
@@ -44,6 +49,7 @@ Deno.serve(async (req) => {
     const supplierName = result?.supplier_name || null;
     const supplierPhone = result?.supplier_phone || null;
     const budgetCategory = result?.budget_category || null;
+    const supplierCategory = result?.supplier_category || 'other';
 
     // Mode 1: extract_only — return data without updating DB
     if (extract_only) {
@@ -54,6 +60,7 @@ Deno.serve(async (req) => {
           supplier_name: supplierName,
           supplier_phone: supplierPhone,
           budget_category: budgetCategory,
+          supplier_category: supplierCategory,
         }
       });
     }
