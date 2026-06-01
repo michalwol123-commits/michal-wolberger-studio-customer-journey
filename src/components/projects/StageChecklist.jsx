@@ -105,6 +105,20 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
   });
 
+  // Auto-complete stage status when all visible items are checked
+  React.useEffect(() => {
+    if (!config || !visibleItems.length) return;
+    const allChecked = visibleItems.every(item => isChecked(item));
+    const stageKey = `s${stageNum}_status`;
+    const currentStatus = project[stageKey];
+    if (allChecked && currentStatus !== 'completed') {
+      base44.entities.Project.update(project.id, { [stageKey]: 'completed' }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
+        toast.success(`שלב ${stageNum} הושלם!`);
+      });
+    }
+  }, [completion.percent]);
+
   const shoppingMutation = useMutation({
     mutationFn: (usedCount) => base44.entities.Project.update(project.id, { shopping_days_actual: usedCount }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['projects'] }),
@@ -150,9 +164,7 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
     if (stageNum === 8 && item.id === 's8_3' && checked) {
       base44.entities.Project.update(project.id, { concept_approved_at: new Date().toISOString() });
     }
-    if (stageNum === 13 && item.id === 's13_5' && checked) {
-      base44.entities.Project.update(project.id, { client_signoff: true });
-    }
+    
     if (item.milestone_key) updateMilestoneFromChecklist(item, checked);
   };
 
