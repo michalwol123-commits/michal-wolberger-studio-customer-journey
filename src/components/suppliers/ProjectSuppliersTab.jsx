@@ -18,6 +18,7 @@ export default function ProjectSuppliersTab({ projectId }) {
   const [showNewSupplier, setShowNewSupplier] = useState(false);
   const [form, setForm] = useState({ supplier_id: '', quoted_amount: '', agreed_amount: '', notes: '' });
   const [uploadingId, setUploadingId] = useState(null);
+  const [extractingId, setExtractingId] = useState(null);
   const fileRef = useRef(null);
 
   const { data: projectSuppliers = [] } = useQuery({
@@ -77,8 +78,17 @@ export default function ProjectSuppliersTab({ projectId }) {
   const handleFileUpload = async (ps, file) => {
     setUploadingId(ps.id);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    await updateMutation.mutateAsync({ id: ps.id, data: { attachment_url: file_url } });
     setUploadingId(null);
+    setExtractingId(ps.id);
+    // Call backend to extract amount + update history
+    base44.functions.invoke('extractSupplierQuote', {
+      file_url,
+      project_supplier_id: ps.id
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['project-suppliers', projectId] });
+    }).finally(() => {
+      setExtractingId(null);
+    });
   };
 
   // Group by category
@@ -165,8 +175,13 @@ export default function ProjectSuppliersTab({ projectId }) {
                             </Select>
                           </td>
                           <td className="px-4 py-2">
-                            {uploadingId === ps.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                            {(uploadingId === ps.id || extractingId === ps.id) ? (
+                              <div className="flex items-center gap-1">
+                                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">
+                                  {extractingId === ps.id ? 'מחלץ מחיר...' : 'מעלה...'}
+                                </span>
+                              </div>
                             ) : ps.attachment_url ? (
                               <div className="flex items-center gap-1">
                                 <a href={ps.attachment_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
