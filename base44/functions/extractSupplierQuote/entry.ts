@@ -8,52 +8,76 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { file_url, project_supplier_id } = await req.json();
+    const { file_url, project_supplier_id, extract_only } = await req.json();
 
-    if (!file_url || !project_supplier_id) {
-      return Response.json({ error: 'Missing file_url or project_supplier_id' }, { status: 400 });
+    if (!file_url) {
+      return Response.json({ error: 'Missing file_url' }, { status: 400 });
     }
 
-    // Use LLM to extract total amount from the uploaded document
+    // Extended extraction prompt — always extract all fields
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `אתה מנתח הצעות מחיר ומסמכים פיננסיים.
-חלץ מהמסמך המצורף את הסכום הסופי לתשלום (סה"כ כולל מע"מ).
-אם אין מע"מ, החזר את הסכום הכולל.
-אם לא ניתן לחלץ סכום, החזר null.
-חשוב: החזר רק את המספר ללא סימן מטבע.`,
+      prompt: `אתה מנתח הצעות מחיר ומסמכים פיננסיים של ספקים בעולם עיצוב פנים ושיפוצים.
+חלץ מהמסמך המצורף את הפרטים הבאים:
+
+1. **total_amount** — הסכום הסופי לתשלום (סה"כ כולל מע"מ). אם אין מע"מ, החזר את הסכום הכולל. החזר רק את המספר ללא סימן מטבע. אם לא ניתן לחלץ, החזר null.
+
+2. **supplier_name** — שם העסק / הספק שהוציא את ההצעה. חפש בכותרת, לוגו, או חתימה. אם לא נמצא, החזר null.
+
+3. **supplier_phone** — מספר טלפון של הספק (אם מופיע). החזר null אם לא נמצא.
+
+4. **budget_category** — הקטגוריה התקציבית המתאימה ביותר מהרשימה הבאה בלבד:
+מטבח, נגרות, חשמל, אינסטלציה, ריצוף, צבע, מזגנים, תאורה, טקסטיל, זגגות, נירוסטה, קבלן, אחר
+בחר קטגוריה אחת בלבד על פי תוכן ההצעה. אם לא ברור, החזר null.`,
       file_urls: [file_url],
       response_json_schema: {
         type: "object",
         properties: {
-          total_amount: {
-            type: "number",
-            description: "סכום סופי לתשלום כולל מע״מ"
-          }
+          total_amount: { type: "number", description: "סכום סופי לתשלום כולל מע״מ" },
+          supplier_name: { type: "string", description: "שם הספק/העסק" },
+          supplier_phone: { type: "string", description: "טלפון הספק" },
+          budget_category: { type: "string", description: "קטגוריה תקציבית" }
         }
       }
     });
 
     const amount = result?.total_amount;
+    const supplierName = result?.supplier_name || null;
+    const supplierPhone = result?.supplier_phone || null;
+    const budgetCategory = result?.budget_category || null;
+
+    // Mode 1: extract_only — return data without updating DB
+    if (extract_only) {
+      return Response.json({
+        success: true,
+        extracted: {
+          amount: amount > 0 ? amount : null,
+          supplier_name: supplierName,
+          supplier_phone: supplierPhone,
+          budget_category: budgetCategory,
+        }
+      });
+    }
+
+    // Mode 2: update existing ProjectSupplier record (original behavior)
+    if (!project_supplier_id) {
+      return Response.json({ error: 'Missing project_supplier_id' }, { status: 400 });
+    }
 
     if (amount && amount > 0) {
-      // Get current ProjectSupplier to read existing history
       const ps = await base44.entities.ProjectSupplier.filter({ id: project_supplier_id });
       const current = ps?.[0];
-      
-      // Parse existing history
+
       let history = [];
       if (current?.quote_history) {
         try { history = JSON.parse(current.quote_history); } catch (_) { history = []; }
       }
 
-      // Add new entry
       history.push({
         file_url,
         amount,
         date: new Date().toISOString().split('T')[0]
       });
 
-      // Update ProjectSupplier with new quoted_amount and history
       await base44.entities.ProjectSupplier.update(project_supplier_id, {
         quoted_amount: amount,
         attachment_url: file_url,

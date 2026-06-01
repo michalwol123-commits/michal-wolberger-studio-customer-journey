@@ -107,14 +107,42 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     setForm(prev => ({ ...prev, attachment_url: file_url }));
     setUploading(false);
 
-    // Auto-extract price
     if (isEdit) {
+      // Edit mode: update existing record directly
       setExtracting(true);
       base44.functions.invoke('extractSupplierQuote', {
         file_url,
         project_supplier_id: editData.id,
       }).then(() => {
         queryClient.invalidateQueries({ queryKey: ['project-suppliers', projectId] });
+      }).finally(() => setExtracting(false));
+    } else {
+      // New mode: extract and fill form fields
+      setExtracting(true);
+      base44.functions.invoke('extractSupplierQuote', {
+        file_url,
+        extract_only: true,
+      }).then((res) => {
+        const ext = res?.data?.extracted;
+        if (!ext) return;
+        setForm(prev => {
+          const updates = { ...prev };
+          if (ext.amount) updates.quoted_amount = ext.amount;
+          if (ext.budget_category && BUDGET_CATEGORIES.some(c => c.value === ext.budget_category)) {
+            updates.budget_category = ext.budget_category;
+          }
+          // Try to match supplier by name
+          if (ext.supplier_name) {
+            const nameLower = ext.supplier_name.trim();
+            const match = activeSuppliers.find(s =>
+              s.name === nameLower ||
+              s.name.includes(nameLower) ||
+              nameLower.includes(s.name)
+            );
+            if (match) updates.supplier_id = match.id;
+          }
+          return updates;
+        });
       }).finally(() => setExtracting(false));
     }
   };
@@ -233,7 +261,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
                 {uploading || extracting ? (
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {extracting ? 'מחלץ מחיר...' : 'מעלה...'}
+                    {extracting ? 'מחלץ פרטים...' : 'מעלה...'}
                   </div>
                 ) : form.attachment_url ? (
                   <>
