@@ -1,25 +1,19 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Trash2, Phone, Upload, FileText, ExternalLink, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Phone, Upload, ExternalLink, Loader2, Pencil } from 'lucide-react';
 import EmptyState from '@/components/shared/EmptyState';
-import { categoryLabel } from './SupplierCategoryBadge';
-import AddSupplierDialog from './AddSupplierDialog';
+import ProjectSupplierDialog from './ProjectSupplierDialog';
 
 export default function ProjectSuppliersTab({ projectId }) {
   const queryClient = useQueryClient();
-  const [showAdd, setShowAdd] = useState(false);
-  const [showNewSupplier, setShowNewSupplier] = useState(false);
-  const [form, setForm] = useState({ supplier_id: '', quoted_amount: '', agreed_amount: '', notes: '' });
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editData, setEditData] = useState(null);
   const [uploadingId, setUploadingId] = useState(null);
   const [extractingId, setExtractingId] = useState(null);
-  const fileRef = useRef(null);
 
   const { data: projectSuppliers = [] } = useQuery({
     queryKey: ['project-suppliers', projectId],
@@ -33,15 +27,6 @@ export default function ProjectSuppliersTab({ projectId }) {
 
   const supplierMap = Object.fromEntries(suppliers.map(s => [s.id, s]));
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.ProjectSupplier.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-suppliers', projectId] });
-      setShowAdd(false);
-      setForm({ supplier_id: '', quoted_amount: '', agreed_amount: '', notes: '' });
-    },
-  });
-
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ProjectSupplier.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['project-suppliers', projectId] }),
@@ -51,20 +36,6 @@ export default function ProjectSuppliersTab({ projectId }) {
     mutationFn: (id) => base44.entities.ProjectSupplier.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['project-suppliers', projectId] }),
   });
-
-  const handleAdd = (e) => {
-    e.preventDefault();
-    const supplier = supplierMap[form.supplier_id];
-    createMutation.mutate({
-      project_id: projectId,
-      supplier_id: form.supplier_id,
-      category: supplier?.category || '',
-      quoted_amount: form.quoted_amount ? Number(form.quoted_amount) : undefined,
-      agreed_amount: form.agreed_amount ? Number(form.agreed_amount) : undefined,
-      notes: form.notes,
-      status: 'pending',
-    });
-  };
 
   const handleStatusChange = (ps, newStatus) => {
     updateMutation.mutate({ id: ps.id, data: { status: newStatus } });
@@ -80,7 +51,6 @@ export default function ProjectSuppliersTab({ projectId }) {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setUploadingId(null);
     setExtractingId(ps.id);
-    // Call backend to extract amount + update history
     base44.functions.invoke('extractSupplierQuote', {
       file_url,
       project_supplier_id: ps.id
@@ -91,24 +61,34 @@ export default function ProjectSuppliersTab({ projectId }) {
     });
   };
 
-  // Group by category
+  const openAdd = () => {
+    setEditData(null);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (ps) => {
+    setEditData(ps);
+    setDialogOpen(true);
+  };
+
+  // Group by budget_category
   const grouped = {};
   projectSuppliers.forEach(ps => {
-    const cat = ps.category || 'other';
+    const cat = ps.budget_category || 'כללי';
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(ps);
   });
 
-  const usedSupplierIds = new Set(projectSuppliers.map(ps => ps.supplier_id));
-  const availableSuppliers = suppliers.filter(s => !usedSupplierIds.has(s.id) && s.is_active !== false);
+  const sortedCategories = Object.keys(grouped).sort((a, b) => {
+    if (a === 'כללי') return 1;
+    if (b === 'כללי') return -1;
+    return a.localeCompare(b, 'he');
+  });
 
   return (
     <div>
-      <div className="flex justify-end gap-2 mb-3">
-        <Button size="sm" variant="outline" onClick={() => setShowNewSupplier(true)} className="gap-1">
-          <Plus className="w-4 h-4" />ספק חדש
-        </Button>
-        <Button size="sm" onClick={() => setShowAdd(true)} className="gap-1">
+      <div className="flex justify-end mb-3">
+        <Button size="sm" onClick={openAdd} className="gap-1">
           <Plus className="w-4 h-4" />הוסף ספק לפרויקט
         </Button>
       </div>
@@ -117,9 +97,9 @@ export default function ProjectSuppliersTab({ projectId }) {
         <EmptyState title="אין ספקים" description="הוסיפי ספקים לפרויקט" />
       ) : (
         <div className="space-y-4">
-          {Object.entries(grouped).map(([cat, items]) => (
+          {sortedCategories.map(cat => (
             <div key={cat}>
-              <h4 className="font-heading font-semibold text-sm mb-2">{categoryLabel(cat)}</h4>
+              <h4 className="font-heading font-semibold text-sm mb-2">{cat}</h4>
               <div className="bg-card rounded-xl border overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -130,11 +110,11 @@ export default function ProjectSuppliersTab({ projectId }) {
                       <th className="text-right px-4 py-2 font-medium">סגור (₪)</th>
                       <th className="text-right px-4 py-2 font-medium">סטטוס</th>
                       <th className="text-right px-4 py-2 font-medium">קובץ</th>
-                      <th className="w-10"></th>
+                      <th className="w-20"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map(ps => {
+                    {grouped[cat].map(ps => {
                       const supplier = supplierMap[ps.supplier_id];
                       return (
                         <tr key={ps.id} className="border-b last:border-0">
@@ -151,6 +131,7 @@ export default function ProjectSuppliersTab({ projectId }) {
                               type="number"
                               className="h-7 w-24 text-xs"
                               defaultValue={ps.quoted_amount || ''}
+                              key={`q-${ps.id}-${ps.quoted_amount}`}
                               onBlur={(e) => handleInlineAmount(ps, 'quoted_amount', e.target.value)}
                             />
                           </td>
@@ -159,6 +140,7 @@ export default function ProjectSuppliersTab({ projectId }) {
                               type="number"
                               className="h-7 w-24 text-xs"
                               defaultValue={ps.agreed_amount || ''}
+                              key={`a-${ps.id}-${ps.agreed_amount}`}
                               onBlur={(e) => handleInlineAmount(ps, 'agreed_amount', e.target.value)}
                             />
                           </td>
@@ -217,7 +199,10 @@ export default function ProjectSuppliersTab({ projectId }) {
                               </button>
                             )}
                           </td>
-                          <td className="px-2">
+                          <td className="px-2 flex gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(ps)}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
                             <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(ps.id)}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
@@ -233,44 +218,12 @@ export default function ProjectSuppliersTab({ projectId }) {
         </div>
       )}
 
-      {/* Add existing supplier to project */}
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="font-heading">הוסף ספק לפרויקט</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleAdd} className="space-y-4">
-            <div>
-              <Label>ספק *</Label>
-              <Select value={form.supplier_id} onValueChange={v => setForm(prev => ({ ...prev, supplier_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="בחר ספק" /></SelectTrigger>
-                <SelectContent>
-                  {availableSuppliers.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name} — {categoryLabel(s.category)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>סכום הצעה (₪)</Label>
-                <Input type="number" value={form.quoted_amount} onChange={e => setForm(prev => ({ ...prev, quoted_amount: e.target.value }))} />
-              </div>
-              <div>
-                <Label>סכום סגור (₪)</Label>
-                <Input type="number" value={form.agreed_amount} onChange={e => setForm(prev => ({ ...prev, agreed_amount: e.target.value }))} />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setShowAdd(false)}>ביטול</Button>
-              <Button type="submit" disabled={!form.supplier_id}>הוסף</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add brand new supplier */}
-      <AddSupplierDialog open={showNewSupplier} onOpenChange={setShowNewSupplier} />
+      <ProjectSupplierDialog
+        open={dialogOpen}
+        onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditData(null); }}
+        projectId={projectId}
+        editData={editData}
+      />
     </div>
   );
 }
