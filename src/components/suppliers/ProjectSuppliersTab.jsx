@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Phone, Upload, ExternalLink, Loader2, Pencil } from 'lucide-react';
+import { Plus, Trash2, Phone, ExternalLink, Pencil } from 'lucide-react';
 import EmptyState from '@/components/shared/EmptyState';
 import ProjectSupplierDialog from './ProjectSupplierDialog';
 
@@ -12,8 +12,7 @@ export default function ProjectSuppliersTab({ projectId }) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editData, setEditData] = useState(null);
-  const [uploadingId, setUploadingId] = useState(null);
-  const [extractingId, setExtractingId] = useState(null);
+
 
   const { data: projectSuppliers = [] } = useQuery({
     queryKey: ['project-suppliers', projectId],
@@ -44,21 +43,6 @@ export default function ProjectSuppliersTab({ projectId }) {
   const handleInlineAmount = (ps, field, value) => {
     const num = value === '' ? null : Number(value);
     updateMutation.mutate({ id: ps.id, data: { [field]: num } });
-  };
-
-  const handleFileUpload = async (ps, file) => {
-    setUploadingId(ps.id);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setUploadingId(null);
-    setExtractingId(ps.id);
-    base44.functions.invoke('extractSupplierQuote', {
-      file_url,
-      project_supplier_id: ps.id
-    }).then(() => {
-      queryClient.invalidateQueries({ queryKey: ['project-suppliers', projectId] });
-    }).finally(() => {
-      setExtractingId(null);
-    });
   };
 
   const openAdd = () => {
@@ -157,46 +141,12 @@ export default function ProjectSuppliersTab({ projectId }) {
                             </Select>
                           </td>
                           <td className="px-4 py-2">
-                            {(uploadingId === ps.id || extractingId === ps.id) ? (
-                              <div className="flex items-center gap-1">
-                                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">
-                                  {extractingId === ps.id ? 'מחלץ מחיר...' : 'מעלה...'}
-                                </span>
-                              </div>
-                            ) : ps.attachment_url ? (
-                              <div className="flex items-center gap-1">
-                                <a href={ps.attachment_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                                  <ExternalLink className="w-4 h-4" />
-                                </a>
-                                <button
-                                  className="text-muted-foreground hover:text-primary"
-                                  onClick={() => {
-                                    const input = document.createElement('input');
-                                    input.type = 'file';
-                                    input.onchange = (e) => {
-                                      if (e.target.files?.[0]) handleFileUpload(ps, e.target.files[0]);
-                                    };
-                                    input.click();
-                                  }}
-                                >
-                                  <Upload className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
+                            {ps.attachment_url ? (
+                              <a href={ps.attachment_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                <ExternalLink className="w-4 h-4" />
+                              </a>
                             ) : (
-                              <button
-                                className="text-muted-foreground hover:text-primary flex items-center gap-1 text-xs"
-                                onClick={() => {
-                                  const input = document.createElement('input');
-                                  input.type = 'file';
-                                  input.onchange = (e) => {
-                                    if (e.target.files?.[0]) handleFileUpload(ps, e.target.files[0]);
-                                  };
-                                  input.click();
-                                }}
-                              >
-                                <Upload className="w-3.5 h-3.5" />
-                              </button>
+                              <span className="text-xs text-muted-foreground">—</span>
                             )}
                           </td>
                           <td className="px-2 flex gap-1">
