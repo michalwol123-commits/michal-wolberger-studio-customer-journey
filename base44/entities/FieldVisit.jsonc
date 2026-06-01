@@ -1,0 +1,84 @@
+{
+  "name": "FieldVisit",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "relationType": "Project",
+      "description": "\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 \u05de\u05e9\u05d5\u05d9\u05da"
+    },
+    "visit_type": {
+      "type": "string",
+      "enum": [
+        "supervision",
+        "installation"
+      ],
+      "description": "\u05e1\u05d5\u05d2 \u05d1\u05d9\u05e7\u05d5\u05e8: \u05e4\u05d9\u05e7\u05d5\u05d7 / \u05d4\u05ea\u05e7\u05e0\u05d5\u05ea"
+    },
+    "visit_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d4\u05d1\u05d9\u05e7\u05d5\u05e8"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "completed"
+      ],
+      "default": "draft",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1: \u05d8\u05d9\u05d5\u05d8\u05d4 / \u05d4\u05d5\u05e9\u05dc\u05dd"
+    },
+    "checklist_items": {
+      "type": "string",
+      "description": "\u05de\u05e2\u05e8\u05da \u05e4\u05e8\u05d9\u05d8\u05d9 \u05e6'\u05e7\u05dc\u05d9\u05e1\u05d8 \u2014 JSON: [{id, label, status: ok/issue/na/null, note, custom}]"
+    },
+    "general_notes": {
+      "type": "string",
+      "description": "\u05d4\u05e2\u05e8\u05d5\u05ea \u05db\u05dc\u05dc\u05d9\u05d5\u05ea \u05dc\u05d1\u05d9\u05e7\u05d5\u05e8"
+    },
+    "attendees": {
+      "type": "string",
+      "description": "\u05e0\u05d5\u05db\u05d7\u05d9\u05dd \u05d1\u05d1\u05d9\u05e7\u05d5\u05e8"
+    },
+    "decisions": {
+      "type": "string",
+      "description": "\u05de\u05d4 \u05e1\u05d5\u05db\u05dd"
+    },
+    "next_steps": {
+      "type": "string",
+      "description": "\u05e6\u05e2\u05d3\u05d9\u05dd \u05d4\u05d1\u05d0\u05d9\u05dd"
+    },
+    "report_requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u05de\u05ea\u05d9 \u05e0\u05e9\u05dc\u05d7\u05d4 \u05d1\u05e7\u05e9\u05d4 \u05dc\u05d9\u05e6\u05d9\u05e8\u05ea PDF \u2014 \u05d8\u05e8\u05d9\u05d2\u05e8 \u05dc\u05e4\u05d5\u05e0\u05e7\u05e6\u05d9\u05d4"
+    },
+    "report_pdf_url": {
+      "type": "string",
+      "description": "URL \u05dc-PDF \u05e9\u05e0\u05d5\u05e6\u05e8"
+    },
+    "report_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "\u05de\u05ea\u05d9 \u05e0\u05e9\u05dc\u05d7 \u05d4\u05d3\u05d5\u05d7"
+    },
+    "report_sent_to": {
+      "type": "string",
+      "description": "\u05dc\u05de\u05d9 \u05e0\u05e9\u05dc\u05d7 (\u05de\u05d9\u05d9\u05dc)"
+    },
+    "owner": {
+      "type": "string",
+      "description": "\u05d1\u05e2\u05dc\u05d9\u05dd (user)"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "\u05e2\u05d5\u05d3\u05db\u05df \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4 \u05e2\"\u05d9 (user)"
+    }
+  },
+  "required": [
+    "project_id",
+    "visit_type",
+    "visit_date"
+  ]
+}

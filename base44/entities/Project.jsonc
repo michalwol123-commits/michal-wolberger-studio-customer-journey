@@ -84,6 +84,25 @@
       "type": "string",
       "description": "\u05de\u05d8\u05e8\u05d5\u05ea \u05d5\u05d7\u05d6\u05d5\u05df \u05d4\u05dc\u05e7\u05d5\u05d7"
     },
+    "package_type": {
+      "type": "string",
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "description": "\u05d7\u05d1\u05d9\u05dc\u05ea \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 (S/M/L) \u2014 \u05e7\u05d5\u05d1\u05e2\u05ea \u05de\u05e1\u05e4\u05e8 \u05d9\u05de\u05d9 \u05e7\u05e0\u05d9\u05d5\u05ea/\u05e4\u05d9\u05e7\u05d5\u05d7/\u05d4\u05ea\u05e7\u05e0\u05d5\u05ea"
+    },
+    "budget_managed_by_designer": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d4\u05d0\u05dd \u05de\u05d9\u05db\u05dc \u05de\u05e0\u05d4\u05dc\u05ea \u05ea\u05e7\u05e6\u05d9\u05d1 (Large \u05d1\u05dc\u05d1\u05d3)"
+    },
+    "floor_plan_locked": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d4\u05d0\u05dd \u05ea\u05db\u05e0\u05d9\u05ea \u05d4\u05e2\u05de\u05d3\u05d4 \u05e0\u05d7\u05ea\u05de\u05d4 \u05d5\u05e0\u05e2\u05d5\u05dc\u05d4"
+    },
     "material_approval_status": {
       "type": "string",
       "enum": [
@@ -222,7 +241,7 @@
         "completed"
       ],
       "default": "pending",
-      "description": "\u05e9\u05dc\u05d1 6 \u2014 \u05e4\u05e8\u05d5\u05d2\u05e8\u05de\u05d4"
+      "description": "\u05e9\u05dc\u05d1 6 \u2014 \u05ea\u05db\u05e0\u05d9\u05ea \u05e2\u05de\u05d3\u05d4"
     },
     "s7_status": {
       "type": "string",

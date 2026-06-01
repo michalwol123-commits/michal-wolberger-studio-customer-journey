@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, ExternalLink, Loader2, UserPlus, Info, FileCheck, FilePlus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { categoryLabel } from './SupplierCategoryBadge';
 import AddSupplierDialog from './AddSupplierDialog';
+import { toast } from 'sonner';
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: 'ממתין' },
@@ -43,7 +45,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
   const [showNewSupplier, setShowNewSupplier] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [extracting, setExtracting] = useState(false);
-  const [quoteTypePrompt, setQuoteTypePrompt] = useState(null); // { file_url, amount }
+  const [quoteTypePrompt, setQuoteTypePrompt] = useState(null); // { file_url, amount, isNewMode }
 
   const [form, setForm] = useState({
     supplier_id: '',
@@ -53,6 +55,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     status: 'pending',
     attachment_url: '',
     notes: '',
+    visible_to_client: true,
   });
 
   useEffect(() => {
@@ -65,6 +68,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
         status: editData.status || 'pending',
         attachment_url: editData.attachment_url || '',
         notes: editData.notes || '',
+        visible_to_client: true,
       });
     } else {
       setForm({
@@ -75,6 +79,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
         status: 'pending',
         attachment_url: '',
         notes: '',
+        visible_to_client: true,
       });
     }
   }, [editData, open]);
@@ -109,9 +114,12 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
         extract_only: true,
       });
       const ext = res?.data?.extracted;
-      if (!ext) return;
+      if (!ext) {
+        setExtracting(false);
+        return;
+      }
       const updates = {};
-      if (ext.amount) updates.quoted_amount = ext.amount;
+      const extractedAmount = ext.amount || null;
       if (ext.budget_category && BUDGET_CATEGORIES.some(c => c.value === ext.budget_category)) {
         updates.budget_category = ext.budget_category;
       }
@@ -136,7 +144,10 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
         }
       }
       setForm(prev => ({ ...prev, ...updates }));
-    } finally {
+      setExtracting(false);
+      // Show quote type prompt for new mode
+      setQuoteTypePrompt({ file_url, amount: extractedAmount, isNewMode: true });
+    } catch {
       setExtracting(false);
     }
   };
@@ -147,24 +158,25 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     setForm(prev => ({ ...prev, attachment_url: file_url }));
     setUploading(false);
 
+    setExtracting(true);
     if (isEdit) {
       // Edit mode: extract amount then ask user what type of quote this is
-      setExtracting(true);
       base44.functions.invoke('extractSupplierQuote', {
         file_url,
         extract_only: true,
       }).then((res) => {
         const amount = res?.data?.extracted?.amount;
-        setQuoteTypePrompt({ file_url, amount });
+        setQuoteTypePrompt({ file_url, amount, isNewMode: false });
       }).finally(() => setExtracting(false));
     } else {
-      // New mode: extract and fill form fields
-      setExtracting(true);
-      extractAndFillForm(file_url);
+      // New mode: extract, fill form, then ask quote type
+      extractAndFillForm(file_url).then(() => {
+        // After form is filled, show the quote type prompt
+      });
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const supplier = suppliers.find(s => s.id === form.supplier_id);
     const payload = {
@@ -179,6 +191,19 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
       notes: form.notes,
     };
 
+    // Create Document record if file was uploaded
+    if (form.attachment_url && !isEdit) {
+      const isInvoice = form.status === 'completed';
+      const supplierName = supplier?.name || 'ספק';
+      await base44.entities.Document.create({
+        project_id: projectId,
+        type: isInvoice ? 'shopping_invoice' : 'quote',
+        file_url: form.attachment_url,
+        visible_to_client: form.visible_to_client,
+        name: supplierName + (isInvoice ? ' — חשבונית' : ' — הצעת מחיר'),
+      });
+    }
+
     if (isEdit) {
       updateMutation.mutate({ id: editData.id, data: payload });
     } else {
@@ -186,31 +211,49 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     }
   };
 
-  const handleQuoteTypeChoice = async (isApproved) => {
+  const handleQuoteTypeChoice = async (isInvoice) => {
     if (!quoteTypePrompt) return;
-    const { file_url, amount } = quoteTypePrompt;
+    const { file_url, amount, isNewMode } = quoteTypePrompt;
     setQuoteTypePrompt(null);
 
-    // Update the backend record
-    await base44.functions.invoke('extractSupplierQuote', {
-      file_url,
-      project_supplier_id: editData.id,
-      is_approved: isApproved,
-    });
-    queryClient.invalidateQueries({ queryKey: ['project-suppliers', projectId] });
-
-    // Also update the form so the user sees the change
-    if (isApproved) {
-      setForm(prev => ({
-        ...prev,
-        agreed_amount: amount || prev.agreed_amount,
-        status: 'approved',
-      }));
+    if (isNewMode) {
+      // New mode: just update the form fields based on choice
+      if (isInvoice) {
+        setForm(prev => ({
+          ...prev,
+          quoted_amount: amount || prev.quoted_amount,
+          agreed_amount: amount || prev.agreed_amount,
+          status: 'completed',
+        }));
+      } else {
+        setForm(prev => ({
+          ...prev,
+          quoted_amount: amount || prev.quoted_amount,
+          status: 'quoted',
+        }));
+      }
     } else {
-      setForm(prev => ({
-        ...prev,
-        quoted_amount: amount || prev.quoted_amount,
-      }));
+      // Edit mode: update the backend record directly with override_amount
+      await base44.functions.invoke('extractSupplierQuote', {
+        file_url,
+        project_supplier_id: editData.id,
+        is_approved: isInvoice,
+        override_amount: amount || undefined,
+      });
+      queryClient.invalidateQueries({ queryKey: ['project-suppliers', projectId] });
+
+      if (isInvoice) {
+        setForm(prev => ({
+          ...prev,
+          agreed_amount: amount || prev.agreed_amount,
+          status: 'approved',
+        }));
+      } else {
+        setForm(prev => ({
+          ...prev,
+          quoted_amount: amount || prev.quoted_amount,
+        }));
+      }
     }
   };
 
@@ -222,13 +265,13 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
         <DialogContent className="max-w-md" dir="rtl">
           <DialogHeader>
             <DialogTitle className="font-heading">
-              {isEdit ? 'עריכת ספק בפרויקט' : 'הוסף ספק לפרויקט'}
+              {isEdit ? 'עריכת ספק בפרויקט' : 'הוסף ספק / הצעה / חשבונית'}
             </DialogTitle>
             {!isEdit && (
               <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground mt-1">
                 <Info className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>
-                  ניתן לבחור ספק מהרשימה, או להעלות הצעת מחיר — המערכת תחלץ אוטומטית את שם הספק, המחיר והקטגוריה, ותוסיף את הספק לרשימה אם אינו קיים.
+                  ניתן לבחור ספק מהרשימה, או להעלות הצעת מחיר / חשבונית — המערכת תחלץ אוטומטית את שם הספק, המחיר והקטגוריה, ותוסיף את הספק לרשימה אם אינו קיים.
                 </span>
               </div>
             )}
@@ -348,6 +391,18 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
               </div>
             </div>
 
+            {/* Visible to client */}
+            {form.attachment_url && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="visible_to_client"
+                  checked={form.visible_to_client}
+                  onCheckedChange={(val) => update('visible_to_client', !!val)}
+                />
+                <Label htmlFor="visible_to_client" className="text-sm cursor-pointer">גלוי ללקוח בפורטל</Label>
+              </div>
+            )}
+
             {/* Notes */}
             <div>
               <Label>הערות</Label>
@@ -357,7 +412,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
               <Button type="submit" disabled={!form.supplier_id}>
-                {isEdit ? 'עדכן' : 'הוסף ספק'}
+                {isEdit ? 'עדכן' : 'הוסף'}
               </Button>
             </div>
           </form>
@@ -378,7 +433,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
       <Dialog open={!!quoteTypePrompt} onOpenChange={() => setQuoteTypePrompt(null)}>
         <DialogContent className="max-w-sm" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="font-heading">סוג ההצעה</DialogTitle>
+            <DialogTitle className="font-heading">סוג המסמך</DialogTitle>
             <DialogDescription>
               {quoteTypePrompt?.amount
                 ? `הסכום שחולץ: ₪${quoteTypePrompt.amount.toLocaleString()}`
@@ -393,8 +448,8 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
             >
               <FilePlus className="w-5 h-5 text-primary shrink-0" />
               <div className="text-right">
-                <div className="font-medium">הצעה חדשה</div>
-                <div className="text-xs text-muted-foreground">יעדכן את שדה ההצעה</div>
+                <div className="font-medium">הצעת מחיר</div>
+                <div className="text-xs text-muted-foreground">יעדכן את שדה ההצעה — טרם אושר</div>
               </div>
             </Button>
             <Button
@@ -404,8 +459,8 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
             >
               <FileCheck className="w-5 h-5 text-green-600 shrink-0" />
               <div className="text-right">
-                <div className="font-medium">הצעה מאושרת</div>
-                <div className="text-xs text-muted-foreground">יעדכן את שדה הסגור + סטטוס מאושר</div>
+                <div className="font-medium">חשבונית / סגור</div>
+                <div className="text-xs text-muted-foreground">שולם בפועל — יעדכן סגור + סטטוס הושלם</div>
               </div>
             </Button>
           </div>

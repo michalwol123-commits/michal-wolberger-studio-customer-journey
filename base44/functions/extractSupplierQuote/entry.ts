@@ -8,10 +8,38 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { file_url, project_supplier_id, extract_only, is_approved } = await req.json();
+    const { file_url, project_supplier_id, extract_only, is_approved, override_amount } = await req.json();
 
     if (!file_url) {
       return Response.json({ error: 'Missing file_url' }, { status: 400 });
+    }
+
+    // If override_amount provided, skip LLM extraction for the update path
+    if (!extract_only && project_supplier_id && override_amount > 0) {
+      const ps = await base44.entities.ProjectSupplier.filter({ id: project_supplier_id });
+      const current = ps?.[0];
+
+      let history = [];
+      if (current?.quote_history) {
+        try { history = JSON.parse(current.quote_history); } catch (_) { history = []; }
+      }
+      history.push({ file_url, amount: override_amount, date: new Date().toISOString().split('T')[0] });
+
+      const updateData = {
+        attachment_url: file_url,
+        quote_history: JSON.stringify(history),
+      };
+
+      if (is_approved) {
+        updateData.agreed_amount = override_amount;
+        updateData.status = 'approved';
+      } else {
+        updateData.quoted_amount = override_amount;
+        updateData.status = current?.status === 'pending' ? 'quoted' : current?.status;
+      }
+
+      await base44.entities.ProjectSupplier.update(project_supplier_id, updateData);
+      return Response.json({ success: true, amount: override_amount, history_count: history.length });
     }
 
     // Extended extraction prompt — always extract all fields
