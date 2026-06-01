@@ -83,7 +83,8 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
       setMeetingId(null);
       setForm(defaultForm);
     }
-  }, [initialData, open, meetings]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Auto-link existing quote_presentation meeting when client changes (new quote only)
   useEffect(() => {
@@ -100,7 +101,8 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
       setMeetingId(null);
       setForm(p => ({ ...p, meeting_date: '' }));
     }
-  }, [form.client_id, meetings, initialData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.client_id]);
 
   const mutation = useMutation({
     mutationFn: async (data) => {
