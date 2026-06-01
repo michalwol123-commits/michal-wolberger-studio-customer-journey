@@ -260,6 +260,7 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
   const stageDocs = content.docs
     ? documents.filter(d => {
         if (d.is_current === false) return false;
+        if (d.type === 'shopping_invoice' || d.type === 'quote') return false;
         if (d.stage != null && d.stage !== 0 && Number(d.stage) === Number(stageNum)) return true;
         if ((!d.stage || d.stage === 0) && isCurrentStage) return true;
         return false;

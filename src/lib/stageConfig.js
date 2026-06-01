@@ -11,7 +11,7 @@ const STAGES = [
   { num: 10, key: 's10_status', label: 'תמחור קבלנים/ספקים', shortLabel: 'תמחור קבלנים/ספקים', icon: '⚖️', description: 'קבלת הצעות מחיר, השוואה חכמה ובחירת אנשי מקצוע' },
   { num: 11, key: 's11_status', label: 'ביצוע בשטח + ימי פיקוח', shortLabel: 'ביצוע + פיקוח', icon: '🏗️', description: 'פיקוח צמוד על עבודות הקבלן, תיעוד ליקויים ווידוא ביצוע לפי התכניות' },
   { num: 12, key: 's12_status', label: 'ימי התקנה ותיאום ספקים', shortLabel: 'התקנה + ספקים', icon: '🔧', description: 'תיאום, ביצוע ובקרה על התקנות הגמר בפרויקט' },
-  { num: 13, key: 's13_status', label: 'סיום פרויקט ומסירה', shortLabel: 'סיום ומסירה', icon: '🏠', description: 'סגירת המעגל, הבטחת שביעות רצון ומינוף לשיווק' },
+  { num: 13, key: 's13_status', label: 'סיום פרויקט ומסירה', shortLabel: 'סיום ומסירה', icon: '🏠', description: '' },
 ];
 export default STAGES;
 export const TOTAL_STAGES = 13;

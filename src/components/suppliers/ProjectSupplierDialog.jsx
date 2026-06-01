@@ -57,6 +57,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     attachment_url: '',
     notes: '',
     visible_to_client: true,
+    doc_stage: '',
   });
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
         attachment_url: editData.attachment_url || '',
         notes: editData.notes || '',
         visible_to_client: true,
+        doc_stage: '',
       });
     } else {
       setForm({
@@ -81,6 +83,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
         attachment_url: '',
         notes: '',
         visible_to_client: true,
+        doc_stage: '',
       });
     }
   }, [editData, open]);
@@ -196,13 +199,17 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     if (form.attachment_url && !isEdit) {
       const isInvoice = form.status === 'completed';
       const supplierName = supplier?.name || 'ספק';
-      await base44.entities.Document.create({
+      const docData = {
         project_id: projectId,
         type: isInvoice ? 'shopping_invoice' : 'quote',
         file_url: form.attachment_url,
         visible_to_client: form.visible_to_client,
         name: supplierName + (isInvoice ? ' — חשבונית' : ' — הצעת מחיר'),
-      });
+      };
+      if (form.doc_stage) {
+        docData.stage = Number(form.doc_stage);
+      }
+      await base44.entities.Document.create(docData);
     }
 
     if (isEdit) {
@@ -392,16 +399,30 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
               </div>
             </div>
 
-            {/* Visible to client */}
+            {/* Doc stage + Visible to client */}
             {form.attachment_url && (
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="visible_to_client"
-                  checked={form.visible_to_client}
-                  onCheckedChange={(val) => update('visible_to_client', !!val)}
-                />
-                <Label htmlFor="visible_to_client" className="text-sm cursor-pointer">גלוי ללקוח בפורטל</Label>
-              </div>
+              <>
+                <div>
+                  <Label>שלב בפורטל (למסמך)</Label>
+                  <Select value={form.doc_stage} onValueChange={v => update('doc_stage', v)}>
+                    <SelectTrigger><SelectValue placeholder="לפי שלב נוכחי" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="9">שלב 9 — ימי קניות</SelectItem>
+                      <SelectItem value="10">שלב 10 — תמחור קבלנים/ספקים</SelectItem>
+                      <SelectItem value="11">שלב 11 — ביצוע + פיקוח</SelectItem>
+                      <SelectItem value="12">שלב 12 — התקנה + ספקים</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="visible_to_client"
+                    checked={form.visible_to_client}
+                    onCheckedChange={(val) => update('visible_to_client', !!val)}
+                  />
+                  <Label htmlFor="visible_to_client" className="text-sm cursor-pointer">גלוי ללקוח בפורטל</Label>
+                </div>
+              </>
             )}
 
             {/* Notes */}

@@ -35,24 +35,13 @@ function PortalRouter() {
     );
   }
 
-  const activeProjects = projects.filter(p => p.status === 'active' || p.status === 'on_hold');
-  const completedProjects = projects.filter(p => p.status === 'completed');
-  const allProjects = [...activeProjects, ...completedProjects];
+  const activeProjects = projects.filter(p => p.status === 'active' || p.status === 'on_hold' || p.status === 'completed');
+  const allProjects = activeProjects;
 
   // State E — handled above (error)
 
   // If a project is selected
   if (selectedProject) {
-    if (selectedProject.status === 'completed') {
-      return (
-        <PortalLayout {...guideProps}>
-          <PortalCompleted
-            project={selectedProject}
-            onBack={allProjects.length > 1 ? () => setSelectedProject(null) : null}
-          />
-        </PortalLayout>
-      );
-    }
     return (
       <PortalLayout {...guideProps}>
         <PortalProjectView
@@ -75,13 +64,6 @@ function PortalRouter() {
   // State B — single project (auto-select)
   if (allProjects.length === 1) {
     const proj = allProjects[0];
-    if (proj.status === 'completed') {
-      return (
-        <PortalLayout {...guideProps}>
-          <PortalCompleted project={proj} />
-        </PortalLayout>
-      );
-    }
     return (
       <PortalLayout {...guideProps}>
         <PortalProjectView project={proj} />
