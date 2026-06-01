@@ -34,6 +34,7 @@ const BUDGET_CATEGORIES = [
   { value: 'טקסטיל', label: 'טקסטיל' },
   { value: 'זגגות', label: 'זגגות' },
   { value: 'נירוסטה', label: 'נירוסטה' },
+  { value: 'ריהוט', label: 'ריהוט' },
   { value: 'קבלן', label: 'קבלן' },
   { value: 'אחר', label: 'אחר' },
 ];
