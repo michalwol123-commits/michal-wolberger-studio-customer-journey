@@ -67,13 +67,13 @@ const STAGE_CHECKLISTS = {
   9: {
     title: 'ימי קניות',
     items: [
-      { id: 's9_1', label: 'תכנון ימי קניות', type: 'manual', required: true },
+      { id: 's9_1', label: 'תכנון ימי קניות', type: 'button', required: true, action: { type: 'add_meeting', meetingType: 'shopping_day' } },
       { id: 's9_shopping_1', label: 'יום קניות 1', type: 'manual', required: false, shoppingDay: 1 },
       { id: 's9_shopping_2', label: 'יום קניות 2', type: 'manual', required: false, shoppingDay: 2 },
       { id: 's9_shopping_3', label: 'יום קניות 3', type: 'manual', required: false, shoppingDay: 3 },
       { id: 's9_shopping_4', label: 'יום קניות 4', type: 'manual', required: false, shoppingDay: 4 },
       { id: 's9_shopping_5', label: 'יום קניות 5', type: 'manual', required: false, shoppingDay: 5 },
-      { id: 's9_7', label: 'מעקב תקציב קניות', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'budget' } },
+      { id: 's9_6', label: 'העלאת חשבוניות קניות — ספקים ורכש', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'suppliers' } },
     ]
   },
   10: {
