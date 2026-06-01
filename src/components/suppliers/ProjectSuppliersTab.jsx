@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Phone, ExternalLink, Pencil } from 'lucide-react';
 import EmptyState from '@/components/shared/EmptyState';
 import ProjectSupplierDialog from './ProjectSupplierDialog';
+import ProjectCommissionsSection from '@/components/commissions/ProjectCommissionsSection';
 
 export default function ProjectSuppliersTab({ projectId }) {
   const queryClient = useQueryClient();
@@ -167,6 +168,8 @@ export default function ProjectSuppliersTab({ projectId }) {
           ))}
         </div>
       )}
+
+      <ProjectCommissionsSection projectId={projectId} />
 
       <ProjectSupplierDialog
         open={dialogOpen}

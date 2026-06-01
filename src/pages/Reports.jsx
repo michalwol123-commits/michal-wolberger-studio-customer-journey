@@ -9,6 +9,7 @@ import FinancialReport from '@/components/reports/FinancialReport';
 import LeadsReport from '@/components/reports/LeadsReport';
 import SuppliersReport from '@/components/reports/SuppliersReport';
 import QuotesReport from '@/components/reports/QuotesReport';
+import CommissionsReport from '@/components/reports/CommissionsReport';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Loader2 } from 'lucide-react';
 
@@ -57,6 +58,7 @@ export default function Reports() {
           <TabsTrigger value="leads">לידים</TabsTrigger>
           <TabsTrigger value="suppliers">ספקים</TabsTrigger>
           <TabsTrigger value="quotes">הצעות מחיר</TabsTrigger>
+          {isAdmin && <TabsTrigger value="commissions">עמלות</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="projects">
@@ -76,6 +78,11 @@ export default function Reports() {
         <TabsContent value="quotes">
           <QuotesReport quotes={quotes} clients={clients} />
         </TabsContent>
+        {isAdmin && (
+          <TabsContent value="commissions">
+            <CommissionsReport />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

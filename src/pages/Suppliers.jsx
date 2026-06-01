@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Search, Star, Phone, Mail, Truck } from 'lucide-react';
+import { Plus, Search, Star, Phone, Mail, Truck, Percent } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import SupplierCategoryBadge, { categoryLabel } from '@/components/suppliers/SupplierCategoryBadge';
 import AddSupplierDialog from '@/components/suppliers/AddSupplierDialog';
@@ -27,6 +27,23 @@ export default function Suppliers() {
     queryKey: ['suppliers'],
     queryFn: () => base44.entities.Supplier.list('-created_date', 500),
   });
+
+  const { data: allCommissions = [] } = useQuery({
+    queryKey: ['all-commissions'],
+    queryFn: () => base44.entities.Commission.list('-created_date', 500),
+  });
+
+  const commissionsBySupplier = useMemo(() => {
+    const map = {};
+    allCommissions.forEach(c => {
+      const sid = c.supplier_id;
+      if (!map[sid]) map[sid] = { expected: 0, received: 0, pending: 0 };
+      map[sid].expected += c.commission_amount || 0;
+      if (c.status === 'received') map[sid].received += c.commission_amount || 0;
+      else map[sid].pending += c.commission_amount || 0;
+    });
+    return map;
+  }, [allCommissions]);
 
   const filtered = suppliers.filter(s => {
     if (!s.is_active && s.is_active !== undefined) return false;
@@ -90,7 +107,7 @@ export default function Suppliers() {
       {filtered.length === 0 ? (
         <EmptyState icon={Truck} title="אין ספקים" description="הוסיפי ספק ראשון" />
       ) : view === 'table' ? (
-        <SuppliersTable suppliers={filtered} onEdit={(s) => { setEditSupplier(s); setShowAdd(true); }} />
+        <SuppliersTable suppliers={filtered} onEdit={(s) => { setEditSupplier(s); setShowAdd(true); }} commissionsBySupplier={commissionsBySupplier} />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map(s => (
@@ -117,7 +134,16 @@ export default function Suppliers() {
                     {s.price_level && (
                       <span className="text-xs">מחיר: {PRICE_LABELS[s.price_level]}</span>
                     )}
+                    {s.commission_rate > 0 && (
+                      <span className="text-xs flex items-center gap-1"><Percent className="w-3 h-3" />{s.commission_rate}%</span>
+                    )}
                   </div>
+                  {commissionsBySupplier[s.id]?.expected > 0 && (
+                    <div className="flex gap-3 mt-1.5 text-xs">
+                      <span>צפוי: ₪{commissionsBySupplier[s.id].expected.toLocaleString()}</span>
+                      <span className="text-green-600">התקבל: ₪{(commissionsBySupplier[s.id].received || 0).toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -4,7 +4,7 @@ const STAGES = [
   { num: 3, key: 's3_status', label: 'פגישת הצעת מחיר', shortLabel: 'הצעת מחיר', icon: '💰', description: 'הצגת חבילות שירות ובחירת מסלול ליווי' },
   { num: 4, key: 's4_status', label: 'סגירת פרויקט', shortLabel: 'סגירת פרויקט', icon: '📋', description: 'חתימה על חוזה דיגיטלי ותשלום ראשון' },
   { num: 5, key: 's5_status', label: 'שאלון מפורט', shortLabel: 'שאלון מפורט', icon: '📝', description: 'איסוף מידע מעמיק לקראת תחילת התכנון' },
-  { num: 6, key: 's6_status', label: 'תכנית העמדה', shortLabel: 'תכנית עמדה', icon: '🗺️', description: 'עיצוב תכנית העמדה לחלל, הצגתה ללקוח, אישור ושחרור לביצוע' },
+  { num: 6, key: 's6_status', label: 'תכנית העמדה', shortLabel: 'תכנית העמדה', icon: '🗺️', description: 'עיצוב תכנית העמדה לחלל, הצגתה ללקוח, אישור ושחרור לביצוע' },
   { num: 7, key: 's7_status', label: 'הכנה לביצוע', shortLabel: 'הכנה לביצוע', icon: '⚡', description: 'תכניות חשמל, אינסטלציה, תאורה ומיזוג — הכנה לביצוע בשטח' },
   { num: 8, key: 's8_status', label: 'קונספט עיצובי + רנדרים', shortLabel: 'קונספט עיצובי', icon: '🎨', description: 'יצירת השפה העיצובית עם מודבורד ורנדרים AI' },
   { num: 9, key: 's9_status', label: 'ימי קניות', shortLabel: 'ימי קניות', icon: '🛍️', description: 'ליווי אישי לרכישות, ניהול מכסת ימים ומעקב תקציבי בזמן אמת' },
