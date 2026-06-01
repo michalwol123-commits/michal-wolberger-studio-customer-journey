@@ -16,7 +16,7 @@ const docTypes = [
   { value: 'concept', label: 'קונספט' },
   { value: 'render', label: 'רנדר' },
   { value: 'contract', label: 'חוזה' },
-  { value: 'quote', label: 'הצעת מחיר' },
+  { value: 'quote', label: 'הצעת מחיר מיכל' },
   { value: 'photo', label: 'תמונה' },
   { value: 'gantt', label: 'גאנט' },
   { value: 'budget', label: 'תקציב' },

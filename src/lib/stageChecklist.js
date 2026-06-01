@@ -77,12 +77,13 @@ const STAGE_CHECKLISTS = {
     ]
   },
   10: {
-    title: 'תמחור קבלנים ובחירת ספקים',
+    title: 'תמחור קבלנים/ספקים',
     items: [
       { id: 's10_1', label: 'קבלת הצעות מחיר מספקים', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'suppliers' } },
       { id: 's10_2', label: 'השוואה ובחירת ספקים', type: 'manual', required: true, milestone_key: 'stage_10_suppliers' },
       { id: 's10_3', label: 'אישור תקציב ספקים', type: 'manual', required: false },
-      { id: 's10_4', label: 'יצירת הזמנות רכש', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'purchases' } },
+      { id: 's10_4', label: 'העלאת הצעות מחיר מספקים', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'purchases' } },
+      { id: 's10_5', label: 'העלאת הזמנות מאושרות מספקים', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'purchases' } },
     ]
   },
   11: {

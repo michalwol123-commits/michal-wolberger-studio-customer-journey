@@ -90,10 +90,10 @@ export default function PurchaseOrders() {
 
   return (
     <div>
-      <PageHeader title="הזמנות רכש" subtitle={`סה״כ פעיל: ₪${totalActive.toLocaleString()}`}>
+      <PageHeader title="מסמכי ספקים" subtitle={`סה״כ פעיל: ₪${totalActive.toLocaleString()}`}>
         <ViewToggle view={view} onViewChange={setView} />
         <Button size="sm" onClick={() => { setEditing(null); setShowDialog(true); }} className="gap-1">
-          <Plus className="w-4 h-4" />הזמנה חדשה
+          <Plus className="w-4 h-4" />מסמך ספק חדש
         </Button>
       </PageHeader>
 
