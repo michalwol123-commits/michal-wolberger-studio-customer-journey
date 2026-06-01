@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { file_url, project_supplier_id, extract_only } = await req.json();
+    const { file_url, project_supplier_id, extract_only, is_approved } = await req.json();
 
     if (!file_url) {
       return Response.json({ error: 'Missing file_url' }, { status: 400 });
@@ -85,12 +85,20 @@ carpenter, electrician, plumber, painter, ac, kitchen, flooring, stainless, glas
         date: new Date().toISOString().split('T')[0]
       });
 
-      await base44.entities.ProjectSupplier.update(project_supplier_id, {
-        quoted_amount: amount,
+      const updateData = {
         attachment_url: file_url,
         quote_history: JSON.stringify(history),
-        status: current?.status === 'pending' ? 'quoted' : current?.status
-      });
+      };
+
+      if (is_approved) {
+        updateData.agreed_amount = amount;
+        updateData.status = 'approved';
+      } else {
+        updateData.quoted_amount = amount;
+        updateData.status = current?.status === 'pending' ? 'quoted' : current?.status;
+      }
+
+      await base44.entities.ProjectSupplier.update(project_supplier_id, updateData);
 
       return Response.json({ success: true, amount, history_count: history.length });
     }

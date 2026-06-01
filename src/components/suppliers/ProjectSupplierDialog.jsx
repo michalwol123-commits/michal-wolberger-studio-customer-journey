@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, ExternalLink, Loader2, UserPlus } from 'lucide-react';
+import { Upload, ExternalLink, Loader2, UserPlus, Info, FileCheck, FilePlus } from 'lucide-react';
 import { categoryLabel } from './SupplierCategoryBadge';
 import AddSupplierDialog from './AddSupplierDialog';
 
@@ -43,6 +43,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
   const [showNewSupplier, setShowNewSupplier] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [quoteTypePrompt, setQuoteTypePrompt] = useState(null); // { file_url, amount }
 
   const [form, setForm] = useState({
     supplier_id: '',
@@ -147,13 +148,14 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     setUploading(false);
 
     if (isEdit) {
-      // Edit mode: update existing record directly
+      // Edit mode: extract amount then ask user what type of quote this is
       setExtracting(true);
       base44.functions.invoke('extractSupplierQuote', {
         file_url,
-        project_supplier_id: editData.id,
-      }).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['project-suppliers', projectId] });
+        extract_only: true,
+      }).then((res) => {
+        const amount = res?.data?.extracted?.amount;
+        setQuoteTypePrompt({ file_url, amount });
       }).finally(() => setExtracting(false));
     } else {
       // New mode: extract and fill form fields
@@ -184,6 +186,34 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     }
   };
 
+  const handleQuoteTypeChoice = async (isApproved) => {
+    if (!quoteTypePrompt) return;
+    const { file_url, amount } = quoteTypePrompt;
+    setQuoteTypePrompt(null);
+
+    // Update the backend record
+    await base44.functions.invoke('extractSupplierQuote', {
+      file_url,
+      project_supplier_id: editData.id,
+      is_approved: isApproved,
+    });
+    queryClient.invalidateQueries({ queryKey: ['project-suppliers', projectId] });
+
+    // Also update the form so the user sees the change
+    if (isApproved) {
+      setForm(prev => ({
+        ...prev,
+        agreed_amount: amount || prev.agreed_amount,
+        status: 'approved',
+      }));
+    } else {
+      setForm(prev => ({
+        ...prev,
+        quoted_amount: amount || prev.quoted_amount,
+      }));
+    }
+  };
+
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   return (
@@ -194,6 +224,14 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
             <DialogTitle className="font-heading">
               {isEdit ? 'עריכת ספק בפרויקט' : 'הוסף ספק לפרויקט'}
             </DialogTitle>
+            {!isEdit && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground mt-1">
+                <Info className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>
+                  ניתן לבחור ספק מהרשימה, או להעלות הצעת מחיר — המערכת תחלץ אוטומטית את שם הספק, המחיר והקטגוריה, ותוסיף את הספק לרשימה אם אינו קיים.
+                </span>
+              </div>
+            )}
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Supplier selector with + new */}
@@ -335,6 +373,44 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
           }
         }}
       />
+
+      {/* Quote type prompt — new quote or approved quote */}
+      <Dialog open={!!quoteTypePrompt} onOpenChange={() => setQuoteTypePrompt(null)}>
+        <DialogContent className="max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="font-heading">סוג ההצעה</DialogTitle>
+            <DialogDescription>
+              {quoteTypePrompt?.amount
+                ? `הסכום שחולץ: ₪${quoteTypePrompt.amount.toLocaleString()}`
+                : 'לא ניתן היה לחלץ סכום מהמסמך'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
+              variant="outline"
+              className="justify-start gap-3 h-auto py-3 px-4"
+              onClick={() => handleQuoteTypeChoice(false)}
+            >
+              <FilePlus className="w-5 h-5 text-primary shrink-0" />
+              <div className="text-right">
+                <div className="font-medium">הצעה חדשה</div>
+                <div className="text-xs text-muted-foreground">יעדכן את שדה ההצעה</div>
+              </div>
+            </Button>
+            <Button
+              variant="outline"
+              className="justify-start gap-3 h-auto py-3 px-4"
+              onClick={() => handleQuoteTypeChoice(true)}
+            >
+              <FileCheck className="w-5 h-5 text-green-600 shrink-0" />
+              <div className="text-right">
+                <div className="font-medium">הצעה מאושרת</div>
+                <div className="text-xs text-muted-foreground">יעדכן את שדה הסגור + סטטוס מאושר</div>
+              </div>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
