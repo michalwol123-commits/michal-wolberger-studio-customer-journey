@@ -15,7 +15,7 @@ import InspirationBoardEditor from '@/components/projects/InspirationBoardEditor
 import PlannedDaysInput from './PlannedDaysInput';
 import DaysProgressMetrics from './DaysProgressGauge';
 
-const VISUAL_STAGES = [8]; // stages that get gallery view
+const VISUAL_STAGES = [8, 13]; // stages that get gallery view
 
 export default function StagePanel({ project, stageNum, onNavigateTab }) {
   const [showUpload, setShowUpload] = useState(false);
