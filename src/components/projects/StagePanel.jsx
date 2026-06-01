@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Download, Eye } from 'lucide-react';
+import { Upload, FileText, Download, Eye, HardDrive } from 'lucide-react';
 import DeleteButton from '@/components/shared/DeleteButton';
 import { getStageByNum } from '@/lib/stageConfig';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
@@ -14,11 +14,13 @@ import ProjectDesignMap from '@/components/design/ProjectDesignMap';
 import InspirationBoardEditor from '@/components/projects/InspirationBoardEditor';
 import PlannedDaysInput from './PlannedDaysInput';
 import DaysProgressMetrics from './DaysProgressGauge';
+import ImportDrivePhotosDialog from './ImportDrivePhotosDialog';
 
 const VISUAL_STAGES = [8, 13]; // stages that get gallery view
 
 export default function StagePanel({ project, stageNum, onNavigateTab }) {
   const [showUpload, setShowUpload] = useState(false);
+  const [showDriveImport, setShowDriveImport] = useState(false);
   const queryClient = useQueryClient();
   const stage = getStageByNum(stageNum);
   const stageStatus = project[stage?.key] || 'pending';
@@ -105,10 +107,18 @@ export default function StagePanel({ project, stageNum, onNavigateTab }) {
             <FileText className="w-4 h-4" />
             מסמכים ({isVisualStage ? otherDocs.length : stageDocs.length})
           </CardTitle>
-          <Button size="sm" onClick={() => setShowUpload(true)} className="gap-1">
-            <Upload className="w-4 h-4" />
-            העלאת מסמך לשלב {stageNum}
-          </Button>
+          <div className="flex gap-2">
+            {isVisualStage && (
+              <Button size="sm" variant="outline" onClick={() => setShowDriveImport(true)} className="gap-1">
+                <HardDrive className="w-4 h-4" />
+                ייבוא מדרייב
+              </Button>
+            )}
+            <Button size="sm" onClick={() => setShowUpload(true)} className="gap-1">
+              <Upload className="w-4 h-4" />
+              העלאת מסמך לשלב {stageNum}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {(isVisualStage ? otherDocs : stageDocs).length === 0 ? (
@@ -154,6 +164,13 @@ export default function StagePanel({ project, stageNum, onNavigateTab }) {
         projectId={project.id}
         clientId={project.client_id}
         defaultStage={stageNum}
+      />
+
+      <ImportDrivePhotosDialog
+        open={showDriveImport}
+        onOpenChange={setShowDriveImport}
+        projectId={project.id}
+        stage={stageNum}
       />
     </div>
   );
