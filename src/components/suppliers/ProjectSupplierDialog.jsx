@@ -20,7 +20,7 @@ const STATUS_OPTIONS = [
 ];
 
 const BUDGET_CATEGORIES = [
-  { value: '', label: 'כללי (ללא קטגוריה)' },
+  { value: 'כללי', label: 'כללי (ללא קטגוריה)' },
   { value: 'מטבח', label: 'מטבח' },
   { value: 'נגרות', label: 'נגרות' },
   { value: 'חשמל', label: 'חשמל' },
@@ -58,7 +58,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     if (editData) {
       setForm({
         supplier_id: editData.supplier_id || '',
-        budget_category: editData.budget_category || '',
+        budget_category: editData.budget_category || 'כללי',
         quoted_amount: editData.quoted_amount || '',
         agreed_amount: editData.agreed_amount || '',
         status: editData.status || 'pending',
@@ -68,7 +68,7 @@ export default function ProjectSupplierDialog({ open, onOpenChange, projectId, e
     } else {
       setForm({
         supplier_id: '',
-        budget_category: '',
+        budget_category: 'כללי',
         quoted_amount: '',
         agreed_amount: '',
         status: 'pending',
