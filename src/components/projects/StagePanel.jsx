@@ -97,7 +97,7 @@ export default function StagePanel({ project, stageNum, onNavigateTab }) {
 
       {/* Visual gallery for stage 8 */}
       {isVisualStage && imageDocs.length > 0 && (
-        <StageGallery docs={imageDocs} />
+        <StageGallery docs={imageDocs} title={stageNum === 13 ? 'רגעים מהפרויקט שלנו' : undefined} />
       )}
 
       {/* Documents list */}

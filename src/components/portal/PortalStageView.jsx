@@ -257,10 +257,13 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
   });
 
   const isCurrentStage = Number(stageNum) === Number(project.stage_current);
+  const PHOTO_TYPES_TO_HIDE = ['render', 'concept', 'photo', 'inspiration', 'mood_board'];
   const stageDocs = content.docs
     ? documents.filter(d => {
         if (d.is_current === false) return false;
         if (d.type === 'shopping_invoice' || d.type === 'quote') return false;
+        // In stage 13, hide photo types from doc list (they show in the collage)
+        if (Number(stageNum) === 13 && PHOTO_TYPES_TO_HIDE.includes(d.type)) return false;
         if (d.stage != null && d.stage !== 0 && Number(d.stage) === Number(stageNum)) return true;
         if ((!d.stage || d.stage === 0) && isCurrentStage) return true;
         return false;
