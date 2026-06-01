@@ -8,7 +8,7 @@ const STAGES = [
   { num: 7, key: 's7_status', label: 'הכנה לביצוע', shortLabel: 'הכנה לביצוע', icon: '⚡', description: 'תכניות חשמל, אינסטלציה, תאורה ומיזוג — הכנה לביצוע בשטח' },
   { num: 8, key: 's8_status', label: 'קונספט עיצובי + רנדרים', shortLabel: 'קונספט עיצובי', icon: '🎨', description: 'יצירת השפה העיצובית עם מודבורד ורנדרים AI' },
   { num: 9, key: 's9_status', label: 'ימי קניות', shortLabel: 'ימי קניות', icon: '🛍️', description: 'ליווי אישי לרכישות, ניהול מכסת ימים ומעקב תקציבי בזמן אמת' },
-  { num: 10, key: 's10_status', label: 'תמחור קבלנים/ספקים', shortLabel: 'תמחור קבלנים', icon: '⚖️', description: 'קבלת הצעות מחיר, השוואה חכמה ובחירת אנשי מקצוע' },
+  { num: 10, key: 's10_status', label: 'תמחור קבלנים/ספקים', shortLabel: 'תמחור קבלנים/ספקים', icon: '⚖️', description: 'קבלת הצעות מחיר, השוואה חכמה ובחירת אנשי מקצוע' },
   { num: 11, key: 's11_status', label: 'ביצוע בשטח + ימי פיקוח', shortLabel: 'ביצוע + פיקוח', icon: '🏗️', description: 'פיקוח צמוד על עבודות הקבלן, תיעוד ליקויים ווידוא ביצוע לפי התכניות' },
   { num: 12, key: 's12_status', label: 'ימי התקנה ותיאום ספקים', shortLabel: 'התקנה + ספקים', icon: '🔧', description: 'תיאום, ביצוע ובקרה על התקנות הגמר בפרויקט' },
   { num: 13, key: 's13_status', label: 'סיום פרויקט ומסירה', shortLabel: 'סיום ומסירה', icon: '🏠', description: 'סגירת המעגל, הבטחת שביעות רצון ומינוף לשיווק' },
