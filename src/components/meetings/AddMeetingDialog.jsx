@@ -54,6 +54,7 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
   });
 
   useEffect(() => {
+    if (!open) return;
     if (initialData) {
       setForm({
         client_id: initialData.client_id || '',
@@ -72,7 +73,8 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
     } else {
       setForm(defaultForm);
     }
-  }, [initialData, open]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const mutation = useMutation({
     mutationFn: (data) => initialData?.id
