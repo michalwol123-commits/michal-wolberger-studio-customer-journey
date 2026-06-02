@@ -1,25 +1,12 @@
-// Generate a styled PDF quote using 27 Canva background images + dynamic text overlays
-// Pages: 27 total. Page 1 (cover, index 0) and page 24 (contract, index 23) get dynamic client text.
+// Generate the quote+contract PDF for Michal Wolberger Interior Design.
+// 27 Canva pages as background JPEGs + transparent text overlay on the 2 dynamic
+// pages only — cover (index 0) and contract (index 23). Only client data is overlaid.
+// RTL: jsPDF reverses pure-LTR under setR2L(true) and pure-Hebrew under setR2L(false).
+// Fix = toggle R2L PER STRING by Hebrew presence (see put()). Coordinates are calibrated — do NOT change.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 
-const COVER_INDEX = 0;    // p-01.jpg — cover page
-const CONTRACT_INDEX = 23; // p-24.jpg — "הסכם מתן שירותים"
-
-// Helper: detect Hebrew chars in a string
-function hasHebrew(str) {
-  return /[\u0590-\u05FF]/.test(str);
-}
-
-// RTL-aware text placement: enables R2L for Hebrew, disables for Latin/numbers
-function putText(doc, text, x, y, options) {
-  const rtl = hasHebrew(text);
-  doc.setR2L(rtl);
-  doc.text(text, x, y, options || {});
-  doc.setR2L(false);
-}
-
-// All 27 background page images in order
+// 27 URLs in order. Index 0 = p-01 (cover), Index 23 = p-24 (contract "הסכם מתן שירותים").
 const PAGE_IMAGES = [
   'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/f09b4eea4_p-01.jpg',
   'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/b94a89d56_p-02.jpg',
@@ -50,35 +37,19 @@ const PAGE_IMAGES = [
   'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/4853b4a4e_p-27.jpg',
 ];
 
-// Fetch image as base64 data URI for jsPDF
-async function fetchImageBase64(url) {
-  const resp = await fetch(url);
-  const buf = await resp.arrayBuffer();
-  const arr = new Uint8Array(buf);
-  let binary = '';
-  for (let i = 0; i < arr.length; i++) {
-    binary += String.fromCharCode(arr[i]);
-  }
-  return 'data:image/jpeg;base64,' + btoa(binary);
-}
+const COVER_INDEX = 0;     // p-01.jpg
+const CONTRACT_INDEX = 23; // p-24.jpg "הסכם מתן שירותים"
+const HEB = /[\u0590-\u05FF]/;
+const HEEBO_TTF_URL = 'https://github.com/google/fonts/raw/main/ofl/heebo/Heebo%5Bwght%5D.ttf';
 
-// Fetch Heebo Hebrew font as base64
-async function fetchHeeboFont() {
-  const cssResp = await fetch(
-    'https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&subset=hebrew',
-    { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }
-  );
-  const css = await cssResp.text();
-  // Find .ttf URL for weight 400
-  const urlMatch = css.match(/src:\s*url\(([^)]+\.ttf[^)]*)\)/);
-  if (!urlMatch) return null;
-  const ttfUrl = urlMatch[1].replace(/['"]/g, '');
-  const fontResp = await fetch(ttfUrl);
-  const fontBuf = await fontResp.arrayBuffer();
-  const fontArr = new Uint8Array(fontBuf);
+async function fetchBase64(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`fetch failed ${resp.status} ${url}`);
+  const buf = new Uint8Array(await resp.arrayBuffer());
   let binary = '';
-  for (let i = 0; i < fontArr.length; i++) {
-    binary += String.fromCharCode(fontArr[i]);
+  const chunk = 0x8000;
+  for (let i = 0; i < buf.length; i += chunk) {
+    binary += String.fromCharCode(...buf.subarray(i, i + chunk));
   }
   return btoa(binary);
 }
@@ -89,64 +60,104 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { client_id, quote_id, title, package_type, total_amount, scope, meeting_date } = await req.json();
+    const { client_id, quote_id, total_amount, meeting_date } = await req.json();
 
-    // Fetch client
     const clients = await base44.asServiceRole.entities.Client.filter({ id: client_id });
     if (clients.length === 0) return Response.json({ error: 'Client not found' }, { status: 404 });
     const client = clients[0];
 
+    if (PAGE_IMAGES.length !== 27) {
+      return Response.json({ error: `PAGE_IMAGES must have exactly 27 URLs (p-01..p-27). Got ${PAGE_IMAGES.length}.` }, { status: 500 });
+    }
+
     console.log('Starting PDF generation for client:', client.name);
 
-    // Load Hebrew font
-    const heeboBase64 = await fetchHeeboFont();
+    const heeboBase64 = await fetchBase64(HEEBO_TTF_URL).catch((e) => { console.error('Heebo fetch failed:', e); return ''; });
     console.log('Font loaded:', !!heeboBase64);
 
-    // Download all 27 background images in parallel
-    console.log('Downloading 27 background images...');
-    const imagePromises = PAGE_IMAGES.map(url => fetchImageBase64(url));
-    const images = await Promise.all(imagePromises);
-    console.log('All images downloaded');
+    // Load images SEQUENTIALLY with per-image logging — a bad URL surfaces as a clear error, never a blank page.
+    const pageImages = [];
+    const failed = [];
+    for (let i = 0; i < PAGE_IMAGES.length; i++) {
+      try {
+        const b64 = await fetchBase64(PAGE_IMAGES[i]);
+        if (!b64 || b64.length < 100) throw new Error(`empty/too small (${b64.length} chars)`);
+        console.log(`img ${i + 1}/27 ok — ${b64.length} chars`);
+        pageImages.push(b64);
+      } catch (e) {
+        console.error(`img ${i + 1}/27 FAILED — ${PAGE_IMAGES[i]} — ${e.message}`);
+        failed.push(`#${i + 1}: ${PAGE_IMAGES[i]} (${e.message})`);
+        pageImages.push('');
+      }
+    }
+    if (failed.length) {
+      return Response.json({ error: `Image load failed for ${failed.length}/27:\n${failed.join('\n')}` }, { status: 500 });
+    }
 
-    // Create PDF
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pageW = 210;
-    const pageH = 297;
-
-    // Register Hebrew font
     if (heeboBase64) {
       doc.addFileToVFS('Heebo.ttf', heeboBase64);
       doc.addFont('Heebo.ttf', 'Heebo', 'normal');
+      doc.setFont('Heebo');
     }
+    const W = 210, H = 297;
 
-    // Build all 27 pages
-    for (let i = 0; i < 27; i++) {
+    // RTL-aware text placement: enables R2L for Hebrew, disables for Latin/numbers
+    const put = (txt, x, y, align, size) => {
+      const t = String(txt ?? '');
+      if (!t) return;
+      doc.setFontSize(size);
+      doc.setR2L(HEB.test(t));
+      doc.text(t, x, y, { align });
+      doc.setR2L(false);
+    };
+
+    const today = new Date();
+    const dd = String(today.getDate());
+    const mm = String(today.getMonth() + 1);
+    const yyyy = String(today.getFullYear());
+    const coverDate = today.toLocaleDateString('he-IL');
+    const quoteDate = meeting_date ? new Date(meeting_date).toLocaleDateString('he-IL') : coverDate;
+    const amountStr = total_amount != null ? Number(total_amount).toLocaleString('he-IL') : '';
+    const city = client.city || '';
+    const coverLine = city ? `${client.name || ''}, ${city}` : (client.name || '');
+    const addressLine = [client.address, city].filter(Boolean).join(', ');
+
+    for (let i = 0; i < pageImages.length; i++) {
       if (i > 0) doc.addPage();
-
-      // Add full-page background image
-      doc.addImage(images[i], 'JPEG', 0, 0, pageW, pageH);
-
-      // Set font for text overlays
-      if (heeboBase64) doc.setFont('Heebo');
+      doc.addImage(pageImages[i], 'JPEG', 0, 0, W, H);
 
       // --- COVER (index 0, p-01.jpg): client name+city, date ---
       if (i === COVER_INDEX) {
-        addCoverText(doc, client, pageW, pageH);
+        doc.setTextColor(74, 53, 38);
+        put(coverLine, W / 2, 260, 'center', 12);
+        put(coverDate, W / 2, 266, 'center', 11);
       }
 
-      // --- CONTRACT (index 23, p-24.jpg "הסכם מתן שירותים"): client details + amount ---
+      // --- CONTRACT (index 23, p-24.jpg "הסכם מתן שירותים"): all client details ---
       if (i === CONTRACT_INDEX) {
-        addContractText(doc, client, total_amount, meeting_date, pageW, pageH);
+        doc.setTextColor(58, 42, 30);
+        // signing date — RTL: day rightmost (large x), year leftmost (small x)
+        put(dd, 120, 50, 'center', 11);
+        put(mm, 92, 50, 'center', 11);
+        put(yyyy, 68, 50, 'center', 11);
+        // identity — each value sits on its dashed line
+        put(client.name, 130, 107, 'right', 13);
+        put(client.id_number, 138, 115, 'right', 13);
+        put(client.phone, 139, 123, 'right', 12);
+        put(addressLine, 138, 135, 'right', 12);
+        put(client.email, 140, 143, 'right', 12);
+        // fee + quote date (inline in body sentences)
+        put(amountStr, 62, 209, 'center', 12);
+        put(quoteDate, 35, 227, 'center', 11);
       }
     }
 
     console.log('PDF pages built, converting to binary...');
 
-    // Convert to binary and upload
     const pdfBytes = doc.output('arraybuffer');
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const file = new File([blob], `quote_${client.name}_${Date.now()}.pdf`, { type: 'application/pdf' });
-
     const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
     console.log('PDF uploaded:', file_url);
 
@@ -161,64 +172,3 @@ Deno.serve(async (req) => {
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
-
-// --- Cover page text overlay (index 0, p-01.jpg) ---
-// Calibrated coords: center-aligned, bottom area
-function addCoverText(doc, client, pageW, pageH) {
-  doc.setTextColor(74, 53, 38);
-
-  // Client name + city — single line, 12pt, center at (105, 260)
-  doc.setFontSize(12);
-  const nameLine = [client.name, client.address].filter(Boolean).join(', ');
-  putText(doc, nameLine, 105, 260, { align: 'center' });
-
-  // Date — 11pt, center at (105, 266)
-  doc.setFontSize(11);
-  const today = new Date();
-  const dateStr = `${today.getDate()}.${today.getMonth() + 1}.${today.getFullYear()}`;
-  putText(doc, dateStr, 105, 266, { align: 'center' });
-}
-
-// --- Contract page text overlay (index 23, p-24.jpg "הסכם מתן שירותים") ---
-// All coords in mm on A4 (210×297), calibrated from Canva template
-function addContractText(doc, client, totalAmount, meetingDate, pageW, pageH) {
-  doc.setTextColor(58, 42, 30);
-
-  const today = new Date();
-  const dayStr = String(today.getDate());
-  const monthStr = String(today.getMonth() + 1);
-  const yearStr = String(today.getFullYear());
-
-  // "שנחתם ביום __ לחודש __ שנת __" — top line
-  doc.setFontSize(11);
-  putText(doc, dayStr, 116.6, 48, { align: 'center' });
-  putText(doc, monthStr, 143.9, 48, { align: 'center' });
-  putText(doc, yearStr, 171.2, 48, { align: 'center' });
-
-  // שם מלא — right-aligned at x=168, y=115
-  doc.setFontSize(13);
-  putText(doc, client.name || '', 168, 115, { align: 'right' });
-
-  // ת.ז — right-aligned at x=172.2, y=121.5
-  putText(doc, client.id_number || '', 172.2, 121.5, { align: 'right' });
-
-  // כתובת + טלפון — right-aligned at x=193.2, y=135
-  doc.setFontSize(12);
-  const contactStr = [client.address, client.phone].filter(Boolean).join(' | ');
-  putText(doc, contactStr, 193.2, 135, { align: 'right' });
-
-  // דוא"ל — right-aligned at x=163.8, y=147
-  putText(doc, client.email || '', 163.8, 147, { align: 'right' });
-
-  // סכום — center at x=82, y=211
-  const amountStr = totalAmount ? Number(totalAmount).toLocaleString('he-IL') : '';
-  putText(doc, amountStr, 82, 211, { align: 'center' });
-
-  // תאריך הצעת מחיר — center at x=46, y=227
-  if (meetingDate) {
-    const md = new Date(meetingDate);
-    const mdStr = `${md.getDate()}.${md.getMonth() + 1}.${md.getFullYear()}`;
-    doc.setFontSize(11);
-    putText(doc, mdStr, 46, 227, { align: 'center' });
-  }
-}
