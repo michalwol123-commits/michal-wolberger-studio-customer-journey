@@ -170,14 +170,38 @@ Deno.serve(async (req) => {
         put(coverDate, W / 2, 266, 'center', 11);
       }
 
-      // --- P15 (index 14, p-15.jpg): comparison table, one value per S/M/L cell ---
+      // --- P15 (index 14, p-15.jpg): comparison table ---
+      // ✓ is drawn as a vector (Heebo has no ✓ glyph); long text wraps to column width.
       if (i === P15_INDEX) {
         doc.setTextColor(40, 40, 40);
+        const isCheck = (v) => {
+          const s = String(v ?? '').trim().toLowerCase();
+          return s === '✓' || s === '✔' || s === 'v' || s === 'true' || s === 'כן';
+        };
+        const drawCheck = (cx, cy) => {
+          doc.setDrawColor(40, 40, 40);
+          doc.setLineWidth(0.6);
+          doc.line(cx - 2, cy - 0.2, cx - 0.6, cy + 1.5);
+          doc.line(cx - 0.6, cy + 1.5, cx + 2.4, cy - 2.4);
+        };
         for (const [key, y] of CMP_ROWS) {
           const cell = comparison[key] || {};
-          put(cell.s, CMP_COL_X.s, y, 'center', 11);
-          put(cell.m, CMP_COL_X.m, y, 'center', 11);
-          put(cell.l, CMP_COL_X.l, y, 'center', 11);
+          for (const col of ['s', 'm', 'l']) {
+            const val = cell[col];
+            if (val == null || String(val).trim() === '') continue;
+            const x = CMP_COL_X[col];
+            if (isCheck(val)) {
+              drawCheck(x, y - 1);
+            } else {
+              doc.setFontSize(9);
+              doc.setR2L(HEB.test(String(val)));
+              const lines = doc.splitTextToSize(String(val), 40);
+              const lh = 3.8;
+              let yy = y - ((lines.length - 1) * lh) / 2;
+              for (const ln of lines) { doc.text(ln, x, yy, { align: 'center' }); yy += lh; }
+              doc.setR2L(false);
+            }
+          }
         }
       }
 
