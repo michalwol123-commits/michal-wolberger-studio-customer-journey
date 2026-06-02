@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
@@ -94,29 +92,26 @@ export default function Quotes() {
   const toggleAll = () => setSelectedIds(prev => prev.length === filtered.length ? [] : filtered.map(q => q.id));
 
   const generatePDF = async (quote, clientName) => {
-    const div = document.createElement('div');
-    div.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:white;';
-    div.innerHTML = '<div style="width:794px;min-height:1123px;background:#fff;font-family:Arial,Arial Hebrew,sans-serif;direction:rtl;color:#1a1a1a;"><div style="background:#8B7355;padding:40px 50px;color:white;"><div style="font-size:28px;font-weight:700;">Michal Wolberger</div><div style="font-size:14px;margin-top:4px;">עיצוב פנים</div></div><div style="padding:40px 50px;"><div style="text-align:center;font-size:24px;font-weight:600;color:#8B7355;margin-bottom:30px;border-bottom:2px solid #C9A96E;padding-bottom:16px;">הצעת מחיר</div><div style="text-align:right;margin-bottom:24px;line-height:2.2;font-size:15px;"><div><strong>לקוח:</strong> ' + (clientName || '') + '</div><div><strong>כותרת:</strong> ' + (quote.title || '') + '</div><div><strong>תאריך:</strong> ' + new Date().toLocaleDateString('he-IL') + '</div></div><div style="background:#F5F0EA;border-radius:8px;padding:24px 28px;margin-bottom:24px;text-align:center;"><div style="font-size:13px;color:#8B7355;margin-bottom:6px;">סהכ לתשלום</div><div style="font-size:32px;font-weight:700;">' + Number(quote.total_amount||0).toLocaleString('he-IL') + ' ILS</div></div>' + (quote.scope ? '<div style="margin-top:20px;"><div style="font-size:14px;font-weight:600;color:#8B7355;margin-bottom:8px;">היקף העבודה</div><div style="font-size:14px;line-height:1.7;">' + quote.scope + '</div></div>' : '') + '</div><div style="text-align:center;font-size:12px;color:#888;border-top:1px solid #eee;padding:16px 50px 0;">Michal Wolberger | עיצוב פנים | 052-468-7812</div></div>';
-    document.body.appendChild(div);
-    try {
-      const canvas = await html2canvas(div.firstElementChild, { scale: 2, useCORS: true, logging: false });
-      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = (canvas.height * pageW) / canvas.width;
-      pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
-      pdf.save('quote_' + (clientName || 'client') + '.pdf');
-
-      // Upload to Base44 and save file_url on the Quote entity
-      const pdfBlob = pdf.output('blob');
-      const file = new File([pdfBlob], 'quote_' + (clientName || 'client') + '.pdf', { type: 'application/pdf' });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      await base44.entities.Quote.update(quote.id, { file_url });
-      queryClient.invalidateQueries({ queryKey: ['quotes'] });
-
-    } finally {
-      document.body.removeChild(div);
+    const result = await base44.functions.invoke('generateQuotePDF', {
+      client_id: quote.client_id,
+      quote_id: quote.id,
+      title: quote.title,
+      package_type: quote.package_type,
+      total_amount: quote.total_amount,
+      scope: quote.scope,
+      meeting_date: quote.meeting_date,
+    });
+    const fileUrl = result?.data?.file_url || result?.file_url;
+    if (!fileUrl) {
+      alert(result?.data?.error || result?.error || 'יצירת ה-PDF נכשלה');
+      return;
     }
+    await base44.entities.Quote.update(quote.id, { file_url: fileUrl });
+    queryClient.invalidateQueries({ queryKey: ['quotes'] });
+    const a = document.createElement('a');
+    a.href = fileUrl; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.download = 'quote_' + (clientName || 'client') + '.pdf';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
 
   return (
