@@ -1,63 +1,61 @@
-// Generate the quote+contract PDF for Michal Wolberger Interior Design.
-// 27 Canva pages as background JPEGs + transparent text overlay on the dynamic
-// pages — cover (0), p-15 comparison table (14), p-16 prices (15), contract (23).
-// RTL: jsPDF reverses pure-LTR under setR2L(true) and pure-Hebrew under setR2L(false).
-// Fix = toggle R2L PER STRING by Hebrew presence (see put()). Coordinates are calibrated.
+
+// Generate the full quote+contract PDF for Michal Wolberger Interior Design.
+// Approach: 27 Canva pages as background JPEGs + a transparent text overlay on
+// the 2 dynamic pages only — cover (page 1 / index 0) and contract (page 24 / index 23).
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 
-// 27 URLs in order. Index 0 = p-01 (cover), Index 23 = p-24 (contract "הסכם מתן שירותים").
+const B = 'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/';
 const PAGE_IMAGES = [
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/c68651c3f_p-01.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/c04dac11b_p-02.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/d9baae647_p-03.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/c0287a4d6_p-04.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/883a904ed_p-05.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/c79f5ebb1_p-06.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/218b9de44_p-07.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/125b5cf35_p-08.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/a64363a35_p-09.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/a3ce1e1fb_p-10.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/4daa96b52_p-11.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/7c2d46126_p-12.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/b9fa781dd_p-13.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/ef1f00041_p-14.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/adbbb37d5_p-15.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/bdd63fda7_p-16.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/dfb07220c_p-17.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/ed071e133_p-18.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/8ffe8d213_p-19.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/3af05f0d4_p-20.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/33be831d0_p-21.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/1cecaa474_p-22.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/053152709_p-23.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/bcccd9ce8_p-24.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/463816653_p-25.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/9b33cace9_p-26.jpg',
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/4853b4a4e_p-27.jpg',
+  B + 'c68651c3f_p-01.jpg', // 0  cover (dynamic)
+  B + 'c04dac11b_p-02.jpg', // 1
+  B + 'd9baae647_p-03.jpg', // 2
+  B + 'c0287a4d6_p-04.jpg', // 3
+  B + '883a904ed_p-05.jpg', // 4
+  B + 'c79f5ebb1_p-06.jpg', // 5
+  B + '218b9de44_p-07.jpg', // 6
+  B + '125b5cf35_p-08.jpg', // 7
+  B + 'a64363a35_p-09.jpg', // 8
+  B + 'a3ce1e1fb_p-10.jpg', // 9
+  B + '4daa96b52_p-11.jpg', // 10
+  B + '7c2d46126_p-12.jpg', // 11
+  B + 'b9fa781dd_p-13.jpg', // 12
+  B + 'ef1f00041_p-14.jpg', // 13
+  B + 'adbbb37d5_p-15.jpg', // 14 comparison table (dynamic)
+  B + 'bdd63fda7_p-16.jpg', // 15 investment / prices (dynamic)
+  B + 'dfb07220c_p-17.jpg', // 16
+  B + 'ed071e133_p-18.jpg', // 17
+  B + '8ffe8d213_p-19.jpg', // 18
+  B + '3af05f0d4_p-20.jpg', // 19
+  B + '33be831d0_p-21.jpg', // 20
+  B + '1cecaa474_p-22.jpg', // 21
+  B + '053152709_p-23.jpg', // 22
+  B + 'bcccd9ce8_p-24.jpg', // 23 contract (dynamic)
+  B + '463816653_p-25.jpg', // 24
+  B + '9b33cace9_p-26.jpg', // 25
+  B + '4853b4a4e_p-27.jpg', // 26
 ];
 
 const COVER_INDEX = 0;     // p-01.jpg
 const P15_INDEX = 14;      // p-15.jpg — package comparison table (S/M/L cells)
-const P16_INDEX = 15;      // p-16.jpg — 3 package prices
-const CONTRACT_INDEX = 23; // p-24.jpg "הסכם מתן שירותים"
-const HEB = /[\u0590-\u05FF]/;
-const HEEBO_TTF_URL = 'https://github.com/google/fonts/raw/main/ofl/heebo/Heebo%5Bwght%5D.ttf';
+const P16_INDEX = 15;      // p-16.jpg — investment page (3 package prices)
+const CONTRACT_INDEX = 23; // p-24.jpg
 
-// p-15 comparison table. Columns reuse the p-16 price-box X positions (same grid).
-// CMP_ROWS keys MUST match the form field keys on the quote screen.
 const CMP_COL_X = { s: 31, m: 82, l: 130 };
 const CMP_ROWS = [
-  ['renders', 69],       // הדמיות פנים פוטוריאליסטיות
-  ['materials', 90],     // רשימת חומרי גמרים וכמויות
-  ['bathrooms', 114],    // חדרי רחצה
-  ['project_mgmt', 144], // ניהול פרויקט
-  ['cloud', 167],        // ניהול תיקייה בענן
-  ['budget', 190],       // ניהול טבלת אקסל ותקציב
-  ['install_days', 207], // ימי הקמה בשטח
-  ['styling', 224],      // הלבשת החלל והום סטיילינג
-  ['shopping', 261],     // פגישות ליווי וימי קניות
+  ['renders', 69],
+  ['materials', 90],
+  ['bathrooms', 114],
+  ['project_mgmt', 144],
+  ['cloud', 167],
+  ['budget', 190],
+  ['install_days', 207],
+  ['styling', 224],
+  ['shopping', 261],
 ];
+
+const HEB = /[֐-׿]/;
+const HEEBO_TTF_URL = 'https://github.com/google/fonts/raw/main/ofl/heebo/Heebo%5Bwght%5D.ttf';
 
 async function fetchBase64(url) {
   const resp = await fetch(url);
@@ -83,7 +81,6 @@ Deno.serve(async (req) => {
     if (clients.length === 0) return Response.json({ error: 'Client not found' }, { status: 404 });
     const client = clients[0];
 
-    // Fetch quote record for package prices + comparison table
     let quote = null;
     if (quote_id) {
       const quotes = await base44.asServiceRole.entities.Quote.filter({ id: quote_id });
@@ -91,22 +88,18 @@ Deno.serve(async (req) => {
     }
 
     if (PAGE_IMAGES.length !== 27) {
-      return Response.json({ error: `PAGE_IMAGES must have exactly 27 URLs (p-01..p-27). Got ${PAGE_IMAGES.length}.` }, { status: 500 });
+      return Response.json({ error: `PAGE_IMAGES must have exactly 27 URLs in order (p-01..p-27). Got ${PAGE_IMAGES.length}.` }, { status: 500 });
     }
 
-    console.log('Starting PDF generation for client:', client.name);
-
     const heeboBase64 = await fetchBase64(HEEBO_TTF_URL).catch((e) => { console.error('Heebo fetch failed:', e); return ''; });
-    console.log('Font loaded:', !!heeboBase64);
 
-    // Load images SEQUENTIALLY with per-image logging — a bad URL surfaces as a clear error, never a blank page.
     const pageImages = [];
     const failed = [];
     for (let i = 0; i < PAGE_IMAGES.length; i++) {
       try {
         const b64 = await fetchBase64(PAGE_IMAGES[i]);
         if (!b64 || b64.length < 100) throw new Error(`empty/too small (${b64.length} chars)`);
-        console.log(`img ${i + 1}/27 ok — ${b64.length} chars`);
+        console.log(`img ${i + 1}/27 ok — ${b64.length} chars — ${PAGE_IMAGES[i]}`);
         pageImages.push(b64);
       } catch (e) {
         console.error(`img ${i + 1}/27 FAILED — ${PAGE_IMAGES[i]} — ${e.message}`);
@@ -126,7 +119,6 @@ Deno.serve(async (req) => {
     }
     const W = 210, H = 297;
 
-    // RTL-aware text placement: enables R2L for Hebrew, disables for Latin/numbers
     const put = (txt, x, y, align, size) => {
       const t = String(txt ?? '');
       if (!t) return;
@@ -143,35 +135,30 @@ Deno.serve(async (req) => {
     const city = client.city || '';
     const coverLine = city ? `${client.name || ''}, ${city}` : (client.name || '');
     const addressLine = [client.address, city].filter(Boolean).join(', ');
-
     const money = (v) => (v != null && v !== '' ? Number(v).toLocaleString('he-IL') : '');
     const priceS = money(quote?.price_small);
     const priceM = money(quote?.price_medium);
     const priceL = money(quote?.price_large);
-
-    // p-15 comparison data — JSON object { rowKey: { s, m, l } }. Accepts object OR JSON string.
     let comparison = {};
     if (quote?.comparison) {
-      if (typeof quote.comparison === 'string') {
-        try { comparison = JSON.parse(quote.comparison); } catch { comparison = {}; }
-      } else {
-        comparison = quote.comparison;
-      }
+      comparison = typeof quote.comparison === 'string'
+        ? (() => { try { return JSON.parse(quote.comparison); } catch { return {}; } })()
+        : quote.comparison;
     }
 
     for (let i = 0; i < pageImages.length; i++) {
       if (i > 0) doc.addPage();
       doc.addImage(pageImages[i], 'JPEG', 0, 0, W, H);
 
-      // --- COVER (index 0, p-01.jpg): client name+city, date ---
       if (i === COVER_INDEX) {
         doc.setTextColor(74, 53, 38);
         put(coverLine, W / 2, 260, 'center', 12);
         put(coverDate, W / 2, 266, 'center', 11);
+        // חותמת אבחון — מוכיחה שהקוד החדש באמת באוויר.
+        doc.setTextColor(200, 0, 0);
+        put('v3', 8, 8, 'left', 8);
       }
 
-      // --- P15 (index 14, p-15.jpg): comparison table ---
-      // ✓ is drawn as a vector (Heebo has no ✓ glyph); long text wraps to column width.
       if (i === P15_INDEX) {
         doc.setTextColor(40, 40, 40);
         const isCheck = (v) => {
@@ -205,15 +192,13 @@ Deno.serve(async (req) => {
         }
       }
 
-      // --- P16 (index 15, p-16.jpg): 3 package prices ---
       if (i === P16_INDEX) {
         doc.setTextColor(58, 42, 30);
-        put(priceS, 31, 80, 'center', 16);   // left box = S
-        put(priceM, 82, 80, 'center', 16);   // middle = M
-        put(priceL, 130, 80, 'center', 16);  // right = L
+        put(priceS, 31, 80, 'center', 16);
+        put(priceM, 82, 80, 'center', 16);
+        put(priceL, 130, 80, 'center', 16);
       }
 
-      // --- CONTRACT (index 23, p-24.jpg "הסכם מתן שירותים"): all client details ---
       if (i === CONTRACT_INDEX) {
         doc.setTextColor(58, 42, 30);
         put(client.name, 130, 104, 'right', 13);
@@ -223,7 +208,6 @@ Deno.serve(async (req) => {
         put(client.email, 140, 140, 'right', 12);
         put(amountStr, 62, 206, 'center', 12);
         put(quoteDate, 35, 224, 'center', 11);
-        // signing date — only rendered when signDate is provided (contract stage)
         if (signDate) {
           const d = new Date(signDate);
           put(String(d.getDate()), 120, 50, 'center', 11);
@@ -233,21 +217,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log('PDF pages built, converting to binary...');
-
     const pdfBytes = doc.output('arraybuffer');
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const file = new File([blob], `quote_${client.name}_${Date.now()}.pdf`, { type: 'application/pdf' });
     const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
-    console.log('PDF uploaded:', file_url);
-
-    if (quote_id) {
-      await base44.asServiceRole.entities.Quote.update(quote_id, { file_url });
-    }
 
     return Response.json({ success: true, file_url });
   } catch (error) {
-    console.error('generateQuotePDF error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
