@@ -1,4 +1,3 @@
-
 // Generate the full quote+contract PDF for Michal Wolberger Interior Design.
 // Approach: 27 Canva pages as background JPEGs + a transparent text overlay on
 // the 2 dynamic pages only — cover (page 1 / index 0) and contract (page 24 / index 23).
@@ -41,7 +40,7 @@ const P15_INDEX = 14;      // p-15.jpg — package comparison table (S/M/L cells
 const P16_INDEX = 15;      // p-16.jpg — investment page (3 package prices)
 const CONTRACT_INDEX = 23; // p-24.jpg
 
-const CMP_COL_X = { s: 31, m: 82, l: 130 };
+const CMP_COL_X = { s: 24, m: 72, l: 119 };
 const CMP_ROWS = [
   ['renders', 69],
   ['materials', 90],
