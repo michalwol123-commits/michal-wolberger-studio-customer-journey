@@ -1,8 +1,8 @@
 // Generate the quote+contract PDF for Michal Wolberger Interior Design.
-// 27 Canva pages as background JPEGs + transparent text overlay on the 2 dynamic
-// pages only — cover (index 0) and contract (index 23). Only client data is overlaid.
+// 27 Canva pages as background JPEGs + transparent text overlay on the dynamic
+// pages — cover (0), p-15 comparison table (14), p-16 prices (15), contract (23).
 // RTL: jsPDF reverses pure-LTR under setR2L(true) and pure-Hebrew under setR2L(false).
-// Fix = toggle R2L PER STRING by Hebrew presence (see put()). Coordinates are calibrated — do NOT change.
+// Fix = toggle R2L PER STRING by Hebrew presence (see put()). Coordinates are calibrated.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 
@@ -38,10 +38,26 @@ const PAGE_IMAGES = [
 ];
 
 const COVER_INDEX = 0;     // p-01.jpg
+const P15_INDEX = 14;      // p-15.jpg — package comparison table (S/M/L cells)
 const P16_INDEX = 15;      // p-16.jpg — 3 package prices
 const CONTRACT_INDEX = 23; // p-24.jpg "הסכם מתן שירותים"
 const HEB = /[\u0590-\u05FF]/;
 const HEEBO_TTF_URL = 'https://github.com/google/fonts/raw/main/ofl/heebo/Heebo%5Bwght%5D.ttf';
+
+// p-15 comparison table. Columns reuse the p-16 price-box X positions (same grid).
+// CMP_ROWS keys MUST match the form field keys on the quote screen.
+const CMP_COL_X = { s: 31, m: 82, l: 130 };
+const CMP_ROWS = [
+  ['renders', 69],       // הדמיות פנים פוטוריאליסטיות
+  ['materials', 90],     // רשימת חומרי גמרים וכמויות
+  ['bathrooms', 114],    // חדרי רחצה
+  ['project_mgmt', 144], // ניהול פרויקט
+  ['cloud', 167],        // ניהול תיקייה בענן
+  ['budget', 190],       // ניהול טבלת אקסל ותקציב
+  ['install_days', 207], // ימי הקמה בשטח
+  ['styling', 224],      // הלבשת החלל והום סטיילינג
+  ['shopping', 261],     // פגישות ליווי וימי קניות
+];
 
 async function fetchBase64(url) {
   const resp = await fetch(url);
@@ -67,7 +83,7 @@ Deno.serve(async (req) => {
     if (clients.length === 0) return Response.json({ error: 'Client not found' }, { status: 404 });
     const client = clients[0];
 
-    // Fetch quote record for package prices
+    // Fetch quote record for package prices + comparison table
     let quote = null;
     if (quote_id) {
       const quotes = await base44.asServiceRole.entities.Quote.filter({ id: quote_id });
@@ -121,9 +137,6 @@ Deno.serve(async (req) => {
     };
 
     const today = new Date();
-    const dd = String(today.getDate());
-    const mm = String(today.getMonth() + 1);
-    const yyyy = String(today.getFullYear());
     const coverDate = today.toLocaleDateString('he-IL');
     const quoteDate = meeting_date ? new Date(meeting_date).toLocaleDateString('he-IL') : coverDate;
     const amountStr = total_amount != null ? Number(total_amount).toLocaleString('he-IL') : '';
@@ -136,6 +149,16 @@ Deno.serve(async (req) => {
     const priceM = money(quote?.price_medium);
     const priceL = money(quote?.price_large);
 
+    // p-15 comparison data — JSON object { rowKey: { s, m, l } }. Accepts object OR JSON string.
+    let comparison = {};
+    if (quote?.comparison) {
+      if (typeof quote.comparison === 'string') {
+        try { comparison = JSON.parse(quote.comparison); } catch { comparison = {}; }
+      } else {
+        comparison = quote.comparison;
+      }
+    }
+
     for (let i = 0; i < pageImages.length; i++) {
       if (i > 0) doc.addPage();
       doc.addImage(pageImages[i], 'JPEG', 0, 0, W, H);
@@ -145,6 +168,17 @@ Deno.serve(async (req) => {
         doc.setTextColor(74, 53, 38);
         put(coverLine, W / 2, 260, 'center', 12);
         put(coverDate, W / 2, 266, 'center', 11);
+      }
+
+      // --- P15 (index 14, p-15.jpg): comparison table, one value per S/M/L cell ---
+      if (i === P15_INDEX) {
+        doc.setTextColor(40, 40, 40);
+        for (const [key, y] of CMP_ROWS) {
+          const cell = comparison[key] || {};
+          put(cell.s, CMP_COL_X.s, y, 'center', 11);
+          put(cell.m, CMP_COL_X.m, y, 'center', 11);
+          put(cell.l, CMP_COL_X.l, y, 'center', 11);
+        }
       }
 
       // --- P16 (index 15, p-16.jpg): 3 package prices ---
@@ -165,7 +199,7 @@ Deno.serve(async (req) => {
         put(client.email, 140, 140, 'right', 12);
         put(amountStr, 62, 206, 'center', 12);
         put(quoteDate, 35, 224, 'center', 11);
-        // signing date — only rendered when signDate is provided
+        // signing date — only rendered when signDate is provided (contract stage)
         if (signDate) {
           const d = new Date(signDate);
           put(String(d.getDate()), 120, 50, 'center', 11);
@@ -183,7 +217,6 @@ Deno.serve(async (req) => {
     const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
     console.log('PDF uploaded:', file_url);
 
-    // Update quote record with file_url if quote_id provided
     if (quote_id) {
       await base44.asServiceRole.entities.Quote.update(quote_id, { file_url });
     }
