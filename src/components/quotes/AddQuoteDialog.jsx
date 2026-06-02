@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FileText, Link, Upload, Loader2, Calendar } from 'lucide-react';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 import { toast } from 'sonner';
+import ComparisonTableEditor from '@/components/quotes/ComparisonTableEditor';
 
 const packageOptions = [
   { value: 'small', label: 'S — ליווי בסיסי' },
@@ -27,7 +28,7 @@ const defaultForm = {
   client_id: '', title: '', quote_type: 'generated', package_type: 'medium',
   total_amount: '', price_small: '', price_medium: '', price_large: '',
   scope: '', url: '', file_url: '', meeting_date: '',
-  send_via: 'email', status: 'draft', notes: '', version: 1,
+  send_via: 'email', status: 'draft', notes: '', version: 1, comparison: null,
 };
 
 export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
@@ -82,6 +83,7 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
         status: initialData.status || 'draft',
         notes: initialData.notes || '',
         version: initialData.version || 1,
+        comparison: initialData.comparison ? (typeof initialData.comparison === 'string' ? JSON.parse(initialData.comparison) : initialData.comparison) : null,
       });
     } else {
       setMeetingId(null);
@@ -151,6 +153,7 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
       price_large: form.price_large ? Number(form.price_large) : undefined,
       version: Number(form.version) || 1,
       meeting_id: meetingId || undefined,
+      comparison: form.comparison ? JSON.stringify(form.comparison) : '',
     };
     // Remove irrelevant fields based on quote_type
     if (form.quote_type === 'generated' || form.quote_type === 'uploaded') {
@@ -253,6 +256,14 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Comparison table (p-15) */}
+          {form.quote_type === 'generated' && (
+            <ComparisonTableEditor
+              value={form.comparison}
+              onChange={(v) => setForm(p => ({ ...p, comparison: v }))}
+            />
           )}
 
           {/* Version */}
