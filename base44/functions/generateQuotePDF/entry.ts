@@ -118,12 +118,17 @@ Deno.serve(async (req) => {
     }
     const W = 210, H = 297;
 
+    // RTL bracket mirroring: jsPDF does NOT mirror paired punctuation under R2L.
+    const MIRROR = { '(': ')', ')': '(', '[': ']', ']': '[', '{': '}', '}': '{', '<': '>', '>': '<' };
+    const fixRtl = (s) => s.replace(/[()\[\]{}<>]/g, (c) => MIRROR[c] ?? c);
+
     const put = (txt, x, y, align, size) => {
       const t = String(txt ?? '');
       if (!t) return;
       doc.setFontSize(size);
-      doc.setR2L(HEB.test(t));
-      doc.text(t, x, y, { align });
+      const rtl = HEB.test(t);
+      doc.setR2L(rtl);
+      doc.text(rtl ? fixRtl(t) : t, x, y, { align });
       doc.setR2L(false);
     };
 
@@ -180,8 +185,9 @@ Deno.serve(async (req) => {
               drawCheck(x, y - 1);
             } else {
               doc.setFontSize(9);
-              doc.setR2L(HEB.test(String(val)));
-              const lines = doc.splitTextToSize(String(val), 40);
+              const rtl = HEB.test(String(val));
+              doc.setR2L(rtl);
+              const lines = doc.splitTextToSize(rtl ? fixRtl(String(val)) : String(val), 40);
               const lh = 3.8;
               let yy = y - ((lines.length - 1) * lh) / 2;
               for (const ln of lines) { doc.text(ln, x, yy, { align: 'center' }); yy += lh; }
