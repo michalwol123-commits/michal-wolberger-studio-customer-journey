@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
           sent_by: 'system',
           status: 'pending',
           channel: 'base44_native',
-          attachment_url: attachmentUrl || undefined,
+          attachment_url: pdfUrl || undefined,
         });
         results.push('whatsapp queued');
       } else {
