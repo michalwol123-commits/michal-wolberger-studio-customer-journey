@@ -25,7 +25,8 @@ const quoteTypeOptions = [
 
 const defaultForm = {
   client_id: '', title: '', quote_type: 'generated', package_type: 'medium',
-  total_amount: '', scope: '', url: '', file_url: '', meeting_date: '',
+  total_amount: '', price_small: '', price_medium: '', price_large: '',
+  scope: '', url: '', file_url: '', meeting_date: '',
   send_via: 'email', status: 'draft', notes: '', version: 1,
 };
 
@@ -70,6 +71,9 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
         quote_type: initialData.quote_type || 'generated',
         package_type: initialData.package_type || 'medium',
         total_amount: initialData.total_amount || '',
+        price_small: initialData.price_small || '',
+        price_medium: initialData.price_medium || '',
+        price_large: initialData.price_large || '',
         scope: initialData.scope || '',
         url: initialData.url || '',
         file_url: initialData.file_url || '',
@@ -142,6 +146,9 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
     const payload = {
       ...form,
       total_amount: Number(form.total_amount) || 0,
+      price_small: form.price_small ? Number(form.price_small) : undefined,
+      price_medium: form.price_medium ? Number(form.price_medium) : undefined,
+      price_large: form.price_large ? Number(form.price_large) : undefined,
       version: Number(form.version) || 1,
       meeting_id: meetingId || undefined,
     };
@@ -226,6 +233,27 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
               </Select>
             </div>
           </div>
+
+          {/* Package prices S / M / L */}
+          {form.quote_type === 'generated' && (
+            <div>
+              <Label className="mb-2 block">מחירי חבילות (עמוד 16)</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground">S — בסיסי</Label>
+                  <Input type="number" value={form.price_small} onChange={e => setForm(p => ({ ...p, price_small: e.target.value }))} placeholder="₪" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">M — מלא</Label>
+                  <Input type="number" value={form.price_medium} onChange={e => setForm(p => ({ ...p, price_medium: e.target.value }))} placeholder="₪" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">L — פרימיום</Label>
+                  <Input type="number" value={form.price_large} onChange={e => setForm(p => ({ ...p, price_large: e.target.value }))} placeholder="₪" />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Version */}
           <div>

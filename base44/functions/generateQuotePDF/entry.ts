@@ -38,6 +38,7 @@ const PAGE_IMAGES = [
 ];
 
 const COVER_INDEX = 0;     // p-01.jpg
+const P16_INDEX = 15;      // p-16.jpg — 3 package prices
 const CONTRACT_INDEX = 23; // p-24.jpg "הסכם מתן שירותים"
 const HEB = /[\u0590-\u05FF]/;
 const HEEBO_TTF_URL = 'https://github.com/google/fonts/raw/main/ofl/heebo/Heebo%5Bwght%5D.ttf';
@@ -60,11 +61,18 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { client_id, quote_id, total_amount, meeting_date } = await req.json();
+    const { client_id, quote_id, total_amount, meeting_date, signDate } = await req.json();
 
     const clients = await base44.asServiceRole.entities.Client.filter({ id: client_id });
     if (clients.length === 0) return Response.json({ error: 'Client not found' }, { status: 404 });
     const client = clients[0];
+
+    // Fetch quote record for package prices
+    let quote = null;
+    if (quote_id) {
+      const quotes = await base44.asServiceRole.entities.Quote.filter({ id: quote_id });
+      quote = quotes[0] || null;
+    }
 
     if (PAGE_IMAGES.length !== 27) {
       return Response.json({ error: `PAGE_IMAGES must have exactly 27 URLs (p-01..p-27). Got ${PAGE_IMAGES.length}.` }, { status: 500 });
@@ -123,6 +131,11 @@ Deno.serve(async (req) => {
     const coverLine = city ? `${client.name || ''}, ${city}` : (client.name || '');
     const addressLine = [client.address, city].filter(Boolean).join(', ');
 
+    const money = (v) => (v != null && v !== '' ? Number(v).toLocaleString('he-IL') : '');
+    const priceS = money(quote?.price_small);
+    const priceM = money(quote?.price_medium);
+    const priceL = money(quote?.price_large);
+
     for (let i = 0; i < pageImages.length; i++) {
       if (i > 0) doc.addPage();
       doc.addImage(pageImages[i], 'JPEG', 0, 0, W, H);
@@ -134,22 +147,31 @@ Deno.serve(async (req) => {
         put(coverDate, W / 2, 266, 'center', 11);
       }
 
+      // --- P16 (index 15, p-16.jpg): 3 package prices ---
+      if (i === P16_INDEX) {
+        doc.setTextColor(58, 42, 30);
+        put(priceS, 31, 80, 'center', 16);   // left box = S
+        put(priceM, 82, 80, 'center', 16);   // middle = M
+        put(priceL, 130, 80, 'center', 16);  // right = L
+      }
+
       // --- CONTRACT (index 23, p-24.jpg "הסכם מתן שירותים"): all client details ---
       if (i === CONTRACT_INDEX) {
         doc.setTextColor(58, 42, 30);
-        // signing date — RTL: day rightmost (large x), year leftmost (small x)
-        put(dd, 120, 50, 'center', 11);
-        put(mm, 92, 50, 'center', 11);
-        put(yyyy, 68, 50, 'center', 11);
-        // identity — each value sits on its dashed line
-        put(client.name, 130, 107, 'right', 13);
-        put(client.id_number, 138, 115, 'right', 13);
-        put(client.phone, 139, 123, 'right', 12);
-        put(addressLine, 138, 135, 'right', 12);
-        put(client.email, 140, 143, 'right', 12);
-        // fee + quote date (inline in body sentences)
-        put(amountStr, 62, 209, 'center', 12);
-        put(quoteDate, 35, 227, 'center', 11);
+        put(client.name, 130, 104, 'right', 13);
+        put(client.id_number, 138, 112, 'right', 13);
+        put(client.phone, 139, 120, 'right', 12);
+        put(addressLine, 138, 132, 'right', 12);
+        put(client.email, 140, 140, 'right', 12);
+        put(amountStr, 62, 206, 'center', 12);
+        put(quoteDate, 35, 224, 'center', 11);
+        // signing date — only rendered when signDate is provided
+        if (signDate) {
+          const d = new Date(signDate);
+          put(String(d.getDate()), 120, 50, 'center', 11);
+          put(String(d.getMonth() + 1), 92, 50, 'center', 11);
+          put(String(d.getFullYear()), 68, 50, 'center', 11);
+        }
       }
     }
 

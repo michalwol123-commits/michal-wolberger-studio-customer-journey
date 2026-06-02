@@ -5,12 +5,12 @@
     "client_id": {
       "type": "string",
       "relationType": "Client",
-      "description": "\u05dc\u05e7\u05d5\u05d7 \u05de\u05e9\u05d5\u05d9\u05d9\u05da"
+      "description": "\u05dc\u05e7\u05d5\u05d7 \u05de\u05e9\u05d5\u05d9\u05da"
     },
     "meeting_id": {
       "type": "string",
       "relationType": "Meeting",
-      "description": "\u05e4\u05d2\u05d9\u05e9\u05ea \u05d4\u05e6\u05d2\u05ea \u05d4\u05e6\u05e2\u05d4 \u05de\u05e9\u05d5\u05d9\u05d9\u05db\u05ea"
+      "description": "\u05e4\u05d2\u05d9\u05e9\u05ea \u05d4\u05e6\u05d2\u05ea \u05d4\u05e6\u05e2\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea"
     },
     "version": {
       "type": "number",
@@ -43,6 +43,18 @@
     "total_amount": {
       "type": "number",
       "description": "\u05e1\u05db\u05d5\u05dd \u05db\u05d5\u05dc\u05dc (\u20aa)"
+    },
+    "price_small": {
+      "type": "number",
+      "description": "\u05de\u05d7\u05d9\u05e8 \u05d7\u05d1\u05d9\u05dc\u05d4 S \u2014 \u05dc\u05d9\u05d5\u05d5\u05d9 \u05d1\u05e1\u05d9\u05e1\u05d9 (\u20aa)"
+    },
+    "price_medium": {
+      "type": "number",
+      "description": "\u05de\u05d7\u05d9\u05e8 \u05d7\u05d1\u05d9\u05dc\u05d4 M \u2014 \u05dc\u05d9\u05d5\u05d5\u05d9 \u05de\u05dc\u05d0 (\u20aa)"
+    },
+    "price_large": {
+      "type": "number",
+      "description": "\u05de\u05d7\u05d9\u05e8 \u05d7\u05d1\u05d9\u05dc\u05d4 L \u2014 \u05e4\u05e8\u05d9\u05de\u05d9\u05d5\u05dd (\u20aa)"
     },
     "scope": {
       "type": "string",
