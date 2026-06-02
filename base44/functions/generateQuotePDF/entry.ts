@@ -1,7 +1,23 @@
 // Generate a styled PDF quote using 27 Canva background images + dynamic text overlays
-// Pages: 27 total. Page 1 (cover) and page 23 (contract) get dynamic client text.
+// Pages: 27 total. Page 1 (cover, index 0) and page 24 (contract, index 23) get dynamic client text.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { jsPDF } from 'npm:jspdf@4.0.0';
+
+const COVER_INDEX = 0;    // p-01.jpg — cover page
+const CONTRACT_INDEX = 23; // p-24.jpg — "הסכם מתן שירותים"
+
+// Helper: detect Hebrew chars in a string
+function hasHebrew(str) {
+  return /[\u0590-\u05FF]/.test(str);
+}
+
+// RTL-aware text placement: enables R2L for Hebrew, disables for Latin/numbers
+function putText(doc, text, x, y, options) {
+  const rtl = hasHebrew(text);
+  doc.setR2L(rtl);
+  doc.text(text, x, y, options || {});
+  doc.setR2L(false);
+}
 
 // All 27 background page images in order
 const PAGE_IMAGES = [
@@ -113,13 +129,13 @@ Deno.serve(async (req) => {
       // Set font for text overlays
       if (heeboBase64) doc.setFont('Heebo');
 
-      // --- PAGE 1 (cover, index 0): client name, address, date ---
-      if (i === 0) {
+      // --- COVER (index 0, p-01.jpg): client name+city, date ---
+      if (i === COVER_INDEX) {
         addCoverText(doc, client, pageW, pageH);
       }
 
-      // --- PAGE 23 (contract, index 22): client details + amount ---
-      if (i === 22) {
+      // --- CONTRACT (index 23, p-24.jpg "הסכם מתן שירותים"): client details + amount ---
+      if (i === CONTRACT_INDEX) {
         addContractText(doc, client, total_amount, meeting_date, pageW, pageH);
       }
     }
@@ -146,78 +162,63 @@ Deno.serve(async (req) => {
   }
 });
 
-// --- Cover page text overlay (page 1, index 0) ---
-// Position: bottom area of the cover, right-aligned (RTL)
+// --- Cover page text overlay (index 0, p-01.jpg) ---
+// Calibrated coords: center-aligned, bottom area
 function addCoverText(doc, client, pageW, pageH) {
-  const rightX = pageW / 2; // Center aligned for cover
-  doc.setTextColor(80, 65, 45); // Dark brown
+  doc.setTextColor(74, 53, 38);
 
-  // Client name — large
-  doc.setFontSize(22);
-  const clientName = client.name || '';
-  doc.text(clientName, rightX, pageH * 0.82, { align: 'center' });
-
-  // Address
-  if (client.address) {
-    doc.setFontSize(14);
-    doc.text(client.address, rightX, pageH * 0.86, { align: 'center' });
-  }
-
-  // Date
+  // Client name + city — single line, 12pt, center at (105, 260)
   doc.setFontSize(12);
+  const nameLine = [client.name, client.address].filter(Boolean).join(', ');
+  putText(doc, nameLine, 105, 260, { align: 'center' });
+
+  // Date — 11pt, center at (105, 266)
+  doc.setFontSize(11);
   const today = new Date();
   const dateStr = `${today.getDate()}.${today.getMonth() + 1}.${today.getFullYear()}`;
-  doc.text(dateStr, rightX, pageH * 0.90, { align: 'center' });
+  putText(doc, dateStr, 105, 266, { align: 'center' });
 }
 
-// --- Contract page text overlay (page 23, index 22) ---
-// Fills in the blanks on the contract template
+// --- Contract page text overlay (index 23, p-24.jpg "הסכם מתן שירותים") ---
+// All coords in mm on A4 (210×297), calibrated from Canva template
 function addContractText(doc, client, totalAmount, meetingDate, pageW, pageH) {
-  doc.setTextColor(50, 40, 30);
-  doc.setFontSize(11);
+  doc.setTextColor(58, 42, 30);
 
   const today = new Date();
   const dayStr = String(today.getDate());
   const monthStr = String(today.getMonth() + 1);
   const yearStr = String(today.getFullYear());
 
-  // "שנחתם ביום __ לחודש __ שנת __" — top area ~line 2
-  // Day, Month, Year placeholders near the top
-  const topY = pageH * 0.075; // ~22mm from top
-  doc.text(dayStr, pageW * 0.62, topY, { align: 'center' });
-  doc.text(monthStr, pageW * 0.47, topY, { align: 'center' });
-  doc.text(yearStr, pageW * 0.32, topY, { align: 'center' });
-
-  // Client name — "שם מלא" line
-  const nameY = pageH * 0.365;
+  // "שנחתם ביום __ לחודש __ שנת __" — top line
   doc.setFontSize(11);
-  doc.text(client.name || '', pageW * 0.42, nameY, { align: 'center' });
+  putText(doc, dayStr, 116.6, 48, { align: 'center' });
+  putText(doc, monthStr, 143.9, 48, { align: 'center' });
+  putText(doc, yearStr, 171.2, 48, { align: 'center' });
 
-  // ID number — "ת.ז" line
-  const idY = pageH * 0.395;
-  doc.text(client.id_number || '', pageW * 0.38, idY, { align: 'center' });
+  // שם מלא — right-aligned at x=168, y=115
+  doc.setFontSize(13);
+  putText(doc, client.name || '', 168, 115, { align: 'right' });
 
-  // Contact details — "פרטי התקשרות" line
-  const contactY = pageH * 0.425;
-  const contactStr = [client.address, client.phone].filter(Boolean).join(' | ');
-  doc.text(contactStr, pageW * 0.38, contactY, { align: 'center' });
+  // ת.ז — right-aligned at x=172.2, y=121.5
+  putText(doc, client.id_number || '', 172.2, 121.5, { align: 'right' });
 
-  // Email — "דוא"ל" line
-  const emailY = pageH * 0.475;
-  doc.text(client.email || '', pageW * 0.38, emailY, { align: 'center' });
-
-  // Amount — "סך ________+ מע"מ" line
-  const amountY = pageH * 0.625;
-  const amountStr = totalAmount ? Number(totalAmount).toLocaleString('he-IL') : '';
+  // כתובת + טלפון — right-aligned at x=193.2, y=135
   doc.setFontSize(12);
-  doc.text(amountStr, pageW * 0.42, amountY, { align: 'center' });
+  const contactStr = [client.address, client.phone].filter(Boolean).join(' | ');
+  putText(doc, contactStr, 193.2, 135, { align: 'right' });
 
-  // Meeting/quote date — "הצעת מחיר מיום" line
+  // דוא"ל — right-aligned at x=163.8, y=147
+  putText(doc, client.email || '', 163.8, 147, { align: 'right' });
+
+  // סכום — center at x=82, y=211
+  const amountStr = totalAmount ? Number(totalAmount).toLocaleString('he-IL') : '';
+  putText(doc, amountStr, 82, 211, { align: 'center' });
+
+  // תאריך הצעת מחיר — center at x=46, y=227
   if (meetingDate) {
     const md = new Date(meetingDate);
     const mdStr = `${md.getDate()}.${md.getMonth() + 1}.${md.getFullYear()}`;
-    doc.setFontSize(10);
-    const dateLineY = pageH * 0.655;
-    doc.text(mdStr, pageW * 0.30, dateLineY, { align: 'center' });
+    doc.setFontSize(11);
+    putText(doc, mdStr, 46, 227, { align: 'center' });
   }
 }
