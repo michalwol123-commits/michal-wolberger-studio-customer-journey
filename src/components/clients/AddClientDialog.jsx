@@ -12,7 +12,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'lead', initialData = null }) {
   const queryClient = useQueryClient();
   const { user } = useCurrentUser();
-  const emptyForm = { name: '', phone: '', email: '', source: '', source_detail: '', budget_range: '', property_type: '', notes: '', birthday: '', anniversary: '' };
+  const emptyForm = { name: '', phone: '', email: '', source: '', source_detail: '', budget_range: '', property_type: '', notes: '', birthday: '', anniversary: '', id_number: '', address: '', city: '' };
   const [form, setForm] = useState(emptyForm);
 
   React.useEffect(() => {
@@ -28,6 +28,9 @@ export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'l
         notes: initialData.notes || '',
         birthday: initialData.birthday || '',
         anniversary: initialData.anniversary || '',
+        id_number: initialData.id_number || '',
+        address: initialData.address || '',
+        city: initialData.city || '',
       });
     } else {
       setForm(emptyForm);
@@ -120,6 +123,20 @@ export default function AddClientDialog({ open, onOpenChange, defaultStatus = 'l
                 <SelectItem value="above_500k">מעל ₪500K</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>ת"ז</Label>
+              <Input value={form.id_number} onChange={e => update('id_number', e.target.value)} dir="ltr" />
+            </div>
+            <div>
+              <Label>עיר</Label>
+              <Input value={form.city} onChange={e => update('city', e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <Label>כתובת הנכס</Label>
+            <Input value={form.address} onChange={e => update('address', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
