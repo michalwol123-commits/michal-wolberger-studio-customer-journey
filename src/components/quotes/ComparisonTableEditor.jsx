@@ -1,5 +1,4 @@
-import React from 'react';
-import { Input } from '@/components/ui/input';
+import React, { useRef, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Check } from 'lucide-react';
 
@@ -24,6 +23,29 @@ function emptyComparison() {
   return obj;
 }
 
+// תיבת טקסט שמתרחבת אוטומטית לפי התוכן (כדי שתמיד רואים מה מילאו)
+function AutoTextarea({ value, onChange, checked }) {
+  const ref = useRef(null);
+  const resize = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.max(28, el.scrollHeight) + 'px';
+  };
+  useEffect(() => { resize(); }, [value]);
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onInput={resize}
+      rows={1}
+      dir="rtl"
+      className={`w-full resize-none overflow-hidden rounded border bg-background px-1.5 py-1 text-xs leading-snug text-right focus:outline-none focus:ring-1 focus:ring-primary ${checked ? 'text-center text-green-600 font-bold' : ''}`}
+    />
+  );
+}
+
 export default function ComparisonTableEditor({ value, onChange }) {
   const data = value || emptyComparison();
 
@@ -41,33 +63,34 @@ export default function ComparisonTableEditor({ value, onChange }) {
     <div>
       <Label className="mb-2 block">טבלת השוואת חבילות (עמוד 15)</Label>
       <div className="border rounded-lg overflow-hidden">
-        <div className="grid grid-cols-[1fr_repeat(3,80px)] bg-muted/50 text-xs font-semibold text-center border-b">
+        <div className="grid grid-cols-[1.3fr_repeat(3,1fr)] bg-muted/50 text-xs font-semibold text-center border-b">
           <div className="px-2 py-1.5 text-right" />
           {COLS.map(c => <div key={c} className="px-1 py-1.5">{COL_LABELS[c]}</div>)}
         </div>
         {ROWS.map((row, i) => (
-          <div key={row.key} className={`grid grid-cols-[1fr_repeat(3,80px)] items-center ${i < ROWS.length - 1 ? 'border-b' : ''}`}>
-            <div className="px-2 py-1 text-xs text-right">{row.label}</div>
-            {COLS.map(col => (
-              <div key={col} className="flex items-center gap-0.5 px-1 py-0.5">
-                <Input
-                  value={data[row.key]?.[col] || ''}
-                  onChange={e => update(row.key, col, e.target.value)}
-                  className="h-7 text-xs text-center px-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => toggleCheck(row.key, col)}
-                  className="shrink-0 w-5 h-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-green-600 transition-colors"
-                  title="הכנס ✓"
-                >
-                  <Check className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
+          <div key={row.key} className={`grid grid-cols-[1.3fr_repeat(3,1fr)] items-start ${i < ROWS.length - 1 ? 'border-b' : ''}`}>
+            <div className="px-2 py-2 text-xs text-right leading-snug">{row.label}</div>
+            {COLS.map(col => {
+              const v = data[row.key]?.[col] || '';
+              const checked = v === '✓';
+              return (
+                <div key={col} className="px-1 py-1 space-y-1">
+                  <AutoTextarea value={v} onChange={(val) => update(row.key, col, val)} checked={checked} />
+                  <button
+                    type="button"
+                    onClick={() => toggleCheck(row.key, col)}
+                    className={`w-full h-5 flex items-center justify-center rounded text-[10px] transition-colors ${checked ? 'bg-green-100 text-green-700' : 'hover:bg-muted text-muted-foreground hover:text-green-600'}`}
+                    title="הכנס / הסר ✓"
+                  >
+                    <Check className="w-3 h-3" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
+      <p className="text-[10px] text-muted-foreground mt-1">התיבות מתרחבות אוטומטית לפי הטקסט. לחיצה על ✓ ממלאת/מנקה סימן וי.</p>
     </div>
   );
 }
