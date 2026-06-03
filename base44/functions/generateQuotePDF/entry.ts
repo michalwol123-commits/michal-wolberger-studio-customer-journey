@@ -1,6 +1,7 @@
 // Generate the full quote+contract PDF for Michal Wolberger Interior Design.
 // Approach: 27 Canva pages as background JPEGs + a transparent text overlay on
-// the 2 dynamic pages only — cover (page 1 / index 0) and contract (page 24 / index 23).
+// the dynamic pages — cover (index 0), comparison (14), prices (15), contract (23).
+// Supports `part`: 'full' (default, all 27 pages), 'quote' (pages 1-23), 'contract' (pages 24-27).
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 
@@ -40,6 +41,9 @@ const P15_INDEX = 14;      // p-15.jpg — package comparison table (S/M/L cells
 const P16_INDEX = 15;      // p-16.jpg — investment page (3 package prices)
 const CONTRACT_INDEX = 23; // p-24.jpg
 
+// page ranges per part (inclusive, 0-based indices)
+const RANGES = { full: [0, 26], quote: [0, 22], contract: [23, 26] };
+
 const CMP_COL_X = { s: 30, m: 80, l: 130 };
 const CMP_ROWS = [
   ['renders', 69],
@@ -53,7 +57,7 @@ const CMP_ROWS = [
   ['shopping', 261],
 ];
 
-const HEB = /[֐-׿]/;
+const HEB = /[\u0590-\u05FF]/;
 const HEEBO_TTF_URL = 'https://github.com/google/fonts/raw/main/ofl/heebo/Heebo%5Bwght%5D.ttf';
 
 async function fetchBase64(url) {
@@ -74,7 +78,8 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { client_id, quote_id, total_amount, meeting_date, signDate } = await req.json();
+    const { client_id, quote_id, total_amount, meeting_date, signDate, part } = await req.json();
+    const [PART_START, PART_END] = RANGES[part] || RANGES.full;
 
     const clients = await base44.asServiceRole.entities.Client.filter({ id: client_id });
     if (clients.length === 0) return Response.json({ error: 'Client not found' }, { status: 404 });
@@ -92,22 +97,21 @@ Deno.serve(async (req) => {
 
     const heeboBase64 = await fetchBase64(HEEBO_TTF_URL).catch((e) => { console.error('Heebo fetch failed:', e); return ''; });
 
-    const pageImages = [];
+    // fetch only the pages in the chosen range, keeping index alignment
+    const pageImages = new Array(PAGE_IMAGES.length).fill('');
     const failed = [];
-    for (let i = 0; i < PAGE_IMAGES.length; i++) {
+    for (let i = PART_START; i <= PART_END; i++) {
       try {
         const b64 = await fetchBase64(PAGE_IMAGES[i]);
         if (!b64 || b64.length < 100) throw new Error(`empty/too small (${b64.length} chars)`);
-        console.log(`img ${i + 1}/27 ok — ${b64.length} chars — ${PAGE_IMAGES[i]}`);
-        pageImages.push(b64);
+        pageImages[i] = b64;
       } catch (e) {
         console.error(`img ${i + 1}/27 FAILED — ${PAGE_IMAGES[i]} — ${e.message}`);
         failed.push(`#${i + 1}: ${PAGE_IMAGES[i]} (${e.message})`);
-        pageImages.push('');
       }
     }
     if (failed.length) {
-      return Response.json({ error: `Image load failed for ${failed.length}/27:\n${failed.join('\n')}` }, { status: 500 });
+      return Response.json({ error: `Image load failed for ${failed.length} page(s):\n${failed.join('\n')}` }, { status: 500 });
     }
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -143,6 +147,18 @@ Deno.serve(async (req) => {
     const priceS = money(quote?.price_small);
     const priceM = money(quote?.price_medium);
     const priceL = money(quote?.price_large);
+
+    // --- Contract field overrides (empty in quote => fall back to client card) ---
+    const cName    = quote?.contract_name      || client.name      || '';
+    const cId      = quote?.contract_id_number || client.id_number || '';
+    const cPhone   = quote?.contract_phone     || client.phone     || '';
+    const cAddress = quote?.contract_address   || addressLine      || '';
+    const cEmail   = quote?.contract_email     || client.email     || '';
+    // contract date: explicit contract_date, else signDate, else today
+    const contractD = quote?.contract_date
+      ? new Date(quote.contract_date)
+      : (signDate ? new Date(signDate) : today);
+
     let comparison = {};
     if (quote?.comparison) {
       comparison = typeof quote.comparison === 'string'
@@ -150,24 +166,26 @@ Deno.serve(async (req) => {
         : quote.comparison;
     }
 
-    for (let i = 0; i < pageImages.length; i++) {
-      if (i > 0) doc.addPage();
+    let _drawn = 0;
+    for (let i = PART_START; i <= PART_END; i++) {
+      if (_drawn > 0) doc.addPage();
+      _drawn++;
       doc.addImage(pageImages[i], 'JPEG', 0, 0, W, H);
 
       if (i === COVER_INDEX) {
         doc.setTextColor(74, 53, 38);
         put(coverLine, W / 2, 260, 'center', 12);
         put(coverDate, W / 2, 266, 'center', 11);
-        // חותמת אבחון — מוכיחה שהקוד החדש באמת באוויר.
+        // diagnostic stamp — confirms the new code is live.
         doc.setTextColor(200, 0, 0);
-        put('v3', 8, 8, 'left', 8);
+        put('v4', 8, 8, 'left', 8);
       }
 
       if (i === P15_INDEX) {
         doc.setTextColor(40, 40, 40);
         const isCheck = (v) => {
           const s = String(v ?? '').trim().toLowerCase();
-          return s === '✓' || s === '✔' || s === 'v' || s === 'true' || s === 'כן';
+          return s === '\u2713' || s === '\u2714' || s === 'v' || s === 'true' || s === '\u05db\u05df';
         };
         const drawCheck = (cx, cy) => {
           doc.setDrawColor(40, 40, 40);
@@ -206,19 +224,19 @@ Deno.serve(async (req) => {
 
       if (i === CONTRACT_INDEX) {
         doc.setTextColor(58, 42, 30);
-        put(client.name, 130, 104, 'right', 13);
-        put(client.id_number, 138, 112, 'right', 13);
-        put(client.phone, 139, 120, 'right', 12);
-        put(addressLine, 138, 132, 'right', 12);
-        put(client.email, 140, 140, 'right', 12);
-        put(amountStr, 62, 206, 'center', 12);
+        put(cName, 130, 104, 'right', 13);
+        put(cId, 138, 112, 'right', 13);
+        put(cPhone, 139, 120, 'right', 12);
+        put(cAddress, 138, 132, 'right', 12);
+        put(cEmail, 140, 140, 'right', 12);
+        // total amount — sits on the "סך ____" underline
+        put(amountStr, 53, 207, 'center', 12);
+        // quote date — "מחיר מיום ____"
         put(quoteDate, 35, 224, 'center', 11);
-        if (signDate) {
-          const d = new Date(signDate);
-          put(String(d.getDate()), 120, 50, 'center', 11);
-          put(String(d.getMonth() + 1), 92, 50, 'center', 11);
-          put(String(d.getFullYear()), 68, 50, 'center', 11);
-        }
+        // signing date line: "שנחתם ביום __ לחודש __ שנת __" (always filled)
+        put(String(contractD.getDate()), 110, 49, 'center', 11);
+        put(String(contractD.getMonth() + 1), 80, 49, 'center', 11);
+        put(String(contractD.getFullYear()), 59, 49, 'center', 10);
       }
     }
 
