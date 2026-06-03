@@ -20,7 +20,7 @@ const PAGE_IMAGES = [
   B + '7c2d46126_p-12.jpg', // 11
   B + 'b9fa781dd_p-13.jpg', // 12
   B + 'ef1f00041_p-14.jpg', // 13
-  B + 'adbbb37d5_p-15.jpg', // 14 comparison table (dynamic)
+  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/d23b47ae7_15.png', // 14 comparison table (dynamic)
   B + 'bdd63fda7_p-16.jpg', // 15 investment / prices (dynamic)
   B + 'dfb07220c_p-17.jpg', // 16
   B + 'ed071e133_p-18.jpg', // 17
@@ -40,7 +40,7 @@ const P15_INDEX = 14;      // p-15.jpg — package comparison table (S/M/L cells
 const P16_INDEX = 15;      // p-16.jpg — investment page (3 package prices)
 const CONTRACT_INDEX = 23; // p-24.jpg
 
-const CMP_COL_X = { s: 24, m: 72, l: 119 };
+const CMP_COL_X = { s: 30, m: 80, l: 130 };
 const CMP_ROWS = [
   ['renders', 69],
   ['materials', 90],
