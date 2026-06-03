@@ -30,6 +30,9 @@ const defaultForm = {
   total_amount: '', price_small: '', price_medium: '', price_large: '',
   scope: '', url: '', file_url: '', meeting_date: '',
   send_via: 'email', status: 'draft', notes: '', version: 1, comparison: null,
+  // contract overrides (empty = pulled from client card)
+  contract_name: '', contract_id_number: '', contract_phone: '',
+  contract_address: '', contract_email: '', contract_date: '',
 };
 
 export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
@@ -51,6 +54,15 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
     queryKey: ['meetings'],
     queryFn: () => base44.entities.Meeting.list('-created_date', 200),
   });
+
+  // selected client — used to show what will be pulled into the contract by default
+  const selClient = clients.find(c => c.id === form.client_id) || {};
+  const selClientAddress = [selClient.address, selClient.city].filter(Boolean).join(', ');
+
+  // price for a given package value (from the prices entered on the quote tab)
+  const priceForPackage = (pt, src) => ({
+    small: src.price_small, medium: src.price_medium, large: src.price_large,
+  }[pt]);
 
   // When dialog opens: populate form from initialData or reset + clear stale mutation state
   useEffect(() => {
@@ -87,6 +99,12 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
         notes: initialData.notes || '',
         version: initialData.version || 1,
         comparison: initialData.comparison ? (typeof initialData.comparison === 'string' ? JSON.parse(initialData.comparison) : initialData.comparison) : null,
+        contract_name: initialData.contract_name || '',
+        contract_id_number: initialData.contract_id_number || '',
+        contract_phone: initialData.contract_phone || '',
+        contract_address: initialData.contract_address || '',
+        contract_email: initialData.contract_email || '',
+        contract_date: initialData.contract_date || '',
       });
     } else {
       setMeetingId(null);
@@ -157,6 +175,13 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
       version: Number(form.version) || 1,
       meeting_id: meetingId || undefined,
       comparison: form.comparison ? JSON.stringify(form.comparison) : '',
+      // contract overrides — empty string = "pull from client card" at PDF time
+      contract_name: form.contract_name || '',
+      contract_id_number: form.contract_id_number || '',
+      contract_phone: form.contract_phone || '',
+      contract_address: form.contract_address || '',
+      contract_email: form.contract_email || '',
+      contract_date: form.contract_date || undefined,
     };
     // Remove irrelevant fields based on quote_type
     if (form.quote_type === 'generated' || form.quote_type === 'uploaded') {
@@ -367,12 +392,50 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
                 </div>
                 <div>
                   <Label>חבילה</Label>
-                  <Select value={form.package_type} onValueChange={v => setForm(p => ({ ...p, package_type: v }))}>
+                  <Select
+                    value={form.package_type}
+                    onValueChange={v => setForm(p => {
+                      const price = priceForPackage(v, p);
+                      return { ...p, package_type: v, total_amount: (price != null && price !== '') ? price : p.total_amount };
+                    })}
+                  >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {packageOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              {/* Manual contract overrides — empty = pulled from client card */}
+              <div>
+                <Label className="mb-1 block text-sm font-medium">פרטי ההסכם (אופציונלי)</Label>
+                <p className="text-xs text-muted-foreground mb-2">השאירי ריק = יימשך אוטומטית מכרטיס הלקוח. תאריך ריק = תאריך החתימה / היום.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">שם בהסכם</Label>
+                    <Input value={form.contract_name} onChange={e => setForm(p => ({ ...p, contract_name: e.target.value }))} placeholder={selClient.name || 'מכרטיס הלקוח'} />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">ת.ז / ח.פ</Label>
+                    <Input value={form.contract_id_number} onChange={e => setForm(p => ({ ...p, contract_id_number: e.target.value }))} placeholder={selClient.id_number || 'מכרטיס הלקוח'} />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">טלפון</Label>
+                    <Input value={form.contract_phone} onChange={e => setForm(p => ({ ...p, contract_phone: e.target.value }))} placeholder={selClient.phone || 'מכרטיס הלקוח'} dir="ltr" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">מייל</Label>
+                    <Input value={form.contract_email} onChange={e => setForm(p => ({ ...p, contract_email: e.target.value }))} placeholder={selClient.email || 'מכרטיס הלקוח'} dir="ltr" />
+                  </div>
+                  <div className="col-span-2">
+                    <Label className="text-xs text-muted-foreground">כתובת</Label>
+                    <Input value={form.contract_address} onChange={e => setForm(p => ({ ...p, contract_address: e.target.value }))} placeholder={selClientAddress || 'מכרטיס הלקוח'} />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">תאריך ההסכם</Label>
+                    <Input type="date" value={form.contract_date} onChange={e => setForm(p => ({ ...p, contract_date: e.target.value }))} />
+                  </div>
                 </div>
               </div>
 
