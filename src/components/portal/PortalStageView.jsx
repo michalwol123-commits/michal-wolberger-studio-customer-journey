@@ -303,7 +303,7 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
       {content.floor_plan && <PortalFloorPlanApproval project={project} />}
       {content.days && <PortalDaysMetrics project={project} stageNum={Number(stageNum)} />}
       {content.meetings && <PortalStageMeetings meetings={meetings} stageNum={stageNum} />}
-      {content.fieldvisits && <PortalFieldVisits project={project} />}
+      {content.fieldvisits && <PortalFieldVisits project={project} visitTypeFilter={Number(stageNum) === 12 ? 'installation' : Number(stageNum) === 11 ? 'supervision' : undefined} />}
 
       {content.docs && (
         <Card>
