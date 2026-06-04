@@ -28,7 +28,7 @@ const PAGE_IMAGES = [
   B + '33be831d0_p-21.jpg', // 20
   B + '1cecaa474_p-22.jpg', // 21
   B + '053152709_p-23.jpg', // 22
-  B + 'bcccd9ce8_p-24.jpg', // 23 contract (dynamic)
+  B + '3e3119aed_24.jpg', // 23 contract (dynamic) — Canva date line removed, overlaid in code
   B + '463816653_p-25.jpg', // 24
   B + '9b33cace9_p-26.jpg', // 25
   B + '4853b4a4e_p-27.jpg', // 26
@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
         put(coverDate, W / 2, 266, 'center', 11);
         // diagnostic stamp — confirms the new code is live.
         doc.setTextColor(200, 0, 0);
-        put('v5', 8, 8, 'left', 8);
+        put('v6', 8, 8, 'left', 8);
       }
 
       if (i === P15_INDEX) {
@@ -235,12 +235,10 @@ Deno.serve(async (req) => {
         put(cEmail, 140, 140, 'right', 12);
         // total amount — sits on the "סך ____" underline
         put(amountStr, 53, 207, 'center', 12);
-        // signing date line: "שנחתם ביום [weekday] לחודש [month#] שנת [yy]"
-        put(WEEKDAYS_HE[contractD.getDay()], 108, 49, 'center', 11);
-        put(String(contractD.getMonth() + 1), 87, 49, 'center', 11);
-        put(String(contractD.getFullYear()).slice(-2), 62, 49, 'center', 11);
-        // "על בסיס הצעת מחיר מיום ___": template has a baked-in date — mask it
-        // with a background-colored rectangle, then print the real quote date.
+        // signing date — full sentence overlaid (line removed from the Canva template), centered below title
+        const signLine = `שנחתם ביום ${WEEKDAYS_HE[contractD.getDay()]} לחודש ${contractD.getMonth() + 1} שנת ${String(contractD.getFullYear()).slice(-2)}`;
+        put(signLine, 105, 49, 'center', 13);
+        // "על בסיס הצעת מחיר מיום ___": template has a baked-in date — mask it, then print the real quote date
         doc.setFillColor(196, 175, 156);
         doc.rect(19, 221, 25, 8, 'F');
         doc.setTextColor(58, 42, 30);
