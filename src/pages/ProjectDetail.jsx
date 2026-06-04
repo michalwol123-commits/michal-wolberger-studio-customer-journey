@@ -78,7 +78,7 @@ export default function ProjectDetail() {
     queryKey: ['documents'],
     queryFn: () => base44.entities.Document.list('-created_date', 200),
   });
-  const projectDocs = documents.filter(d => d.project_id === projectId && d.is_current !== false);
+  const projectDocs = documents.filter(d => (d.project_id === projectId || (!d.project_id && d.client_id === project?.client_id)) && d.is_current !== false);
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],

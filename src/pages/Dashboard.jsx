@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { UserPlus, Calendar, CreditCard, CheckSquare, Briefcase, TrendingUp, AlertTriangle, Clock } from 'lucide-react';
+import { UserPlus, Calendar, CreditCard, CheckSquare, Briefcase, TrendingUp } from 'lucide-react';
 import StatsCard from '@/components/shared/StatsCard';
 import PageHeader from '@/components/shared/PageHeader';
 import useCurrentUser from '@/lib/useCurrentUser';
@@ -9,8 +9,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
-import CriticalAlerts from '@/components/dashboard/CriticalAlerts';
-import CustomerService from '@/components/dashboard/CustomerService';
 import PipelineChart from '@/components/dashboard/PipelineChart';
 import RevenueForecast from '@/components/dashboard/RevenueForecast';
 import WorkloadGauge from '@/components/dashboard/WorkloadGauge';
@@ -67,11 +65,6 @@ export default function Dashboard() {
   const activeProjects = myProjects.filter(p => p.status === 'active').length;
   const pipelineValue = myProjects.filter(p => p.status === 'active').reduce((sum, p) => sum + (p.total_budget || 0), 0);
 
-  // Conversion
-  const totalLeads = myClients.length;
-  const activeAndCompleted = myClients.filter(c => c.status === 'active_client' || c.status === 'completed_client').length;
-  const conversionRate = totalLeads > 0 ? Math.round((activeAndCompleted / totalLeads) * 100) : 0;
-
   // Recent leads
   const recentLeads = myClients.filter(c => c.status === 'lead').slice(0, 5);
   // Upcoming tasks
@@ -83,43 +76,26 @@ export default function Dashboard() {
       
       {/* Activity KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatsCard title="לידים חדשים (שבוע)" value={newLeads} icon={UserPlus} color="primary" />
-        <StatsCard title="פגישות היום" value={todayMeetings} icon={Calendar} color="secondary" />
+        <Link to="/leads"><StatsCard title="לידים חדשים (שבוע)" value={newLeads} icon={UserPlus} color="primary" /></Link>
+        <Link to="/meetings"><StatsCard title="פגישות היום" value={todayMeetings} icon={Calendar} color="secondary" /></Link>
         {isAdmin && (
-          <StatsCard 
-            title="תשלומים באיחור" 
-            value={overduePayments.length}
-            subtitle={overduePayments.length > 0 ? `₪${overduePayments.reduce((s, p) => s + (p.amount || 0), 0).toLocaleString()}` : undefined}
-            icon={CreditCard} 
-            color="destructive" 
-          />
+          <Link to="/payments">
+            <StatsCard 
+              title="תשלומים באיחור" 
+              value={overduePayments.length}
+              subtitle={overduePayments.length > 0 ? `₪${overduePayments.reduce((s, p) => s + (p.amount || 0), 0).toLocaleString()}` : undefined}
+              icon={CreditCard} 
+              color="destructive" 
+            />
+          </Link>
         )}
-        <StatsCard title="משימות פתוחות" value={openTasks} icon={CheckSquare} color="warning" />
+        <Link to="/tasks"><StatsCard title="משימות פתוחות" value={openTasks} icon={CheckSquare} color="warning" /></Link>
       </div>
 
       {/* Pipeline KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <StatsCard title="פרויקטים פעילים" value={activeProjects} icon={Briefcase} color="accent" />
-        <StatsCard title="ערך Pipeline" value={`₪${pipelineValue.toLocaleString()}`} icon={TrendingUp} color="primary" />
-        <StatsCard title="Conversion Rate" value={`${conversionRate}%`} subtitle="ליד → לקוח" icon={TrendingUp} color="success" />
-      </div>
-
-      {/* Widget 4+5: Alerts & Customer Service */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <CriticalAlerts
-          payments={payments}
-          tasks={myTasks}
-          communications={communications}
-          meetings={meetings}
-          clients={myClients}
-          isAdmin={isAdmin}
-        />
-        <CustomerService
-          clients={myClients}
-          communications={communications}
-          meetings={meetings}
-          projects={myProjects}
-        />
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <Link to="/projects"><StatsCard title="פרויקטים פעילים" value={activeProjects} icon={Briefcase} color="accent" /></Link>
+        <Link to="/pipeline"><StatsCard title="ערך Pipeline" value={`₪${pipelineValue.toLocaleString()}`} icon={TrendingUp} color="primary" /></Link>
       </div>
 
       {/* Pipeline & Revenue Charts */}

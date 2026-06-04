@@ -136,11 +136,17 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
     try {
       const id = await handleSave('completed');
       if (!id) return;
-      await base44.entities.FieldVisit.update(id, { report_requested_at: new Date().toISOString() });
-      toast.success('הדוח בדרך ✉️ יישלח למייל הלקוח');
+      // Direct call to generate PDF + send email (avoids automation race condition)
+      const response = await base44.functions.invoke('generateFieldReport', { visitId: id });
+      if (response.data?.success) {
+        toast.success('הדוח נוצר ונשלח בהצלחה ✉️');
+      } else {
+        toast.success('הדוח נוצר בהצלחה');
+      }
+      queryClient.invalidateQueries({ queryKey: ['field-visits', projectId] });
       onClose?.();
     } catch {
-      toast.error('שגיאה בשליחת הדוח');
+      toast.error('שגיאה ביצירת הדוח');
     } finally {
       setSending(false);
     }
