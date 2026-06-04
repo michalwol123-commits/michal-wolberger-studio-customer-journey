@@ -7,7 +7,8 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList, CalendarDays, Plus, Trash2, Pencil, Send } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList, CalendarDays, Plus, Trash2, Pencil, Send, ClipboardCheck } from 'lucide-react';
 import DeleteButton from '@/components/shared/DeleteButton';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -30,6 +31,9 @@ import MeetingsList from '@/components/meetings/MeetingsList';
 import ProjectOverview from '@/components/projects/ProjectOverview';
 import SendQuestionnaireDialog from '@/components/questionnaire/SendQuestionnaireDialog';
 import DocumentSignatureBadge from '@/components/documents/DocumentSignatureBadge';
+import FieldVisitCard from '@/components/fieldvisits/FieldVisitCard';
+import FieldVisitForm from '@/components/fieldvisits/FieldVisitForm';
+import FieldVisitSummary from '@/components/fieldvisits/FieldVisitSummary';
 
 
 export default function ProjectDetail() {
@@ -43,6 +47,7 @@ export default function ProjectDetail() {
   const [editTask, setEditTask] = React.useState(null);
   const [showAddTask, setShowAddTask] = React.useState(false);
   const [showSendDetailedQ, setShowSendDetailedQ] = React.useState(false);
+  const [fieldVisitView, setFieldVisitView] = React.useState(null); // null | { mode: 'form'|'summary', visit?: obj }
   const queryClient = useQueryClient();
 
   const updateProjectStatus = useMutation({
@@ -95,12 +100,17 @@ export default function ProjectDetail() {
   });
   const projectMeetings = meetings.filter(m => m.project_id === projectId);
 
+  const { data: fieldVisits = [] } = useQuery({
+    queryKey: ['field-visits', projectId],
+    queryFn: () => base44.entities.FieldVisit.filter({ project_id: projectId }),
+    enabled: !!projectId,
+  });
+
   const clientId = project?.client_id;
   const { data: projectQuestionnaires = [] } = useQuery({
     queryKey: ['questionnaires', clientId],
     queryFn: async () => {
       const byClientId = await base44.entities.Questionnaire.filter({ client_id: clientId });
-      // Also fetch by phone/email for generic questionnaires
       const c = client;
       const byPhone = c?.phone ? await base44.entities.Questionnaire.filter({ phone: c.phone }) : [];
       const byEmail = c?.email ? await base44.entities.Questionnaire.filter({ email: c.email }) : [];
@@ -109,6 +119,9 @@ export default function ProjectDetail() {
     },
     enabled: !!clientId && !!client,
   });
+
+  const defaultVisitType = project?.stage_current >= 12 ? 'installation' : 'supervision';
+  const showFieldVisitsTab = project?.stage_current >= 9;
 
   if (!project) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground">טוען...</div>;
@@ -173,6 +186,17 @@ export default function ProjectDetail() {
           <TabsTrigger value="suppliers">ספקים ורכש</TabsTrigger>
           <TabsTrigger value="questionnaires">שאלונים</TabsTrigger>
           <TabsTrigger value="communications">תקשורת</TabsTrigger>
+          {showFieldVisitsTab && (
+            <TabsTrigger value="field-visits" className="flex items-center gap-1">
+              <ClipboardCheck className="w-3.5 h-3.5" />
+              דוחות שטח
+              {fieldVisits.length > 0 && (
+                <span className="mr-1 bg-primary/15 text-primary text-xs rounded-full px-1.5 py-0.5">
+                  {fieldVisits.length}
+                </span>
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview">
@@ -365,6 +389,74 @@ export default function ProjectDetail() {
             </div>
           )}
         </TabsContent>
+
+        {/* ── Field Visits Tab ── */}
+        {showFieldVisitsTab && (
+          <TabsContent value="field-visits">
+            <div className="flex justify-end mb-4">
+              <Button
+                onClick={() => setFieldVisitView({ mode: 'form', visit: null })}
+                className="bg-[#8B7355] hover:bg-[#7a6548] text-white gap-1"
+              >
+                <Plus className="w-4 h-4" />
+                ביקור חדש
+              </Button>
+            </div>
+
+            {fieldVisits.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <ClipboardCheck className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p className="text-sm">אין ביקורי שטח עדיין</p>
+                <p className="text-xs mt-1">לחצי על "ביקור חדש" להתחיל</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {[...fieldVisits]
+                  .sort((a, b) => new Date(b.visit_date) - new Date(a.visit_date))
+                  .map(visit => (
+                    <FieldVisitCard
+                      key={visit.id}
+                      visit={visit}
+                      onClick={() => setFieldVisitView({ mode: 'summary', visit })}
+                    />
+                  ))}
+              </div>
+            )}
+
+            {/* Form dialog */}
+            <Dialog
+              open={fieldVisitView?.mode === 'form'}
+              onOpenChange={(open) => { if (!open) setFieldVisitView(null); }}
+            >
+              <DialogContent className="max-w-lg h-[90vh] p-0 overflow-hidden">
+                <FieldVisitForm
+                  projectId={projectId}
+                  visit={fieldVisitView?.visit}
+                  defaultVisitType={defaultVisitType}
+                  onClose={() => setFieldVisitView(null)}
+                  onSaved={() => queryClient.invalidateQueries({ queryKey: ['field-visits', projectId] })}
+                />
+              </DialogContent>
+            </Dialog>
+
+            {/* Summary dialog */}
+            <Dialog
+              open={fieldVisitView?.mode === 'summary'}
+              onOpenChange={(open) => { if (!open) setFieldVisitView(null); }}
+            >
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                {fieldVisitView?.visit && (
+                  <FieldVisitSummary
+                    visitId={fieldVisitView.visit.id}
+                    onEdit={() => setFieldVisitView({ mode: 'form', visit: fieldVisitView.visit })}
+                    onClose={() => setFieldVisitView(null)}
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
+          </TabsContent>
+        )}
+
       </Tabs>
     </div>
   );
