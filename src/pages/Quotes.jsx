@@ -13,14 +13,113 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, FileText, Send } from 'lucide-react';
+import { Plus, Search, FileText, Send, FileSignature, Loader2, Layers } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { format } from 'date-fns';
 import AddQuoteDialog from '@/components/quotes/AddQuoteDialog';
 import QuotesTable from '@/components/quotes/QuotesTable';
+import DocumentSignatureBadge from '@/components/documents/DocumentSignatureBadge';
 import { toast } from 'sonner';
 
 const packageLabels = { small: 'ליווי בסיסי', medium: 'ליווי מלא', large: 'פרימיום' };
+
+// ===== חתימה דו-שלבית + שלב יחיד (מוטמע כאן כי אי אפשר להוסיף קבצים) =====
+// שלב 1 = הצעה (part:'quote'), שלב 2 = הסכם (part:'contract'), או הכל יחד (part:'full').
+// כל Document נחתם דרך מנגנון החתימה הקיים — לא נוגעים בו.
+function QuoteSigningButtons({ quote, clientName, compact = false }) {
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(null);
+
+  const { data: docs = [] } = useQuery({
+    queryKey: ['quote-docs', quote?.id],
+    queryFn: () => base44.entities.Document.filter({ quote_id: quote.id }),
+    enabled: !!quote?.id,
+  });
+
+  const quoteDoc = docs.find(d => d.type === 'quote');
+  const contractDoc = docs.find(d => d.type === 'contract');
+
+  const sendForSignature = async (part, type, label) => {
+    if (!quote?.id) { toast.error('צריך לשמור את ההצעה קודם'); return; }
+    setBusy(part);
+    try {
+      const result = await base44.functions.invoke('generateQuotePDF', {
+        client_id: quote.client_id,
+        quote_id: quote.id,
+        total_amount: quote.total_amount,
+        meeting_date: quote.meeting_date,
+        part,
+      });
+      const fileUrl = result?.data?.file_url || result?.file_url;
+      if (!fileUrl) throw new Error(result?.data?.error || result?.error || 'יצירת ה-PDF נכשלה');
+
+      const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+      await base44.entities.Document.create({
+        name: `${label} - ${clientName || ''}`.trim(),
+        type,
+        file_url: fileUrl,
+        client_id: quote.client_id,
+        quote_id: quote.id,
+        signature_token: token,
+        signature_status: 'pending_signature',
+      });
+
+      const url = `${window.location.origin}/sign?token=${token}`;
+      await navigator.clipboard.writeText(url);
+      toast.success(`${label}: קישור חתימה הועתק! שלחי ללקוח/ה`);
+      queryClient.invalidateQueries({ queryKey: ['quote-docs', quote.id] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    } catch (e) {
+      toast.error('שגיאה: ' + (e?.message || 'נסי שוב'));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (!quote?.id) {
+    return <p className="text-xs text-muted-foreground">שמרי את ההצעה כדי לשלוח לחתימה.</p>;
+  }
+
+  const sz = compact ? 'h-7 px-2 text-xs' : '';
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2">
+        {!quoteDoc && (
+          <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
+            onClick={() => sendForSignature('quote', 'quote', 'הצעת מחיר')}>
+            {busy === 'quote' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+            שלב 1: הצעה לחתימה
+          </Button>
+        )}
+        {!contractDoc && (
+          <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
+            onClick={() => sendForSignature('contract', 'contract', 'הסכם')}>
+            {busy === 'contract' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSignature className="w-3.5 h-3.5" />}
+            שלב 2: הסכם לחתימה
+          </Button>
+        )}
+        {!quoteDoc && !contractDoc && (
+          <Button type="button" size="sm" variant="ghost" className={`gap-1.5 ${sz}`} disabled={!!busy}
+            onClick={() => sendForSignature('full', 'contract', 'הצעה + הסכם')}>
+            {busy === 'full' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
+            שלח הכל יחד
+          </Button>
+        )}
+      </div>
+      {docs.length > 0 && (
+        <div className="space-y-1">
+          {docs.map(d => (
+            <div key={d.id} className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-medium">{d.type === 'quote' ? '📄 הצעה' : '✍️ הסכם'}:</span>
+              <DocumentSignatureBadge doc={d} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Quotes() {
   const { user, isAdmin } = useCurrentUser();
@@ -230,6 +329,9 @@ export default function Quotes() {
                       )}
                       <button onClick={() => generatePDF(q, clientMap[q.client_id]?.name)} className="flex items-center gap-1 text-sm text-[#8B7355] hover:text-[#C9A96E]" title="הורד PDF"><FileText className="w-3 h-3" />הורד PDF</button>
                     </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t" onClick={e => e.stopPropagation()}>
+                    <QuoteSigningButtons quote={q} clientName={client?.name} compact />
                   </div>
                 </CardContent>
               </Card>
