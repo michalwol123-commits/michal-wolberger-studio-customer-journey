@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
         put(coverDate, W / 2, 266, 'center', 11);
         // diagnostic stamp — confirms the new code is live.
         doc.setTextColor(200, 0, 0);
-        put('v6', 8, 8, 'left', 8);
+        put('v7', 8, 8, 'left', 8);
       }
 
       if (i === P15_INDEX) {
@@ -228,11 +228,11 @@ Deno.serve(async (req) => {
 
       if (i === CONTRACT_INDEX) {
         doc.setTextColor(58, 42, 30);
-        put(cName, 130, 104, 'right', 13);
-        put(cId, 138, 112, 'right', 13);
-        put(cPhone, 139, 120, 'right', 12);
-        put(cAddress, 138, 132, 'right', 12);
-        put(cEmail, 140, 140, 'right', 12);
+        put(cName, 130, 105.2, 'right', 13);
+        put(cId, 138, 114.4, 'right', 13);
+        put(cPhone, 139, 123.7, 'right', 12);
+        put(cAddress, 132, 133, 'right', 12);
+        put(cEmail, 140, 142.3, 'right', 12);
         // total amount — sits on the "סך ____" underline
         put(amountStr, 53, 207, 'center', 12);
         // signing date — full sentence overlaid (line removed from the Canva template), centered below title
