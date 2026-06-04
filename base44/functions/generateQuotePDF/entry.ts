@@ -28,7 +28,7 @@ const PAGE_IMAGES = [
   B + '33be831d0_p-21.jpg', // 20
   B + '1cecaa474_p-22.jpg', // 21
   B + '053152709_p-23.jpg', // 22
-  B + '3e3119aed_24.jpg', // 23 contract (dynamic) — Canva date line removed, overlaid in code
+  B + '498d8d078_24.jpg', // 23 contract (dynamic) — Canva date line removed, overlaid in code
   B + '463816653_p-25.jpg', // 24
   B + '9b33cace9_p-26.jpg', // 25
   B + '4853b4a4e_p-27.jpg', // 26
