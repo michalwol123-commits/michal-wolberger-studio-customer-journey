@@ -15,6 +15,7 @@ import InspirationBoardViewer from './InspirationBoardViewer';
 import PortalQuoteView from './PortalQuoteView';
 import PortalDaysMetrics from './PortalDaysMetrics';
 import PortalSupplierDocs from './PortalSupplierDocs';
+import PortalFieldVisits from './PortalFieldVisits';
 
 const STAGE_CONTENT = {
   1: { questionnaire: 'short', docs: true },
@@ -24,10 +25,10 @@ const STAGE_CONTENT = {
   5: { questionnaire: 'detailed', docs: true },
   6: { floor_plan: true, meetings: true, docs: true },
   8: { meetings: true, docs: true, payments: true, inspiration: true },
-  9: { days: true, meetings: true, docs: true, payments: true },
+  9:  { days: true, meetings: true, docs: true, payments: true, fieldvisits: true },
   10: { meetings: true, docs: true, payments: true, supplier_docs: true },
-  11: { days: true, meetings: true, docs: true, payments: true },
-  12: { days: true, meetings: true, docs: true, payments: true },
+  11: { days: true, meetings: true, docs: true, payments: true, fieldvisits: true },
+  12: { days: true, meetings: true, docs: true, payments: true, fieldvisits: true },
   13: { payments: true, docs: true, completion: true },
 };
 function getStageContent(stageNum) {
@@ -262,7 +263,6 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
     ? documents.filter(d => {
         if (d.is_current === false) return false;
         if (d.type === 'shopping_invoice' || d.type === 'quote') return false;
-        // In stage 13, hide photo types from doc list (they show in the collage)
         if (Number(stageNum) === 13 && PHOTO_TYPES_TO_HIDE.includes(d.type)) return false;
         if (d.stage != null && d.stage !== 0 && Number(d.stage) === Number(stageNum)) return true;
         if ((!d.stage || d.stage === 0) && isCurrentStage) return true;
@@ -303,6 +303,7 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
       {content.floor_plan && <PortalFloorPlanApproval project={project} />}
       {content.days && <PortalDaysMetrics project={project} stageNum={Number(stageNum)} />}
       {content.meetings && <PortalStageMeetings meetings={meetings} stageNum={stageNum} />}
+      {content.fieldvisits && <PortalFieldVisits project={project} />}
 
       {content.docs && (
         <Card>
