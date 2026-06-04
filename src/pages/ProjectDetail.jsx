@@ -450,6 +450,10 @@ export default function ProjectDetail() {
                     visitId={fieldVisitView.visit.id}
                     onEdit={() => setFieldVisitView({ mode: 'form', visit: fieldVisitView.visit })}
                     onClose={() => setFieldVisitView(null)}
+                    onDelete={() => {
+                      queryClient.invalidateQueries({ queryKey: ['field-visits', projectId] });
+                      setFieldVisitView(null);
+                    }}
                   />
                 )}
               </DialogContent>

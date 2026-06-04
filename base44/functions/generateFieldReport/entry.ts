@@ -1,5 +1,6 @@
-// generateFieldReport — יצירת PDF דוח ביקור שטח + שליחה במייל
+// generateFieldReport — יצירת PDF דוח ביקור שטח + שליחה ישירה דרך Brevo
 // Trigger: FieldVisit record_updated — כאשר report_requested_at משתנה
+// OR: Called directly with { visitId, mode: 'preview' } for preview without email
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 
@@ -33,24 +34,51 @@ async function fetchBase64(url) {
   return btoa(binary);
 }
 
+async function fetchBase64Chunked(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('fetch failed ' + resp.status);
+  const buf = new Uint8Array(await resp.arrayBuffer());
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < buf.length; i += chunk) {
+    binary += String.fromCharCode(...buf.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { data, old_data } = await req.json();
+    const body = await req.json();
 
-    if (!data?.report_requested_at) return Response.json({ skipped: true, reason: 'no report_requested_at' });
-    if (data.report_requested_at === old_data?.report_requested_at) return Response.json({ skipped: true, reason: 'unchanged' });
+    // Support two call modes:
+    // 1. Entity automation: { data, old_data } — triggered on FieldVisit update
+    // 2. Direct call: { visitId, mode } — called from frontend for preview/send
+    let visitId, isPreview = false;
 
-    const visitId = data.id;
-    const [visits, findingsList, projects] = await Promise.all([
+    if (body.visitId) {
+      // Direct call mode
+      visitId = body.visitId;
+      isPreview = body.mode === 'preview';
+    } else if (body.data) {
+      // Entity automation mode
+      const { data, old_data } = body;
+      if (!data?.report_requested_at) return Response.json({ skipped: true, reason: 'no report_requested_at' });
+      if (data.report_requested_at === old_data?.report_requested_at) return Response.json({ skipped: true, reason: 'unchanged' });
+      visitId = data.id;
+    } else {
+      return Response.json({ skipped: true, reason: 'no data' });
+    }
+
+    const [visits, findingsList] = await Promise.all([
       base44.asServiceRole.entities.FieldVisit.filter({ id: visitId }),
       base44.asServiceRole.entities.FieldFinding.filter({ field_visit_id: visitId }),
-      base44.asServiceRole.entities.Project.filter({ id: data.project_id }),
     ]);
 
     const visit = visits[0];
     if (!visit) return Response.json({ error: 'visit not found' }, { status: 404 });
 
+    const projects = await base44.asServiceRole.entities.Project.filter({ id: visit.project_id });
     const project = projects[0];
     const clients = project?.client_id ? await base44.asServiceRole.entities.Client.filter({ id: project.client_id }) : [];
     const client = clients[0];
@@ -60,7 +88,7 @@ Deno.serve(async (req) => {
     const visitDateHe = visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('he-IL') : '—';
     const projectName = project?.name || 'פרויקט';
 
-    // Load Heebo — same as generateQuotePDF
+    // Load Heebo font
     const heeboBase64 = await fetchBase64(HEEBO_TTF_URL).catch(e => { console.error('Heebo failed:', e); return ''; });
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -73,7 +101,6 @@ Deno.serve(async (req) => {
     const W = 210, H = 297, margin = 15;
     let y = margin;
 
-    // put() — same RTL pattern as generateQuotePDF
     const put = (txt, x, yPos, align, size) => {
       const t = String(txt ?? '');
       if (!t) return;
@@ -200,36 +227,79 @@ Deno.serve(async (req) => {
     const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
     const pdfUrl = file_url;
 
-    // Create Communication record (נשלח ע"י שולח המייל הקיים)
-    if (client?.id && client?.email) {
-      const emailContent =
-        'שלום ' + (client.name || '') + ',\n\n' +
-        'מצורף דוח ביקור ה' + visitTypeHe + ' מתאריך ' + visitDateHe + ' עבור הפרויקט: ' + projectName + '.\n\n' +
-        (findingsList.length > 0 ? 'נמצאו ' + findingsList.length + ' ממצאים המפורטים בדוח.\n\n' : 'הביקור עבר ללא ממצאים משמעותיים.\n\n') +
-        (visit.next_steps ? 'צעדים הבאים:\n' + visit.next_steps + '\n\n' : '') +
-        'לצפייה והורדת הדוח:\n' + pdfUrl;
-
-      await base44.asServiceRole.entities.Communication.create({
-        client_id: client.id,
-        project_id: data.project_id,
-        type: 'email',
-        direction: 'outbound',
-        subject: 'דוח ביקור שטח — ' + projectName + ' (' + visitDateHe + ')',
-        content: emailContent,
-        sent_by: 'system',
-        status: 'pending',
-        channel: 'base44_native',
-        attachment_url: pdfUrl,
-      });
-    }
-
-    // Update FieldVisit
+    // Update FieldVisit with PDF URL
     await base44.asServiceRole.entities.FieldVisit.update(visitId, {
       report_pdf_url: pdfUrl,
-      report_sent_at: new Date().toISOString(),
-      report_sent_to: client?.email || '',
       status: 'completed',
     });
+
+    // If preview mode — return URL without sending email
+    if (isPreview) {
+      return Response.json({ success: true, file_url: pdfUrl, mode: 'preview' });
+    }
+
+    // ── Send email directly via Brevo (like autoQuoteSent) ──
+    if (client?.id && client?.email) {
+      const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
+      const clientName = client.name || 'לקוח/ה';
+      const subject = 'דוח ביקור שטח — ' + projectName + ' (' + visitDateHe + ')';
+
+      const htmlBody = `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <div style="background:#8B7355;padding:32px;text-align:center;color:white;">
+          <h1 style="margin:0;font-size:22px;">סטודיו מיכל וולברגר</h1>
+          <p style="margin:8px 0 0;font-size:13px;opacity:0.85;">עיצוב פנים</p>
+        </div>
+        <div style="padding:32px;">
+          <p>שלום ${clientName},</p>
+          <p>מצורף דוח ביקור ה${visitTypeHe} מתאריך ${visitDateHe} עבור הפרויקט: <strong>${projectName}</strong>.</p>
+          ${findingsList.length > 0 ? '<p>נמצאו ' + findingsList.length + ' ממצאים המפורטים בדוח.</p>' : '<p>הביקור עבר ללא ממצאים משמעותיים.</p>'}
+          ${visit.next_steps ? '<p><strong>צעדים הבאים:</strong><br/>' + visit.next_steps.replace(/\n/g, '<br/>') + '</p>' : ''}
+          <p>בברכה,<br/>מיכל וולברגר - עיצוב פנים</p>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#999;padding:16px;">סטודיו מיכל וולברגר | עיצוב פנים<br/>הודעה זו נשלחה אוטומטית</div>
+      </div>`;
+
+      const brevoPayload = {
+        sender: { name: 'סטודיו מיכל וולברגר', email: 'michalwol123@gmail.com' },
+        to: [{ email: client.email, name: clientName }],
+        subject: subject,
+        htmlContent: htmlBody,
+      };
+
+      // Attach PDF
+      const pdfAttachBase64 = await fetchBase64Chunked(pdfUrl);
+      brevoPayload.attachment = [{ content: pdfAttachBase64, name: 'field_report_' + projectName + '.pdf' }];
+
+      const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': BREVO_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(brevoPayload),
+      });
+      if (!brevoRes.ok) throw new Error('Brevo error: ' + JSON.stringify(await brevoRes.json()));
+
+      // Create Communication with status: 'sent'
+      await base44.asServiceRole.entities.Communication.create({
+        client_id: client.id,
+        project_id: visit.project_id,
+        type: 'email',
+        direction: 'outbound',
+        subject: subject,
+        content: 'דוח ביקור ' + visitTypeHe + ' מתאריך ' + visitDateHe + ' נשלח עם PDF מצורף ל-' + client.email,
+        sent_by: 'system',
+        status: 'sent',
+        channel: 'gmail',
+        attachment_url: pdfUrl,
+      });
+
+      // Update FieldVisit sent info
+      await base44.asServiceRole.entities.FieldVisit.update(visitId, {
+        report_sent_at: new Date().toISOString(),
+        report_sent_to: client.email,
+      });
+    }
 
     return Response.json({ success: true, file_url: pdfUrl, sentTo: client?.email || '' });
 

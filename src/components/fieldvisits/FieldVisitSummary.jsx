@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, MinusCircle, Download, Send, Loader2, RefreshCw } from 'lucide-react';
+import { CheckCircle, AlertCircle, MinusCircle, Download, Send, Loader2, RefreshCw, Eye, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CATEGORY_LABELS = {
@@ -17,10 +17,12 @@ const SEV_COLORS = {
   high: 'bg-red-100 text-red-700',
 };
 
-export default function FieldVisitSummary({ visitId, onEdit, onClose }) {
+export default function FieldVisitSummary({ visitId, onEdit, onClose, onDelete }) {
   const queryClient = useQueryClient();
   const [sending, setSending] = useState(false);
   const [polling, setPolling] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: visits = [] } = useQuery({
     queryKey: ['field-visit-detail', visitId],
@@ -47,6 +49,29 @@ export default function FieldVisitSummary({ visitId, onEdit, onClose }) {
       toast.success('הדוח נשלח בהצלחה! ✉️');
     }
   }, [visit?.report_pdf_url, polling]);
+
+  const handlePreviewReport = async () => {
+    if (!visit) return;
+    setPreviewing(true);
+    try {
+      // Save as completed first, then generate preview PDF without sending email
+      await updateMutation.mutateAsync({
+        id: visitId,
+        status: 'completed',
+      });
+      const res = await base44.functions.invoke('generateFieldReport', { visitId, mode: 'preview' });
+      const url = res.data?.file_url;
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        toast.error('לא התקבל קישור ל-PDF');
+      }
+    } catch {
+      toast.error('שגיאה ביצירת תצוגה מקדימה');
+    } finally {
+      setPreviewing(false);
+    }
+  };
 
   const handleSendReport = async () => {
     if (!visit) return;
@@ -104,6 +129,7 @@ export default function FieldVisitSummary({ visitId, onEdit, onClose }) {
                 <div key={item.id} className="bg-red-50 rounded-xl px-3 py-2">
                   <p className="text-sm font-medium text-gray-800">{item.label}</p>
                   {item.note && <p className="text-xs text-gray-500 mt-0.5">{item.note}</p>}
+                  {item.photo_url && <img src={item.photo_url} alt="" className="mt-1.5 w-full max-h-32 object-cover rounded-lg" />}
                 </div>
               ))}
             </div>
@@ -161,17 +187,22 @@ export default function FieldVisitSummary({ visitId, onEdit, onClose }) {
             </div>
           ) : (
             <div className="text-center space-y-2">
-              {sending || polling ? (
+              {sending || polling || previewing ? (
                 <div className="flex flex-col items-center gap-2 py-2">
                   <Loader2 className="w-6 h-6 animate-spin text-[#8B7355]" />
-                  <p className="text-sm text-gray-500">מכין את הדוח...</p>
+                  <p className="text-sm text-gray-500">{previewing ? 'מכין תצוגה מקדימה...' : 'מכין את הדוח...'}</p>
                 </div>
               ) : (
                 <>
                   <p className="text-xs text-gray-400 mb-2">הדוח יישלח ללקוח במייל כ-PDF</p>
-                  <Button onClick={handleSendReport} className="w-full bg-[#8B7355] hover:bg-[#7a6548] text-white h-12">
-                    <Send className="w-4 h-4 ml-1" /> צור ושלח דוח PDF
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button onClick={handlePreviewReport} variant="outline" className="border-[#8B7355] text-[#8B7355] h-12">
+                      <Eye className="w-4 h-4 ml-1" /> תצוגה מקדימה
+                    </Button>
+                    <Button onClick={handleSendReport} className="bg-[#8B7355] hover:bg-[#7a6548] text-white h-12">
+                      <Send className="w-4 h-4 ml-1" /> שלח דוח
+                    </Button>
+                  </div>
                 </>
               )}
             </div>
@@ -181,6 +212,29 @@ export default function FieldVisitSummary({ visitId, onEdit, onClose }) {
 
       {onEdit && (
         <Button onClick={onEdit} variant="ghost" className="w-full text-gray-400 text-sm">✏️ ערוך ביקור</Button>
+      )}
+      {onDelete && (
+        <Button
+          onClick={async () => {
+            if (!confirm('למחוק ביקור זה לצמיתות?')) return;
+            setDeleting(true);
+            try {
+              await base44.entities.FieldVisit.delete(visitId);
+              toast.success('הביקור נמחק');
+              onDelete();
+            } catch {
+              toast.error('שגיאה במחיקה');
+            } finally {
+              setDeleting(false);
+            }
+          }}
+          disabled={deleting}
+          variant="ghost"
+          className="w-full text-red-400 hover:text-red-600 text-sm"
+        >
+          {deleting ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : null}
+          🗑️ מחק ביקור
+        </Button>
       )}
     </div>
   );
