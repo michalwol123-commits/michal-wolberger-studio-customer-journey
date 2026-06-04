@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, AlertCircle, MinusCircle, Plus, Trash2, Save, Send, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertCircle, MinusCircle, Plus, Trash2, Save, Send, Loader2, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import FieldVisitFindingsList from './FieldVisitFindingsList';
 
@@ -32,7 +32,7 @@ const INSTALLATION_CHECKLIST = [
 
 const initChecklist = (type) =>
   (type === 'installation' ? INSTALLATION_CHECKLIST : SUPERVISION_CHECKLIST).map(item => ({
-    ...item, status: null, note: '', custom: false,
+    ...item, status: null, note: '', photo_url: '', custom: false,
   }));
 
 const parseChecklist = (raw) => {
@@ -54,6 +54,7 @@ const TABS = [
 export default function FieldVisitForm({ projectId, visit, defaultVisitType, onClose, onSaved }) {
   const queryClient = useQueryClient();
   const isNew = !visit?.id;
+  const stateRef = useRef({});
 
   const [visitType, setVisitType]       = useState(visit?.visit_type || defaultVisitType || 'supervision');
   const [visitDate, setVisitDate]       = useState(visit?.visit_date || new Date().toISOString().split('T')[0]);
@@ -67,8 +68,8 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
   const [savedId, setSavedId]           = useState(visit?.id || null);
   const [saving, setSaving]             = useState(false);
   const [sending, setSending]           = useState(false);
+  const [uploadingItemId, setUploadingItemId] = useState(null);
 
-  const stateRef = useRef({});
   stateRef.current = { visitType, visitDate, checklist, generalNotes, attendees, decisions, nextSteps, savedId };
 
   const createMutation = useMutation({ mutationFn: (data) => base44.entities.FieldVisit.create(data) });
@@ -89,13 +90,12 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
     };
   };
 
+  // Auto-save every 30s
   useEffect(() => {
     const timer = setInterval(async () => {
       const { savedId: id } = stateRef.current;
       if (!id) return;
-      try {
-        await base44.entities.FieldVisit.update(id, buildPayload('draft'));
-      } catch {}
+      try { await base44.entities.FieldVisit.update(id, buildPayload('draft')); } catch {}
     }, 30000);
     return () => clearInterval(timer);
   }, []);
@@ -123,15 +123,21 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
     }
   };
 
+  // Auto-save when switching to findings tab (to get savedId)
+  const handleTabChange = async (tabId) => {
+    if (tabId === 'findings' && !stateRef.current.savedId) {
+      await handleSave('draft');
+    }
+    setActiveTab(tabId);
+  };
+
   const handleSendReport = async () => {
     setSending(true);
     try {
       const id = await handleSave('completed');
       if (!id) return;
-      await base44.entities.FieldVisit.update(id, {
-        report_requested_at: new Date().toISOString(),
-      });
-      toast.success('הדוח בדרך ✉️ תקבלי עדכון במייל');
+      await base44.entities.FieldVisit.update(id, { report_requested_at: new Date().toISOString() });
+      toast.success('הדוח בדרך ✉️ יישלח למייל הלקוח');
       onClose?.();
     } catch {
       toast.error('שגיאה בשליחת הדוח');
@@ -143,15 +149,29 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
   const updateItem = (itemId, field, value) =>
     setChecklist(prev => prev.map(i => i.id === itemId ? { ...i, [field]: value } : i));
 
+  const handleItemPhoto = async (itemId, file) => {
+    setUploadingItemId(itemId);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      updateItem(itemId, 'photo_url', file_url);
+      toast.success('תמונה הועלתה');
+    } catch {
+      toast.error('שגיאה בהעלאת תמונה');
+    } finally {
+      setUploadingItemId(null);
+    }
+  };
+
   const addCustomItem = () => {
     const label = newItemLabel.trim();
     if (!label) return;
-    setChecklist(prev => [...prev, { id: `custom_${Date.now()}`, label, status: null, note: '', custom: true }]);
+    setChecklist(prev => [...prev, { id: 'custom_' + Date.now(), label, status: null, note: '', photo_url: '', custom: true }]);
     setNewItemLabel('');
   };
 
   return (
     <div className="flex flex-col h-full bg-[#FAF8F5]" dir="rtl">
+      {/* Header */}
       <div className="bg-white border-b px-4 py-3 sticky top-0 z-10 flex justify-between items-center">
         <button onClick={onClose} className="text-gray-400 text-lg leading-none">✕</button>
         <h1 className="font-semibold text-[#5A4632] text-sm">
@@ -165,6 +185,8 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-28 space-y-4">
+
+        {/* Visit type + date (new only) */}
         {isNew && (
           <Card className="border-[#E8E0D8]">
             <CardContent className="pt-4 space-y-3">
@@ -173,7 +195,7 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
                 <div className="grid grid-cols-2 gap-2">
                   {[{ v: 'supervision', l: '📋 פיקוח' }, { v: 'installation', l: '🔧 התקנות' }].map(({ v, l }) => (
                     <button key={v} onClick={() => { setVisitType(v); setChecklist(initChecklist(v)); }}
-                      className={`py-3 rounded-2xl border-2 text-sm font-medium transition-all ${visitType === v ? 'border-[#8B7355] bg-[#8B7355] text-white' : 'border-gray-200 text-gray-600'}`}>
+                      className={'py-3 rounded-2xl border-2 text-sm font-medium transition-all ' + (visitType === v ? 'border-[#8B7355] bg-[#8B7355] text-white' : 'border-gray-200 text-gray-600')}>
                       {l}
                     </button>
                   ))}
@@ -188,19 +210,21 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
           </Card>
         )}
 
+        {/* Tabs */}
         <div className="grid grid-cols-3 gap-1 bg-white rounded-2xl p-1 border border-gray-100">
           {TABS.map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id)}
-              className={`py-2 rounded-xl text-sm font-medium transition-all ${activeTab === t.id ? 'bg-[#8B7355] text-white shadow-sm' : 'text-gray-400'}`}>
+            <button key={t.id} onClick={() => handleTabChange(t.id)}
+              className={'py-2 rounded-xl text-sm font-medium transition-all ' + (activeTab === t.id ? 'bg-[#8B7355] text-white shadow-sm' : 'text-gray-400')}>
               {t.label}
             </button>
           ))}
         </div>
 
+        {/* CHECKLIST TAB */}
         {activeTab === 'checklist' && (
           <div className="space-y-3">
             {checklist.map(item => (
-              <Card key={item.id} className={`border ${item.status === 'issue' ? 'border-red-200 bg-red-50/20' : 'border-gray-100'}`}>
+              <Card key={item.id} className={'border ' + (item.status === 'issue' ? 'border-red-200 bg-red-50/20' : 'border-gray-100')}>
                 <CardContent className="pt-3 pb-3 px-4">
                   <div className="flex items-start justify-between mb-2">
                     <span className="font-medium text-sm text-[#2C2C2C] flex-1 leading-snug">{item.label}</span>
@@ -210,27 +234,65 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
                       </button>
                     )}
                   </div>
+
+                  {/* Status buttons */}
                   <div className="grid grid-cols-3 gap-1.5">
                     {STATUS_BTNS.map(({ key, label, Icon, cls }) => (
                       <button key={key} onClick={() => updateItem(item.id, 'status', item.status === key ? null : key)}
-                        className={`flex items-center justify-center gap-1 py-2 px-1 rounded-xl border text-xs font-medium transition-all ${item.status === key ? cls : 'border-gray-100 text-gray-300'}`}>
+                        className={'flex items-center justify-center gap-1 py-2 px-1 rounded-xl border text-xs font-medium transition-all ' + (item.status === key ? cls : 'border-gray-100 text-gray-300')}>
                         <Icon className="w-4 h-4" /><span>{label}</span>
                       </button>
                     ))}
                   </div>
-                  {(item.status === 'issue' || item.note) && (
-                    <Textarea placeholder="הערה / תיאור..." value={item.note}
-                      onChange={e => updateItem(item.id, 'note', e.target.value)}
-                      className="mt-2 text-sm min-h-[56px]" />
+
+                  {/* When marked as "ממצא" — show note + inline photo */}
+                  {item.status === 'issue' && (
+                    <div className="mt-2 space-y-2">
+                      <Textarea
+                        placeholder="תיאור הממצא..."
+                        value={item.note}
+                        onChange={e => updateItem(item.id, 'note', e.target.value)}
+                        className="text-sm min-h-[56px]"
+                      />
+
+                      {/* Photo upload inline */}
+                      {item.photo_url ? (
+                        <div className="relative">
+                          <img src={item.photo_url} alt="ממצא" className="w-full max-h-40 object-cover rounded-xl" />
+                          <button
+                            onClick={() => updateItem(item.id, 'photo_url', '')}
+                            className="absolute top-2 left-2 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <label htmlFor={'photo-' + item.id}
+                          className="flex items-center justify-center gap-2 text-sm text-[#8B7355] border-2 border-dashed border-[#8B7355]/40 rounded-xl py-2.5 cursor-pointer hover:bg-[#8B7355]/5 transition-colors">
+                          {uploadingItemId === item.id
+                            ? <><Loader2 className="w-4 h-4 animate-spin" /> מעלה...</>
+                            : <><Camera className="w-4 h-4" /> צלם תמונה של הממצא</>}
+                          <input
+                            id={'photo-' + item.id}
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={e => e.target.files?.[0] && handleItemPhoto(item.id, e.target.files[0])}
+                          />
+                        </label>
+                      )}
+                    </div>
                   )}
                 </CardContent>
               </Card>
             ))}
 
+            {/* Add custom item */}
             <Card className="border-2 border-dashed border-[#8B7355]/30">
               <CardContent className="pt-3 pb-3 px-4">
+                <p className="text-xs text-gray-400 mb-2">הוספת סעיף מותאם אישית</p>
                 <div className="flex gap-2">
-                  <Input placeholder="הוסף סעיף מותאם אישית..." value={newItemLabel}
+                  <Input placeholder="שם הסעיף..." value={newItemLabel}
                     onChange={e => setNewItemLabel(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && addCustomItem()} className="text-sm flex-1" />
                   <Button onClick={addCustomItem} disabled={!newItemLabel.trim()} size="sm" variant="outline" className="border-[#8B7355] text-[#8B7355] shrink-0">
@@ -240,6 +302,7 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
               </CardContent>
             </Card>
 
+            {/* General notes */}
             <Card className="border-gray-100">
               <CardContent className="pt-3 pb-3 px-4">
                 <p className="text-xs text-gray-500 mb-1">הערות כלליות לביקור</p>
@@ -250,19 +313,21 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
           </div>
         )}
 
+        {/* FINDINGS TAB — לממצאים מפורטים עם קטגוריה/חומרה/מיקום */}
         {activeTab === 'findings' && (
           savedId
             ? <FieldVisitFindingsList visitId={savedId} projectId={projectId} />
             : (
               <Card className="border-gray-100">
                 <CardContent className="pt-8 pb-8 text-center text-gray-400">
-                  <p className="text-sm mb-3">שמור את הביקור תחילה</p>
-                  <Button onClick={() => handleSave('draft')} className="bg-[#8B7355] text-white text-sm">שמור ביקור</Button>
+                  <p className="text-sm mb-1">שומר ביקור...</p>
+                  <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#8B7355]" />
                 </CardContent>
               </Card>
             )
         )}
 
+        {/* SUMMARY TAB */}
         {activeTab === 'summary' && (
           <Card className="border-gray-100">
             <CardContent className="pt-4 space-y-4">
@@ -283,6 +348,7 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
         )}
       </div>
 
+      {/* Bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t px-4 py-3 flex gap-2 z-20">
         <Button onClick={() => handleSave('draft')} disabled={saving} variant="outline" className="flex-1 border-[#8B7355] text-[#8B7355] h-11">
           <Save className="w-4 h-4 ml-1" />{saving ? 'שומר...' : 'שמור טיוטה'}
