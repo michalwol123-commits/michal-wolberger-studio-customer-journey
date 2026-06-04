@@ -1,0 +1,187 @@
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, AlertCircle, MinusCircle, Download, Send, Loader2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+
+const CATEGORY_LABELS = {
+  structure: '🧱 בנייה', finishing: '🎨 גמרים', electrical: '⚡ חשמל',
+  plumbing: '🔧 אינסטלציה', carpentry: '🪵 נגרות', other: '📌 אחר',
+};
+const SEV_COLORS = {
+  low: 'bg-yellow-100 text-yellow-700',
+  medium: 'bg-orange-100 text-orange-700',
+  high: 'bg-red-100 text-red-700',
+};
+
+export default function FieldVisitSummary({ visitId, onEdit, onClose }) {
+  const queryClient = useQueryClient();
+  const [sending, setSending] = useState(false);
+  const [polling, setPolling] = useState(false);
+
+  const { data: visits = [] } = useQuery({
+    queryKey: ['field-visit-detail', visitId],
+    queryFn: () => base44.entities.FieldVisit.filter({ id: visitId }),
+    refetchInterval: polling ? 4000 : false,
+  });
+  const visit = visits[0];
+
+  const { data: findings = [] } = useQuery({
+    queryKey: ['findings', visitId],
+    queryFn: () => base44.entities.FieldFinding.filter({ field_visit_id: visitId }),
+    enabled: !!visitId,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, ...data }) => base44.entities.FieldVisit.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['field-visit-detail', visitId] }),
+  });
+
+  useEffect(() => {
+    if (visit?.report_pdf_url && polling) {
+      setPolling(false);
+      setSending(false);
+      toast.success('הדוח נשלח בהצלחה! ✉️');
+    }
+  }, [visit?.report_pdf_url, polling]);
+
+  const handleSendReport = async () => {
+    if (!visit) return;
+    setSending(true);
+    setPolling(true);
+    try {
+      await updateMutation.mutateAsync({
+        id: visitId,
+        status: 'completed',
+        report_requested_at: new Date().toISOString(),
+      });
+    } catch {
+      toast.error('שגיאה בשליחת הדוח');
+      setSending(false);
+      setPolling(false);
+    }
+  };
+
+  if (!visit) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#8B7355]" /></div>;
+
+  const checklist = (() => { try { return JSON.parse(visit.checklist_items || '[]'); } catch { return []; } })();
+  const okItems    = checklist.filter(i => i.status === 'ok');
+  const issueItems = checklist.filter(i => i.status === 'issue');
+  const naItems    = checklist.filter(i => i.status === 'na');
+  const dateStr    = visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('he-IL') : '—';
+  const typeLabel  = visit.visit_type === 'supervision' ? '📋 פיקוח' : '🔧 התקנות';
+
+  return (
+    <div className="space-y-4 pb-6" dir="rtl">
+      <Card className="border-r-4 border-r-[#8B7355]">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="font-bold text-[#5A4632] text-lg">{typeLabel}</h2>
+              <p className="text-sm text-gray-500">{dateStr}</p>
+            </div>
+            <Badge className={visit.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
+              {visit.status === 'completed' ? 'הושלם' : 'טיוטה'}
+            </Badge>
+          </div>
+          <div className="flex gap-4 mt-3 text-sm">
+            <span className="flex items-center gap-1 text-green-600"><CheckCircle className="w-4 h-4" /> {okItems.length} תקין</span>
+            <span className="flex items-center gap-1 text-red-500"><AlertCircle className="w-4 h-4" /> {issueItems.length} ממצאים</span>
+            <span className="flex items-center gap-1 text-gray-400"><MinusCircle className="w-4 h-4" /> {naItems.length} לא רלוונטי</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {issueItems.length > 0 && (
+        <Card>
+          <CardContent className="pt-3">
+            <h3 className="font-semibold text-sm text-gray-700 mb-2">⚠️ ממצאי צ'קליסט</h3>
+            <div className="space-y-2">
+              {issueItems.map(item => (
+                <div key={item.id} className="bg-red-50 rounded-xl px-3 py-2">
+                  <p className="text-sm font-medium text-gray-800">{item.label}</p>
+                  {item.note && <p className="text-xs text-gray-500 mt-0.5">{item.note}</p>}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {findings.length > 0 && (
+        <Card>
+          <CardContent className="pt-3">
+            <h3 className="font-semibold text-sm text-gray-700 mb-2">🔍 ממצאים ({findings.length})</h3>
+            <div className="space-y-2">
+              {findings.map((f, i) => (
+                <div key={f.id} className="border border-gray-100 rounded-xl px-3 py-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-gray-300">#{f.finding_number || i + 1}</span>
+                    <Badge className={`text-xs ${SEV_COLORS[f.severity] || SEV_COLORS.medium}`}>{f.severity === 'low' ? 'נמוך' : f.severity === 'high' ? 'גבוה' : 'בינוני'}</Badge>
+                    <span className="text-xs text-gray-500">{CATEGORY_LABELS[f.category] || f.category}</span>
+                  </div>
+                  <p className="text-sm text-gray-800">{f.description}</p>
+                  {f.location && <p className="text-xs text-gray-400">📍 {f.location}</p>}
+                  {f.photo_url && <img src={f.photo_url} alt="" className="mt-2 w-full max-h-32 object-cover rounded-lg" />}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {(visit.attendees || visit.decisions || visit.next_steps) && (
+        <Card>
+          <CardContent className="pt-3 space-y-3">
+            <h3 className="font-semibold text-sm text-gray-700">📝 סיכום ביקור</h3>
+            {visit.attendees && <div><p className="text-xs text-gray-400 mb-0.5">נוכחים</p><p className="text-sm text-gray-700">{visit.attendees}</p></div>}
+            {visit.decisions && <div><p className="text-xs text-gray-400 mb-0.5">מה סוכם</p><p className="text-sm text-gray-700 whitespace-pre-wrap">{visit.decisions}</p></div>}
+            {visit.next_steps && <div><p className="text-xs text-gray-400 mb-0.5">צעדים הבאים</p><p className="text-sm text-gray-700 whitespace-pre-wrap">{visit.next_steps}</p></div>}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="border-[#8B7355]/20 bg-[#FAF8F5]">
+        <CardContent className="pt-4 pb-4">
+          {visit.report_pdf_url ? (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500 text-center">✅ דוח נשלח{visit.report_sent_at ? ' ' + new Date(visit.report_sent_at).toLocaleDateString('he-IL') : ''}{visit.report_sent_to ? ' → ' + visit.report_sent_to : ''}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <a href={visit.report_pdf_url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1 text-sm border border-[#8B7355] text-[#8B7355] rounded-xl py-2.5">
+                  <Download className="w-4 h-4" /> צפה ב-PDF
+                </a>
+                <Button onClick={handleSendReport} disabled={sending} variant="outline" className="text-sm border-[#8B7355] text-[#8B7355]">
+                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 ml-1" />}שלח שוב
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center space-y-2">
+              {sending || polling ? (
+                <div className="flex flex-col items-center gap-2 py-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#8B7355]" />
+                  <p className="text-sm text-gray-500">מכין את הדוח...</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-400 mb-2">הדוח יישלח ללקוח במייל כ-PDF</p>
+                  <Button onClick={handleSendReport} className="w-full bg-[#8B7355] hover:bg-[#7a6548] text-white h-12">
+                    <Send className="w-4 h-4 ml-1" /> צור ושלח דוח PDF
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {onEdit && (
+        <Button onClick={onEdit} variant="ghost" className="w-full text-gray-400 text-sm">✏️ ערוך ביקור</Button>
+      )}
+    </div>
+  );
+}
