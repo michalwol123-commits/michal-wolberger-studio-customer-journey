@@ -428,7 +428,7 @@ export default function ProjectDetail() {
               open={fieldVisitView?.mode === 'form'}
               onOpenChange={(open) => { if (!open) setFieldVisitView(null); }}
             >
-              <DialogContent className="max-w-lg h-[90vh] p-0 overflow-hidden">
+              <DialogContent className="max-w-lg h-[90vh] p-0 overflow-y-auto">
                 <FieldVisitForm
                   projectId={projectId}
                   visit={fieldVisitView?.visit}

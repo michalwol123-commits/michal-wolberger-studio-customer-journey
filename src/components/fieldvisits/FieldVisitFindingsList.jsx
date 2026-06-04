@@ -36,8 +36,9 @@ export default function FieldVisitFindingsList({ visitId, projectId }) {
   const [adding, setAdding] = useState(false);
   const [uploadingId, setUploadingId] = useState(null);
   const [newFinding, setNewFinding] = useState({
-    description: '', category: 'other', severity: 'medium', location: '', notes: '',
+    description: '', category: 'other', severity: 'medium', location: '', notes: '', photo_url: '',
   });
+  const [newPhotoUploading, setNewPhotoUploading] = useState(false);
 
   const { data: findings = [], isLoading } = useQuery({
     queryKey: ['findings', visitId],
@@ -50,7 +51,7 @@ export default function FieldVisitFindingsList({ visitId, projectId }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['findings', visitId] });
       setAdding(false);
-      setNewFinding({ description: '', category: 'other', severity: 'medium', location: '', notes: '' });
+      setNewFinding({ description: '', category: 'other', severity: 'medium', location: '', notes: '', photo_url: '' });
       toast.success('ממצא נוסף');
     },
     onError: () => toast.error('שגיאה בשמירת ממצא'),
@@ -71,13 +72,28 @@ export default function FieldVisitFindingsList({ visitId, projectId }) {
 
   const handleAddFinding = () => {
     if (!newFinding.description.trim()) return;
-    createMutation.mutate({
+    const data = {
       field_visit_id: visitId,
       project_id: projectId,
       finding_number: findings.length + 1,
       status: 'open',
       ...newFinding,
-    });
+    };
+    if (!data.photo_url) delete data.photo_url;
+    createMutation.mutate(data);
+  };
+
+  const handleNewFindingPhoto = async (file) => {
+    setNewPhotoUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setNewFinding(p => ({ ...p, photo_url: file_url }));
+      toast.success('תמונה הועלתה');
+    } catch {
+      toast.error('שגיאה בהעלאת תמונה');
+    } finally {
+      setNewPhotoUploading(false);
+    }
   };
 
   const handlePhotoUpload = async (findingId, file) => {
@@ -197,6 +213,24 @@ export default function FieldVisitFindingsList({ visitId, projectId }) {
             </div>
             <Input placeholder="מיקום (חדר, אזור...)" value={newFinding.location}
               onChange={e => setNewFinding(p => ({ ...p, location: e.target.value }))} className="text-sm" />
+
+            {/* Photo upload for new finding */}
+            {newFinding.photo_url ? (
+              <div className="relative">
+                <img src={newFinding.photo_url} alt="ממצא" className="w-full max-h-40 object-cover rounded-xl" />
+                <button onClick={() => setNewFinding(p => ({ ...p, photo_url: '' }))}
+                  className="absolute top-2 left-2 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">✕</button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 text-sm text-[#8B7355] border-2 border-dashed border-[#8B7355]/40 rounded-xl py-2.5 cursor-pointer hover:bg-[#8B7355]/5">
+                {newPhotoUploading
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> מעלה...</>
+                  : <><Camera className="w-4 h-4" /> צלם / העלה תמונה</>}
+                <input type="file" accept="image/*" capture="environment" className="hidden"
+                  onChange={e => e.target.files?.[0] && handleNewFindingPhoto(e.target.files[0])} />
+              </label>
+            )}
+
             <div className="flex gap-2">
               <Button onClick={handleAddFinding} disabled={!newFinding.description.trim() || createMutation.isPending}
                 className="flex-1 bg-[#8B7355] hover:bg-[#7a6548] text-white text-sm h-10">

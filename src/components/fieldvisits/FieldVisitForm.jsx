@@ -231,7 +231,7 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
                   <Input placeholder="שם הסעיף..." value={newItemLabel}
                     onChange={e => setNewItemLabel(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && addCustomItem()} className="text-sm flex-1" />
-                  <Button onClick={addCustomItem} disabled={!newItemLabel.trim()} size="sm" variant="outline" className="border-[#8B7355] text-[#8B7355] shrink-0">
+                  <Button type="button" onClick={addCustomItem} disabled={!newItemLabel.trim()} size="sm" variant="outline" className="border-[#8B7355] text-[#8B7355] shrink-0">
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
@@ -347,7 +347,7 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
       </div>
 
       {/* Bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t px-4 py-3 flex gap-2 z-20">
+      <div className="sticky bottom-0 bg-white border-t px-4 py-3 flex gap-2 z-20">
         <Button onClick={() => handleSave('draft')} disabled={saving} variant="outline" className="flex-1 border-[#8B7355] text-[#8B7355] h-11">
           <Save className="w-4 h-4 ml-1" />{saving ? 'שומר...' : 'שמור טיוטה'}
         </Button>
