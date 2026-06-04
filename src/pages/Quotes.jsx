@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, FileText, Send, FileSignature, Loader2, Layers } from 'lucide-react';
+import { Plus, Search, FileText, Send, FileSignature, Loader2, Layers, RefreshCw } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import { format } from 'date-fns';
 import AddQuoteDialog from '@/components/quotes/AddQuoteDialog';
@@ -23,9 +23,9 @@ import { toast } from 'sonner';
 
 const packageLabels = { small: 'ליווי בסיסי', medium: 'ליווי מלא', large: 'פרימיום' };
 
-// ===== חתימה דו-שלבית + שלב יחיד (מוטמע כאן כי אי אפשר להוסיף קבצים) =====
+// ===== חתימה דו-שלבית + שלב יחיד + "גרסה חדשה" (מוטמע כאן כי אי אפשר להוסיף קבצים) =====
 // שלב 1 = הצעה (part:'quote'), שלב 2 = הסכם (part:'contract'), או הכל יחד (part:'full').
-// כל Document נחתם דרך מנגנון החתימה הקיים — לא נוגעים בו.
+// "גרסה חדשה לחתימה" יוצרת Document חדש (version_number+1, parent_doc_id) בלי למחוק את הישן.
 function QuoteSigningButtons({ quote, clientName, compact = false }) {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(null);
@@ -36,12 +36,20 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
     enabled: !!quote?.id,
   });
 
-  const quoteDoc = docs.find(d => d.type === 'quote');
-  const contractDoc = docs.find(d => d.type === 'contract');
+  // הגרסה האחרונה לכל סוג (לפי version_number, ואז תאריך)
+  const latestOf = (type) => docs
+    .filter(d => d.type === type)
+    .sort((a, b) =>
+      (b.version_number || 1) - (a.version_number || 1) ||
+      new Date(b.created_date || 0) - new Date(a.created_date || 0)
+    )[0];
+  const quoteDoc = latestOf('quote');
+  const contractDoc = latestOf('contract');
 
-  const sendForSignature = async (part, type, label) => {
+  const sendForSignature = async (part, type, label, prevDoc) => {
     if (!quote?.id) { toast.error('צריך לשמור את ההצעה קודם'); return; }
-    setBusy(part);
+    const key = `${part}${prevDoc ? '-rev' : ''}`;
+    setBusy(key);
     try {
       const result = await base44.functions.invoke('generateQuotePDF', {
         client_id: quote.client_id,
@@ -53,20 +61,23 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
       const fileUrl = result?.data?.file_url || result?.file_url;
       if (!fileUrl) throw new Error(result?.data?.error || result?.error || 'יצירת ה-PDF נכשלה');
 
+      const version = prevDoc ? (prevDoc.version_number || 1) + 1 : 1;
       const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 8);
       await base44.entities.Document.create({
-        name: `${label} - ${clientName || ''}`.trim(),
+        name: `${label} - ${clientName || ''}${version > 1 ? ` (גרסה ${version})` : ''}`.trim(),
         type,
         file_url: fileUrl,
         client_id: quote.client_id,
         quote_id: quote.id,
+        version_number: version,
+        parent_doc_id: prevDoc?.id || undefined,
         signature_token: token,
         signature_status: 'pending_signature',
       });
 
       const url = `${window.location.origin}/sign?token=${token}`;
       await navigator.clipboard.writeText(url);
-      toast.success(`${label}: קישור חתימה הועתק! שלחי ללקוח/ה`);
+      toast.success(`${label}${version > 1 ? ` (גרסה ${version})` : ''}: קישור חתימה הועתק! שלחי ללקוח/ה`);
       queryClient.invalidateQueries({ queryKey: ['quote-docs', quote.id] });
       queryClient.invalidateQueries({ queryKey: ['documents'] });
     } catch (e) {
@@ -81,41 +92,55 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
   }
 
   const sz = compact ? 'h-7 px-2 text-xs' : '';
+  const Spin = <Loader2 className="w-3.5 h-3.5 animate-spin" />;
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
-        {!quoteDoc && (
-          <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
-            onClick={() => sendForSignature('quote', 'quote', 'הצעת מחיר')}>
-            {busy === 'quote' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
-            שלב 1: הצעה לחתימה
+      {/* ===== שלב 1: הצעה ===== */}
+      {!quoteDoc ? (
+        <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
+          onClick={() => sendForSignature('quote', 'quote', 'הצעת מחיר', null)}>
+          {busy === 'quote' ? Spin : <FileText className="w-3.5 h-3.5" />}
+          שלב 1: הצעה לחתימה
+        </Button>
+      ) : (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs font-medium">📄 הצעה (גרסה {quoteDoc.version_number || 1}):</span>
+          <DocumentSignatureBadge doc={quoteDoc} />
+          <Button type="button" size="sm" variant="ghost" className={`gap-1 ${sz}`} disabled={!!busy}
+            onClick={() => sendForSignature('quote', 'quote', 'הצעת מחיר', quoteDoc)} title="ייצר PDF מעודכן ושלח גרסה חדשה לחתימה">
+            {busy === 'quote-rev' ? Spin : <RefreshCw className="w-3 h-3" />}
+            גרסה חדשה
           </Button>
-        )}
-        {!contractDoc && (
-          <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
-            onClick={() => sendForSignature('contract', 'contract', 'הסכם')}>
-            {busy === 'contract' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSignature className="w-3.5 h-3.5" />}
-            שלב 2: הסכם לחתימה
-          </Button>
-        )}
-        {!quoteDoc && !contractDoc && (
-          <Button type="button" size="sm" variant="ghost" className={`gap-1.5 ${sz}`} disabled={!!busy}
-            onClick={() => sendForSignature('full', 'contract', 'הצעה + הסכם')}>
-            {busy === 'full' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />}
-            שלח הכל יחד
-          </Button>
-        )}
-      </div>
-      {docs.length > 0 && (
-        <div className="space-y-1">
-          {docs.map(d => (
-            <div key={d.id} className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-medium">{d.type === 'quote' ? '📄 הצעה' : '✍️ הסכם'}:</span>
-              <DocumentSignatureBadge doc={d} />
-            </div>
-          ))}
         </div>
+      )}
+
+      {/* ===== שלב 2: הסכם ===== */}
+      {!contractDoc ? (
+        <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
+          onClick={() => sendForSignature('contract', 'contract', 'הסכם', null)}>
+          {busy === 'contract' ? Spin : <FileSignature className="w-3.5 h-3.5" />}
+          שלב 2: הסכם לחתימה
+        </Button>
+      ) : (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs font-medium">✍️ הסכם (גרסה {contractDoc.version_number || 1}):</span>
+          <DocumentSignatureBadge doc={contractDoc} />
+          <Button type="button" size="sm" variant="ghost" className={`gap-1 ${sz}`} disabled={!!busy}
+            onClick={() => sendForSignature('contract', 'contract', 'הסכם', contractDoc)} title="ייצר PDF מעודכן ושלח גרסה חדשה לחתימה">
+            {busy === 'contract-rev' ? Spin : <RefreshCw className="w-3 h-3" />}
+            גרסה חדשה
+          </Button>
+        </div>
+      )}
+
+      {/* ===== שלח הכל יחד — רק כשעוד לא נשלח כלום ===== */}
+      {!quoteDoc && !contractDoc && (
+        <Button type="button" size="sm" variant="ghost" className={`gap-1.5 ${sz}`} disabled={!!busy}
+          onClick={() => sendForSignature('full', 'contract', 'הצעה + הסכם', null)}>
+          {busy === 'full' ? Spin : <Layers className="w-3.5 h-3.5" />}
+          שלח הכל יחד
+        </Button>
       )}
     </div>
   );
