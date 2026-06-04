@@ -223,16 +223,29 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
         {/* CHECKLIST TAB */}
         {activeTab === 'checklist' && (
           <div className="space-y-3">
+            {/* Add custom item — top */}
+            <Card className="border-2 border-dashed border-[#8B7355]/30">
+              <CardContent className="pt-3 pb-3 px-4">
+                <p className="text-xs text-gray-400 mb-2">הוספת סעיף לבדיקה</p>
+                <div className="flex gap-2">
+                  <Input placeholder="שם הסעיף..." value={newItemLabel}
+                    onChange={e => setNewItemLabel(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addCustomItem()} className="text-sm flex-1" />
+                  <Button onClick={addCustomItem} disabled={!newItemLabel.trim()} size="sm" variant="outline" className="border-[#8B7355] text-[#8B7355] shrink-0">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {checklist.map(item => (
               <Card key={item.id} className={'border ' + (item.status === 'issue' ? 'border-red-200 bg-red-50/20' : 'border-gray-100')}>
                 <CardContent className="pt-3 pb-3 px-4">
                   <div className="flex items-start justify-between mb-2">
                     <span className="font-medium text-sm text-[#2C2C2C] flex-1 leading-snug">{item.label}</span>
-                    {item.custom && (
-                      <button onClick={() => setChecklist(prev => prev.filter(i => i.id !== item.id))} className="text-gray-300 hover:text-red-400 ml-2 shrink-0">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                    <button onClick={() => setChecklist(prev => prev.filter(i => i.id !== item.id))} className="text-gray-300 hover:text-red-400 ml-2 shrink-0">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
 
                   {/* Status buttons */}
@@ -286,21 +299,6 @@ export default function FieldVisitForm({ projectId, visit, defaultVisitType, onC
                 </CardContent>
               </Card>
             ))}
-
-            {/* Add custom item */}
-            <Card className="border-2 border-dashed border-[#8B7355]/30">
-              <CardContent className="pt-3 pb-3 px-4">
-                <p className="text-xs text-gray-400 mb-2">הוספת סעיף מותאם אישית</p>
-                <div className="flex gap-2">
-                  <Input placeholder="שם הסעיף..." value={newItemLabel}
-                    onChange={e => setNewItemLabel(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && addCustomItem()} className="text-sm flex-1" />
-                  <Button onClick={addCustomItem} disabled={!newItemLabel.trim()} size="sm" variant="outline" className="border-[#8B7355] text-[#8B7355] shrink-0">
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* General notes */}
             <Card className="border-gray-100">
