@@ -34,10 +34,19 @@ Deno.serve(async (req) => {
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
       const pages = pdfDoc.getPages();
       const lastOrigPage = pages[pages.length - 1];
-    const { width: origW, height: origH } = lastOrigPage.getSize();
-    const lastPage = pages.length >= 2
-        ? pdfDoc.addPage([origW, origH])
-        : pages[0];
+      const { width: origW, height: origH } = lastOrigPage.getSize();
+
+      // Where to place the signature:
+      // - quote signing -> on the offer/prices page (page 16), NOT a new page
+      // - everything else (contract, floor plan, ...) -> keep the original behaviour
+      let lastPage;
+      if (doc.type === 'quote' && pages[15]) {
+        lastPage = pages[15];
+      } else if (pages.length >= 2) {
+        lastPage = pdfDoc.addPage([origW, origH]);
+      } else {
+        lastPage = pages[0];
+      }
       const { width } = lastPage.getSize();
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
