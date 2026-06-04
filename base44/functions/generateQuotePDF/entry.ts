@@ -1,6 +1,4 @@
 // Generate the full quote+contract PDF for Michal Wolberger Interior Design.
-// Approach: 27 Canva pages as background JPEGs + a transparent text overlay on
-// the dynamic pages — cover (index 0), comparison (14), prices (15), contract (23).
 // Supports `part`: 'full' (default, all 27 pages), 'quote' (pages 1-23), 'contract' (pages 24-27).
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { jsPDF } from 'npm:jspdf@4.0.0';
@@ -36,13 +34,16 @@ const PAGE_IMAGES = [
   B + '4853b4a4e_p-27.jpg', // 26
 ];
 
-const COVER_INDEX = 0;     // p-01.jpg
-const P15_INDEX = 14;      // p-15.jpg — package comparison table (S/M/L cells)
-const P16_INDEX = 15;      // p-16.jpg — investment page (3 package prices)
-const CONTRACT_INDEX = 23; // p-24.jpg
+const COVER_INDEX = 0;
+const P15_INDEX = 14;
+const P16_INDEX = 15;
+const CONTRACT_INDEX = 23;
 
 // page ranges per part (inclusive, 0-based indices)
 const RANGES = { full: [0, 26], quote: [0, 22], contract: [23, 26] };
+
+// Hebrew weekday letters for the contract signing line ("שנחתם ביום ___")
+const WEEKDAYS_HE = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'שבת'];
 
 const CMP_COL_X = { s: 30, m: 80, l: 130 };
 const CMP_ROWS = [
@@ -138,8 +139,11 @@ Deno.serve(async (req) => {
 
     const today = new Date();
     const coverDate = today.toLocaleDateString('he-IL');
-    const quoteDate = meeting_date ? new Date(meeting_date).toLocaleDateString('he-IL') : coverDate;
-    const amountStr = total_amount != null ? Number(total_amount).toLocaleString('he-IL') : '';
+    // short date d.m.yy — matches the contract template style (e.g. 25.5.26)
+    const shortDate = (d) => `${d.getDate()}.${d.getMonth() + 1}.${String(d.getFullYear()).slice(-2)}`;
+    const quoteDate = meeting_date ? shortDate(new Date(meeting_date)) : shortDate(today);
+    // amount: blank (not "0") when there is no real amount yet (quote stage)
+    const amountStr = (total_amount != null && Number(total_amount) > 0) ? Number(total_amount).toLocaleString('he-IL') : '';
     const city = client.city || '';
     const coverLine = city ? `${client.name || ''}, ${city}` : (client.name || '');
     const addressLine = [client.address, city].filter(Boolean).join(', ');
@@ -178,14 +182,14 @@ Deno.serve(async (req) => {
         put(coverDate, W / 2, 266, 'center', 11);
         // diagnostic stamp — confirms the new code is live.
         doc.setTextColor(200, 0, 0);
-        put('v4', 8, 8, 'left', 8);
+        put('v5', 8, 8, 'left', 8);
       }
 
       if (i === P15_INDEX) {
         doc.setTextColor(40, 40, 40);
         const isCheck = (v) => {
           const s = String(v ?? '').trim().toLowerCase();
-          return s === '\u2713' || s === '\u2714' || s === 'v' || s === 'true' || s === '\u05db\u05df';
+          return s === '\u2713' || s === '\u2714' || s === 'v' || s === 'true' || s === 'כן';
         };
         const drawCheck = (cx, cy) => {
           doc.setDrawColor(40, 40, 40);
@@ -231,12 +235,16 @@ Deno.serve(async (req) => {
         put(cEmail, 140, 140, 'right', 12);
         // total amount — sits on the "סך ____" underline
         put(amountStr, 53, 207, 'center', 12);
-        // quote date — "מחיר מיום ____"
-        put(quoteDate, 35, 224, 'center', 11);
-        // signing date line: "שנחתם ביום __ לחודש __ שנת __" (always filled)
-        put(String(contractD.getDate()), 110, 49, 'center', 11);
-        put(String(contractD.getMonth() + 1), 80, 49, 'center', 11);
-        put(String(contractD.getFullYear()), 59, 49, 'center', 10);
+        // signing date line: "שנחתם ביום [weekday] לחודש [month#] שנת [yy]"
+        put(WEEKDAYS_HE[contractD.getDay()], 108, 49, 'center', 11);
+        put(String(contractD.getMonth() + 1), 87, 49, 'center', 11);
+        put(String(contractD.getFullYear()).slice(-2), 62, 49, 'center', 11);
+        // "על בסיס הצעת מחיר מיום ___": template has a baked-in date — mask it
+        // with a background-colored rectangle, then print the real quote date.
+        doc.setFillColor(196, 175, 156);
+        doc.rect(19, 221, 25, 8, 'F');
+        doc.setTextColor(58, 42, 30);
+        put(quoteDate, 32, 226.5, 'center', 11);
       }
     }
 
