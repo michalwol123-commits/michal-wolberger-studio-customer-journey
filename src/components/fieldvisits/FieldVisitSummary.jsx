@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -59,14 +59,12 @@ const SEV_COLORS = {
 export default function FieldVisitSummary({ visitId, onEdit, onClose, onDelete }) {
   const queryClient = useQueryClient();
   const [sending, setSending] = useState(false);
-  const [polling, setPolling] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const { data: visits = [] } = useQuery({
     queryKey: ['field-visit-detail', visitId],
     queryFn: () => base44.entities.FieldVisit.filter({ id: visitId }),
-    refetchInterval: polling ? 4000 : false,
   });
   const visit = visits[0];
 
@@ -80,14 +78,6 @@ export default function FieldVisitSummary({ visitId, onEdit, onClose, onDelete }
     mutationFn: ({ id, ...data }) => base44.entities.FieldVisit.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['field-visit-detail', visitId] }),
   });
-
-  useEffect(() => {
-    if (visit?.report_pdf_url && polling) {
-      setPolling(false);
-      setSending(false);
-      toast.success('הדוח נשלח בהצלחה! ✉️');
-    }
-  }, [visit?.report_pdf_url, polling]);
 
   const handlePreviewReport = async () => {
     if (!visit) return;
@@ -115,17 +105,19 @@ export default function FieldVisitSummary({ visitId, onEdit, onClose, onDelete }
   const handleSendReport = async () => {
     if (!visit) return;
     setSending(true);
-    setPolling(true);
     try {
-      await updateMutation.mutateAsync({
-        id: visitId,
-        status: 'completed',
-        report_requested_at: new Date().toISOString(),
-      });
+      await updateMutation.mutateAsync({ id: visitId, status: 'completed' });
+      const res = await base44.functions.invoke('generateFieldReport', { visitId });
+      if (res.data?.success) {
+        toast.success('הדוח נוצר ונשלח בהצלחה ✉️');
+      } else {
+        toast.success('הדוח נוצר בהצלחה');
+      }
+      queryClient.invalidateQueries({ queryKey: ['field-visit-detail', visitId] });
     } catch {
       toast.error('שגיאה בשליחת הדוח');
+    } finally {
       setSending(false);
-      setPolling(false);
     }
   };
 
@@ -250,7 +242,7 @@ export default function FieldVisitSummary({ visitId, onEdit, onClose, onDelete }
             </div>
           ) : (
             <div className="text-center space-y-2">
-              {sending || polling || previewing ? (
+              {sending || previewing ? (
                 <div className="flex flex-col items-center gap-2 py-2">
                   <Loader2 className="w-6 h-6 animate-spin text-[#8B7355]" />
                   <p className="text-sm text-gray-500">{previewing ? 'מכין תצוגה מקדימה...' : 'מכין את הדוח...'}</p>
