@@ -17,7 +17,9 @@ const STAGE_CHECKLISTS = {
     title: 'סגירת פרויקט',
     items: [
       { id: 's4_1', label: 'אישור לקוח — בחירת חבילה', type: 'manual', required: true },
-      { id: 's4_2', label: 'העלאת חוזה חתום', type: 'button', required: true, action: { type: 'upload_doc', docType: 'contract', stage: 4 } },
+      { id: 's4_2a', label: 'שליחת הסכם לחתימה', type: 'auto', required: true, action: { type: 'auto_check_contract_sent' } },
+      { id: 's4_2b', label: 'הסכם חתום', type: 'auto', required: true, action: { type: 'auto_check_contract_signed' } },
+      { id: 's4_2c', label: 'מעבר להצעות מחיר והסכמים', type: 'button', required: false, action: { type: 'navigate_quotes' } },
       { id: 's4_3', label: 'תשלום ראשון — מקדמה', type: 'button', required: true, action: { type: 'navigate_tab', tab: 'payments' } },
       { id: 's4_4', label: 'הגדרת פריסת תשלומים עתידית', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'payments' } },
       { id: 's4_5', label: 'הזנת Timeline ראשוני', type: 'button', required: false, action: { type: 'navigate_tab', tab: 'gantt' } },

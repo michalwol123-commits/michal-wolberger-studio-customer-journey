@@ -2,7 +2,7 @@ const STAGES = [
   { num: 1, key: 's1_status', label: 'יצירת קשר ראשוני', shortLabel: 'קשר ראשוני', icon: '📞', description: 'פנייה נכנסת והתנעת התהליך בצורה אוטומטית' },
   { num: 2, key: 's2_status', label: 'שיחת היכרות', shortLabel: 'שיחת היכרות', icon: '🤝', description: 'תיאום אוטומטי, שיחה טלפונית והחלטה על המשך' },
   { num: 3, key: 's3_status', label: 'פגישת הצעת מחיר', shortLabel: 'הצעת מחיר', icon: '💰', description: 'הצגת חבילות שירות ובחירת מסלול ליווי' },
-  { num: 4, key: 's4_status', label: 'סגירת פרויקט', shortLabel: 'סגירת פרויקט', icon: '📋', description: 'חתימה על חוזה דיגיטלי ותשלום ראשון' },
+  { num: 4, key: 's4_status', label: 'סגירת פרויקט', shortLabel: 'סגירת פרויקט', icon: '📋', description: 'חתימה על הסכם דיגיטלי ותשלום ראשון' },
   { num: 5, key: 's5_status', label: 'שאלון מפורט', shortLabel: 'שאלון מפורט', icon: '📝', description: 'איסוף מידע מעמיק לקראת תחילת התכנון' },
   { num: 6, key: 's6_status', label: 'תכנית העמדה', shortLabel: 'תכנית העמדה', icon: '🗺️', description: 'עיצוב תכנית העמדה לחלל, הצגתה ללקוח, אישור ושחרור לביצוע' },
   { num: 7, key: 's7_status', label: 'הכנה לביצוע', shortLabel: 'הכנה לביצוע', icon: '⚡', description: 'תכניות חשמל, אינסטלציה, תאורה ומיזוג — הכנה לביצוע בשטח' },

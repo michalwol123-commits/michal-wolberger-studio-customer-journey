@@ -12,9 +12,11 @@ import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 import ImportDrivePhotosDialog from '@/components/projects/ImportDrivePhotosDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useNavigate } from 'react-router-dom';
 
 export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const config = getStageChecklist(stageNum);
   const [uploadConfig, setUploadConfig] = useState(null);
   const [meetingConfig, setMeetingConfig] = useState(null);
@@ -50,11 +52,22 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
   });
   const hasStageReviewMeeting = projectMeetings.some(m => m.type === 'stage_review');
 
+  // Contract documents for auto-check (stage 4)
+  const { data: contractDocs = [] } = useQuery({
+    queryKey: ['contract-docs', project.client_id],
+    queryFn: () => base44.entities.Document.filter({ client_id: project.client_id, type: 'contract' }),
+    enabled: stageNum === 4,
+  });
+  const hasContractSent = contractDocs.some(d => d.signature_status === 'pending_signature' || d.signature_status === 'signed');
+  const hasContractSigned = contractDocs.some(d => d.signature_status === 'signed');
+
   const getAutoState = (item) => {
     if (item.action?.type === 'auto_check_questionnaire') return detailedSubmitted;
     if (item.action?.type === 'auto_check_payments') return allPaymentsPaid;
     if (item.action?.type === 'auto_check_stage_review') return hasStageReviewMeeting;
     if (item.action?.type === 'auto_check_floor_plan') return !!project.floor_plan_locked;
+    if (item.action?.type === 'auto_check_contract_sent') return hasContractSent;
+    if (item.action?.type === 'auto_check_contract_signed') return hasContractSigned;
     return false;
   };
 
@@ -77,7 +90,7 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
       }
     }
     if (needsUpdate) saveMutation.mutate(newData);
-  }, [detailedSubmitted, allPaymentsPaid, hasStageReviewMeeting, project.floor_plan_locked]);
+  }, [detailedSubmitted, allPaymentsPaid, hasStageReviewMeeting, project.floor_plan_locked, hasContractSent, hasContractSigned]);
 
   const visibleItems = useMemo(() => {
     if (!config) return [];
@@ -212,6 +225,9 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
         await base44.functions.invoke(action.functionName, { client_id: project.client_id, project_id: project.id });
         toast.success('בוצע בהצלחה');
         break;
+      case 'navigate_quotes':
+        navigate('/quotes');
+        break;
     }
   };
 
@@ -224,6 +240,7 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
     if (a.type === 'navigate_tab') return <ExternalLink className="w-3.5 h-3.5" />;
     if (a.type === 'add_meeting') return <Calendar className="w-3.5 h-3.5" />;
     if (a.type === 'run_function') return <Play className="w-3.5 h-3.5" />;
+    if (a.type === 'navigate_quotes') return <ExternalLink className="w-3.5 h-3.5" />;
     return null;
   };
 
@@ -234,6 +251,7 @@ export default function StageChecklist({ project, stageNum, onNavigateTab }) {
     if (a.type === 'navigate_tab') return 'מעבר';
     if (a.type === 'add_meeting') return 'תיאום';
     if (a.type === 'run_function') return 'הפעלה';
+    if (a.type === 'navigate_quotes') return 'מעבר';
     return null;
   };
 

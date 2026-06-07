@@ -29,7 +29,7 @@ const navItems = [
   { path: '/leads', label: 'לידים', icon: UserPlus, adminOnly: false },
   { path: '/clients', label: 'לקוחות', icon: Users, adminOnly: false },
   { path: '/projects', label: 'פרויקטים', icon: Briefcase, adminOnly: false },
-  { path: '/quotes', label: 'הצעות מחיר', icon: FileTextIcon, adminOnly: false },
+  { path: '/quotes', label: 'הצעות מחיר והסכמים', icon: FileTextIcon, adminOnly: false },
   { path: '/payments', label: 'תשלומים', icon: CreditCard, adminOnly: true },
   { path: '/meetings', label: 'פגישות', icon: Calendar, adminOnly: false },
   { path: '/communications', label: 'תקשורת', icon: MessageSquare, adminOnly: false },

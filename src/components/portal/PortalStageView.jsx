@@ -264,6 +264,8 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
         if (d.is_current === false) return false;
         if (d.type === 'shopping_invoice' || d.type === 'quote') return false;
         if (Number(stageNum) === 13 && PHOTO_TYPES_TO_HIDE.includes(d.type)) return false;
+        // Stage 4: show contract docs
+        if (Number(stageNum) === 4 && d.type === 'contract') return true;
         if (d.stage != null && d.stage !== 0 && Number(d.stage) === Number(stageNum)) return true;
         if ((!d.stage || d.stage === 0) && isCurrentStage) return true;
         return false;

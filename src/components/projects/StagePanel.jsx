@@ -30,9 +30,12 @@ export default function StagePanel({ project, stageNum, onNavigateTab }) {
     queryFn: () => base44.entities.Document.list('-created_date', 500),
   });
 
-  const stageDocs = allDocs.filter(
-    d => d.project_id === project.id && d.stage === stageNum && d.is_current !== false
-  );
+  const stageDocs = allDocs.filter(d => {
+    if (d.is_current === false) return false;
+    // Stage 4: also show contract docs linked to client (from quotes module)
+    if (stageNum === 4 && d.type === 'contract' && d.client_id === project.client_id) return true;
+    return d.project_id === project.id && d.stage === stageNum;
+  });
 
   const isVisualStage = VISUAL_STAGES.includes(stageNum);
   const imageDocs = stageDocs.filter(d => ['render', 'concept', 'photo'].includes(d.type));

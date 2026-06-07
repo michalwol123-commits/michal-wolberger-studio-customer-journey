@@ -69,6 +69,8 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
         file_url: fileUrl,
         client_id: quote.client_id,
         quote_id: quote.id,
+        stage: type === 'contract' ? 4 : undefined,
+        visible_to_client: true,
         version_number: version,
         parent_doc_id: prevDoc?.id || undefined,
         signature_token: token,
@@ -240,7 +242,7 @@ export default function Quotes() {
 
   return (
     <div>
-      <PageHeader title="הצעות מחיר" subtitle={`${filtered.length} הצעות • ₪${totalAmount.toLocaleString()}`}>
+      <PageHeader title="הצעות מחיר והסכמים" subtitle={`${filtered.length} הצעות • ₪${totalAmount.toLocaleString()}`}>
         <ExportCSVButton
           data={filtered}
           columns={[
@@ -298,7 +300,7 @@ export default function Quotes() {
       {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={(ids) => bulkDeleteMutation.mutate(ids || selectedIds)} entityLabel="הצעות" />}
 
       {filtered.length === 0 ? (
-        <EmptyState icon={FileText} title="אין הצעות מחיר" description="צרי הצעה ראשונה" />
+        <EmptyState icon={FileText} title="אין הצעות מחיר והסכמים" description="צרי הצעה ראשונה" />
       ) : view === 'table' ? (
         <QuotesTable
           quotes={filtered}
