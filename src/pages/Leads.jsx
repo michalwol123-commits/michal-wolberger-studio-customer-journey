@@ -51,7 +51,6 @@ export default function Leads() {
 
   const leads = clients
     .filter(c => ['lead', 'qualified', 'proposal_presented', 'proposal_sent'].includes(c.status))
-    .filter(c => isAdmin || c.assigned_to === user?.email || c.owner === user?.email)
     .filter(c => !search || c.name?.includes(search) || c.phone?.includes(search) || c.email?.includes(search));
 
   return (
@@ -84,18 +83,16 @@ export default function Leads() {
         />
       </div>
 
-      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="לידים" />}
+      <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="לידים" />
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                {isAdmin && (
-                  <th className="px-3 py-3 w-10">
+                <th className="px-3 py-3 w-10">
                     <Checkbox checked={selectedIds.length === leads.length && leads.length > 0} onCheckedChange={toggleAll} />
                   </th>
-                )}
                 <th className="text-right px-4 py-3 font-medium">שם</th>
                 <th className="text-right px-4 py-3 font-medium">טלפון</th>
                 <th className="text-right px-4 py-3 font-medium hidden sm:table-cell">מקור</th>
@@ -107,11 +104,9 @@ export default function Leads() {
             <tbody>
               {leads.map(lead => (
                 <tr key={lead.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                  {isAdmin && (
-                    <td className="px-3 py-3">
+                  <td className="px-3 py-3">
                       <Checkbox checked={selectedIds.includes(lead.id)} onCheckedChange={() => toggleSelect(lead.id)} />
                     </td>
-                  )}
                   <td className="px-4 py-3">
                     <Link to={`/clients/${lead.id}`} className="font-medium text-primary hover:underline">
                       {lead.name}
@@ -130,7 +125,7 @@ export default function Leads() {
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditLead(lead); setShowAdd(true); }}>
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
-                      {isAdmin && <DeleteButton onDelete={() => deleteMutation.mutate(lead.id)} entityLabel="ליד" />}
+                      <DeleteButton onDelete={() => deleteMutation.mutate(lead.id)} entityLabel="ליד" />
                     </div>
                   </td>
                 </tr>
