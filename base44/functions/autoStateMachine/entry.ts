@@ -1,7 +1,7 @@
 // Automation I — State Machine Enforcement
 // Trigger: record_updated on Client, Project, Quote, Task, Payment
 // Uses last_valid_status field to detect and break rollback loops
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const TRANSITIONS = {
   Client: {
@@ -56,6 +56,9 @@ Deno.serve(async (req) => {
     // No status change — skip
     if (oldStatus === newStatus) return Response.json({ skipped: true, reason: 'status unchanged' });
 
+    // If old status is missing (new record or data inconsistency) — allow freely
+    if (!oldStatus) return Response.json({ skipped: true, reason: 'no old status, allowing' });
+
     // ROLLBACK DETECTION: if the new status matches last_valid_status,
     // this is our own rollback update — stop the loop
     if (data.last_valid_status && newStatus === data.last_valid_status) {
@@ -66,7 +69,8 @@ Deno.serve(async (req) => {
     if (!entityTransitions) return Response.json({ skipped: true, reason: 'no rules for entity' });
 
     const allowed = entityTransitions[oldStatus];
-    if (!allowed) return Response.json({ skipped: true, reason: 'unknown old status' });
+    // If old status is not recognized in transition table — allow freely instead of blocking
+    if (!allowed) return Response.json({ skipped: true, reason: 'unknown old status, allowing' });
 
     if (allowed.includes(newStatus)) {
       // VALID TRANSITION — update last_valid_status
