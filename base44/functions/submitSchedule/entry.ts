@@ -2,7 +2,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    // Clone the request so we can read body AND pass original to SDK
     const cloned = req.clone();
     const { token, scheduled_at } = await cloned.json();
 
@@ -12,7 +11,6 @@ Deno.serve(async (req) => {
 
     const base44 = createClientFromRequest(req);
 
-    // Find meeting by token (service role — public page, no auth)
     const meetings = await base44.asServiceRole.entities.Meeting.filter({ scheduling_token: token });
     const meeting = meetings[0];
 
@@ -24,26 +22,30 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'meeting_closed' }, { status: 410 });
     }
 
-    // Check calendar conflicts (using Google Calendar API directly)
     const duration = meeting.duration || 45;
     const startTime = new Date(scheduled_at);
     const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
 
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
-
-    const params = new URLSearchParams({
-      timeMin: startTime.toISOString(),
-      timeMax: endTime.toISOString(),
-      singleEvents: 'true',
-      orderBy: 'startTime',
-    });
-
-    const calRes = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-      { headers: { 'Authorization': `Bearer ${accessToken}` } }
-    );
-    const calData = await calRes.json();
-    const conflicts = (calData.items || []).filter(e => e.status !== 'cancelled');
+    // --- Google Calendar conflict check (optional — skip if not connected) ---
+    let conflicts = [];
+    try {
+      const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
+      const params = new URLSearchParams({
+        timeMin: startTime.toISOString(),
+        timeMax: endTime.toISOString(),
+        singleEvents: 'true',
+        orderBy: 'startTime',
+      });
+      const calRes = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      );
+      const calData = await calRes.json();
+      conflicts = (calData.items || []).filter(e => e.status !== 'cancelled');
+    } catch (calErr) {
+      // Calendar not connected or token expired — skip conflict check, allow scheduling
+      console.warn('Google Calendar check skipped:', calErr.message);
+    }
 
     if (conflicts.length > 0) {
       return Response.json({
@@ -56,7 +58,7 @@ Deno.serve(async (req) => {
       }, { status: 409 });
     }
 
-    // Update meeting with the chosen time
+    // Save the chosen time
     await base44.asServiceRole.entities.Meeting.update(meeting.id, {
       scheduled_at: new Date(scheduled_at).toISOString(),
       status: 'scheduled',
