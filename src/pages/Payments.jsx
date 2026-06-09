@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import DeleteButton from '@/components/shared/DeleteButton';
 import BulkDeleteBar from '@/components/shared/BulkDeleteBar';
-import { CreditCard, AlertTriangle, CheckCircle, Clock, Pencil } from 'lucide-react';
+import { CreditCard, AlertTriangle, CheckCircle, Clock, Pencil, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import EditPaymentDialog from '@/components/payments/EditPaymentDialog';
 import { format } from 'date-fns';
@@ -20,6 +21,7 @@ import { Navigate } from 'react-router-dom';
 export default function Payments() {
   const { isAdmin, loading } = useCurrentUser();
   const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [editPayment, setEditPayment] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const queryClient = useQueryClient();
@@ -65,7 +67,15 @@ export default function Payments() {
   const clientMap = {};
   clients.forEach(c => { clientMap[c.id] = c; });
 
-  const filtered = statusFilter === 'all' ? payments : payments.filter(p => p.status === statusFilter);
+  const filtered = payments
+    .filter(p => statusFilter === 'all' || p.status === statusFilter)
+    .filter(p => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      const proj = projectMap[p.project_id];
+      const client = clientMap[p.client_id] || (proj ? clientMap[proj.client_id] : null);
+      return p.milestone?.toLowerCase().includes(q) || client?.name?.toLowerCase().includes(q) || proj?.name?.toLowerCase().includes(q);
+    });
 
   const totalPending = payments.filter(p => p.status === 'pending').reduce((s, p) => s + (p.amount || 0), 0);
   const totalOverdue = payments.filter(p => p.status === 'overdue').reduce((s, p) => s + (p.amount || 0), 0);
@@ -95,7 +105,11 @@ export default function Payments() {
         <StatsCard title="שולם" value={`₪${totalPaid.toLocaleString()}`} icon={CheckCircle} color="success" />
       </div>
 
-      <div className="mb-4">
+      <div className="flex flex-wrap gap-3 mb-4">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="חיפוש לפי לקוח, פרויקט, אבן דרך..." value={search} onChange={e => setSearch(e.target.value)} className="pr-9" />
+        </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
           <SelectContent>

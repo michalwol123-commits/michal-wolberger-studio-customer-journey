@@ -10,7 +10,8 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Plus } from 'lucide-react';
+import { Briefcase, Plus, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import AddProjectDialog from '@/components/projects/AddProjectDialog';
 import { Link } from 'react-router-dom';
@@ -25,6 +26,7 @@ const stageConfig = STAGES_CONFIG.map(s => ({ num: s.num, name: s.shortLabel }))
 export default function Projects() {
   const { user, isAdmin } = useCurrentUser();
   const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [view, setView] = useState('cards');
   const [selectedIds, setSelectedIds] = useState([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -45,7 +47,12 @@ export default function Projects() {
 
   const filtered = projects
     .filter(p => isAdmin || p.owner === user?.email)
-    .filter(p => statusFilter === 'all' || p.status === statusFilter);
+    .filter(p => statusFilter === 'all' || p.status === statusFilter)
+    .filter(p => {
+      if (!search) return true;
+      const client = clientMap[p.client_id];
+      return p.name?.includes(search) || client?.name?.includes(search);
+    });
 
   const stageGroups = {};
   stageConfig.forEach(s => { stageGroups[s.num] = []; });
@@ -105,6 +112,13 @@ export default function Projects() {
           </SelectContent>
         </Select>
       </PageHeader>
+
+      <div className="mb-4">
+        <div className="relative max-w-md">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="חיפוש לפי שם פרויקט או לקוח..." value={search} onChange={e => setSearch(e.target.value)} className="pr-9" />
+        </div>
+      </div>
 
       {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="פרויקטים" />}
 

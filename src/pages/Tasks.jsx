@@ -10,7 +10,9 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckSquare, Clock, User, Plus, Pencil } from 'lucide-react';
+import { CheckSquare, Clock, User, Plus, Pencil, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
 import ViewToggle from '@/components/shared/ViewToggle';
 import TasksTable from '@/components/tasks/TasksTable';
@@ -36,6 +38,9 @@ export default function Tasks() {
   const [view, setView] = useState('cards');
   const [selectedIds, setSelectedIds] = useState([]);
   const [quoteForClient, setQuoteForClient] = useState(null);
+  const [search, setSearch] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const queryClient = useQueryClient();
 
   const { data: tasks = [] } = useQuery({
@@ -51,7 +56,15 @@ export default function Tasks() {
   const clientMap = {};
   clients.forEach(c => { clientMap[c.id] = c; });
 
-  const filtered = isAdmin ? tasks : tasks.filter(t => t.assigned_to === user?.email);
+  const filtered = tasks
+    .filter(t => isAdmin || t.assigned_to === user?.email)
+    .filter(t => statusFilter === 'all' || t.status === statusFilter)
+    .filter(t => priorityFilter === 'all' || t.priority === priorityFilter)
+    .filter(t => {
+      if (!search) return true;
+      const client = clientMap[t.client_id];
+      return t.title?.includes(search) || t.description?.includes(search) || client?.name?.includes(search);
+    });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
@@ -98,6 +111,33 @@ export default function Tasks() {
           משימה חדשה
         </Button>
       </PageHeader>
+
+      <div className="flex flex-wrap gap-3 mb-4">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="חיפוש לפי כותרת, לקוח..." value={search} onChange={e => setSearch(e.target.value)} className="pr-9" />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">כל הסטטוסים</SelectItem>
+            <SelectItem value="open">פתוח</SelectItem>
+            <SelectItem value="in_progress">בביצוע</SelectItem>
+            <SelectItem value="done">הושלם</SelectItem>
+            <SelectItem value="cancelled">בוטל</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">כל העדיפויות</SelectItem>
+            <SelectItem value="urgent">דחוף</SelectItem>
+            <SelectItem value="high">גבוה</SelectItem>
+            <SelectItem value="normal">רגיל</SelectItem>
+            <SelectItem value="low">נמוך</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={(ids) => bulkDeleteMutation.mutate(ids || selectedIds)} entityLabel="משימות" />}
 

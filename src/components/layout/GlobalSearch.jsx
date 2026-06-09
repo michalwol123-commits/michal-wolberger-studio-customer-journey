@@ -63,52 +63,49 @@ export default function GlobalSearch({ open, onOpenChange }) {
     return () => window.removeEventListener('keydown', handler);
   }, [onOpenChange]);
 
-  const { data: clients } = useQuery({
-    queryKey: ['search-clients'],
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
     queryFn: () => base44.entities.Client.list('-created_date', 200),
-    initialData: [],
     staleTime: 60000,
   });
-  const { data: projects } = useQuery({
-    queryKey: ['search-projects'],
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects'],
     queryFn: () => base44.entities.Project.list('-created_date', 200),
-    initialData: [],
     staleTime: 60000,
   });
-  const { data: tasks } = useQuery({
-    queryKey: ['search-tasks'],
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks'],
     queryFn: () => base44.entities.Task.list('-created_date', 200),
-    initialData: [],
     staleTime: 60000,
   });
-  const { data: quotes } = useQuery({
-    queryKey: ['search-quotes'],
+  const { data: quotes = [] } = useQuery({
+    queryKey: ['quotes'],
     queryFn: () => base44.entities.Quote.list('-created_date', 200),
-    initialData: [],
     staleTime: 60000,
   });
-  const { data: payments } = useQuery({
-    queryKey: ['search-payments'],
+  const { data: payments = [] } = useQuery({
+    queryKey: ['payments'],
     queryFn: () => base44.entities.Payment.list('-created_date', 200),
-    initialData: [],
     staleTime: 60000,
+    enabled: open,
   });
-  const { data: suppliers } = useQuery({
-    queryKey: ['search-suppliers'],
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ['suppliers'],
     queryFn: () => base44.entities.Supplier.list('-created_date', 200),
-    initialData: [],
     staleTime: 60000,
   });
 
   const q = debouncedQuery.trim().toLowerCase();
 
+  const match = (val) => val?.toLowerCase().includes(q);
+
   const results = q.length < 2 ? {} : {
-    clients: clients.filter(c => c.name?.toLowerCase().includes(q) || c.phone?.includes(q) || c.email?.toLowerCase().includes(q)).slice(0, 5),
-    projects: projects.filter(p => p.name?.toLowerCase().includes(q)).slice(0, 5),
-    tasks: tasks.filter(t => t.title?.toLowerCase().includes(q)).slice(0, 5),
-    quotes: quotes.filter(qt => qt.title?.toLowerCase().includes(q)).slice(0, 5),
-    payments: payments.filter(p => p.milestone?.toLowerCase().includes(q)).slice(0, 5),
-    suppliers: suppliers.filter(s => s.name?.toLowerCase().includes(q) || s.phone?.includes(q)).slice(0, 5),
+    clients: clients.filter(c => match(c.name) || c.phone?.includes(q) || match(c.email) || match(c.city)).slice(0, 5),
+    projects: projects.filter(p => match(p.name)).slice(0, 5),
+    tasks: tasks.filter(t => match(t.title) || match(t.description)).slice(0, 5),
+    quotes: quotes.filter(qt => match(qt.title) || match(qt.scope)).slice(0, 5),
+    payments: payments.filter(p => match(p.milestone) || match(p.notes)).slice(0, 5),
+    suppliers: suppliers.filter(s => match(s.name) || s.phone?.includes(q) || match(s.category)).slice(0, 5),
   };
 
   const totalResults = Object.values(results).reduce((sum, arr) => sum + (arr?.length || 0), 0);

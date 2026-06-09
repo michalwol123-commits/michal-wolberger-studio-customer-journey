@@ -8,7 +8,9 @@ import BulkDeleteBar from '@/components/shared/BulkDeleteBar';
 import DeleteButton from '@/components/shared/DeleteButton';
 import useCurrentUser from '@/lib/useCurrentUser';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Plus, LayoutGrid, List, Calendar } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar as CalendarIcon, Plus, LayoutGrid, List, Calendar, Search } from 'lucide-react';
 import ViewToggle from '@/components/shared/ViewToggle';
 import MeetingsTable from '@/components/meetings/MeetingsTable';
 import MeetingsCards from '@/components/meetings/MeetingsCards';
@@ -38,6 +40,9 @@ export default function Meetings() {
   const [editMeeting, setEditMeeting] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [introDialogMeeting, setIntroDialogMeeting] = useState(null);
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const queryClient = useQueryClient();
 
   const { data: meetings = [] } = useQuery({
@@ -60,12 +65,15 @@ export default function Meetings() {
   const quotesMap = {};
   quotes.forEach(q => { quotesMap[q.id] = q; });
 
-  const filtered = isAdmin
-    ? meetings
-    : meetings.filter(m => {
-        const client = clientMap[m.client_id];
-        return client && (client.owner === user?.email);
-      });
+  const filtered = meetings
+    .filter(m => isAdmin || (clientMap[m.client_id] && clientMap[m.client_id].owner === user?.email))
+    .filter(m => typeFilter === 'all' || m.type === typeFilter)
+    .filter(m => statusFilter === 'all' || m.status === statusFilter)
+    .filter(m => {
+      if (!search) return true;
+      const client = clientMap[m.client_id];
+      return client?.name?.includes(search) || m.location?.includes(search) || m.summary?.includes(search);
+    });
 
   const now = new Date();
   const weekStart = startOfWeek(addWeeks(now, weekOffset), { weekStartsOn: 0 });
@@ -189,6 +197,31 @@ export default function Meetings() {
           </Button>
         </div>
       </PageHeader>
+
+      <div className="flex flex-wrap gap-3 mb-4">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="חיפוש לפי לקוח, מיקום..." value={search} onChange={e => setSearch(e.target.value)} className="pr-9" />
+        </div>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">כל הסוגים</SelectItem>
+            {Object.entries(typeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">כל הסטטוסים</SelectItem>
+            <SelectItem value="scheduled">מתוכנן</SelectItem>
+            <SelectItem value="completed">הושלם</SelectItem>
+            <SelectItem value="cancelled">בוטל</SelectItem>
+            <SelectItem value="no_show">לא הגיע</SelectItem>
+            <SelectItem value="rescheduled">נדחה</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {view === 'weekly' && (
         <p className="text-sm text-muted-foreground mb-4">

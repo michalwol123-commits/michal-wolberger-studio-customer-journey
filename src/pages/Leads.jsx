@@ -12,6 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Search, UserPlus, Pencil } from 'lucide-react';
 import ExportCSVButton from '@/components/shared/ExportCSVButton';
+import ViewToggle from '@/components/shared/ViewToggle';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import AddClientDialog from '@/components/clients/AddClientDialog';
@@ -23,6 +26,9 @@ export default function Leads() {
   const [showAdd, setShowAdd] = useState(false);
   const [editLead, setEditLead] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [view, setView] = useState('table');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
@@ -52,6 +58,8 @@ export default function Leads() {
   const leads = clients
     .filter(c => ['lead', 'qualified', 'proposal_presented', 'proposal_sent'].includes(c.status))
     .filter(c => isAdmin || c.assigned_to === user?.email || c.owner === user?.email)
+    .filter(c => statusFilter === 'all' || c.status === statusFilter)
+    .filter(c => sourceFilter === 'all' || c.source === sourceFilter)
     .filter(c => !search || c.name?.includes(search) || c.phone?.includes(search) || c.email?.includes(search));
 
   return (
@@ -68,24 +76,48 @@ export default function Leads() {
           ]}
           filename="לידים"
         />
+        <ViewToggle view={view} onViewChange={setView} />
         <Button data-tutorial="add-lead-btn" onClick={() => { setEditLead(null); setShowAdd(true); }} className="gap-2">
           <Plus className="w-4 h-4" />
           ליד חדש
         </Button>
       </PageHeader>
 
-      <div className="mb-4 relative max-w-md">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="חיפוש לפי שם, טלפון או אימייל..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pr-9"
-        />
+      <div className="flex flex-wrap gap-3 mb-4">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="חיפוש לפי שם, טלפון או אימייל..." value={search} onChange={e => setSearch(e.target.value)} className="pr-9" />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">כל הסטטוסים</SelectItem>
+            <SelectItem value="lead">ליד</SelectItem>
+            <SelectItem value="qualified">מתעניין</SelectItem>
+            <SelectItem value="proposal_presented">הוגשה בפגישה</SelectItem>
+            <SelectItem value="proposal_sent">הצעה נשלחה</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">כל המקורות</SelectItem>
+            <SelectItem value="facebook">Facebook</SelectItem>
+            <SelectItem value="instagram">Instagram</SelectItem>
+            <SelectItem value="referral">הפנייה</SelectItem>
+            <SelectItem value="google">Google</SelectItem>
+            <SelectItem value="website">אתר</SelectItem>
+            <SelectItem value="whatsapp">WhatsApp</SelectItem>
+            <SelectItem value="other">אחר</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="לידים" />}
 
+      {leads.length === 0 ? (
+        <EmptyState icon={UserPlus} title="אין לידים" description="הוסיפי ליד חדש כדי להתחיל" />
+      ) : view === 'table' ? (
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -138,8 +170,34 @@ export default function Leads() {
             </tbody>
           </table>
         </div>
-        {leads.length === 0 && <EmptyState icon={UserPlus} title="אין לידים" description="הוסיפי ליד חדש כדי להתחיל" />}
       </div>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {leads.map(lead => (
+            <Card key={lead.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <Link to={`/clients/${lead.id}`} className="font-medium text-primary hover:underline">{lead.name}</Link>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditLead(lead); setShowAdd(true); }}>
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    {isAdmin && <DeleteButton onDelete={() => deleteMutation.mutate(lead.id)} entityLabel="ליד" />}
+                  </div>
+                </div>
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  {lead.phone && <p dir="ltr" className="text-right">{lead.phone}</p>}
+                  <div className="flex items-center gap-2 flex-wrap mt-2">
+                    <StatusBadge status={lead.status} />
+                    {lead.source && <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{lead.source}</span>}
+                  </div>
+                  <p className="text-xs">{lead.created_date ? format(new Date(lead.created_date), 'dd/MM/yyyy') : ''}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <AddClientDialog open={showAdd} onOpenChange={(open) => { setShowAdd(open); if (!open) setEditLead(null); }} defaultStatus="lead" initialData={editLead} />
     </div>
