@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
+import BulkDeleteBar from '@/components/shared/BulkDeleteBar';
+import DeleteButton from '@/components/shared/DeleteButton';
+import useCurrentUser from '@/lib/useCurrentUser';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,15 +16,19 @@ import SupplierCategoryBadge, { categoryLabel } from '@/components/suppliers/Sup
 import AddSupplierDialog from '@/components/suppliers/AddSupplierDialog';
 import ViewToggle from '@/components/shared/ViewToggle';
 import SuppliersTable from '@/components/suppliers/SuppliersTable';
+import { toast } from 'sonner';
 
 const PRICE_LABELS = { low: 'נמוך', mid: 'בינוני', high: 'גבוה' };
 
 export default function Suppliers() {
+  const { isAdmin } = useCurrentUser();
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('all');
   const [showAdd, setShowAdd] = useState(false);
   const [editSupplier, setEditSupplier] = useState(null);
   const [view, setView] = useState('cards');
+  const [selectedIds, setSelectedIds] = useState([]);
+  const queryClient = useQueryClient();
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
@@ -44,6 +51,25 @@ export default function Suppliers() {
     });
     return map;
   }, [allCommissions]);
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Supplier.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suppliers'] }),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) await base44.entities.Supplier.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      setSelectedIds([]);
+      toast.success('הספקים נמחקו');
+    },
+  });
+
+  const toggleSelect = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = () => setSelectedIds(prev => prev.length === filtered.length ? [] : filtered.map(s => s.id));
 
   const filtered = suppliers.filter(s => {
     if (!s.is_active && s.is_active !== undefined) return false;
@@ -104,18 +130,32 @@ export default function Suppliers() {
         </Select>
       </div>
 
+      {isAdmin && <BulkDeleteBar selectedIds={selectedIds} onDelete={() => bulkDeleteMutation.mutate(selectedIds)} entityLabel="ספקים" />}
+
       {filtered.length === 0 ? (
         <EmptyState icon={Truck} title="אין ספקים" description="הוסיפי ספק ראשון" />
       ) : view === 'table' ? (
-        <SuppliersTable suppliers={filtered} onEdit={(s) => { setEditSupplier(s); setShowAdd(true); }} commissionsBySupplier={commissionsBySupplier} />
+        <SuppliersTable
+          suppliers={filtered}
+          onEdit={(s) => { setEditSupplier(s); setShowAdd(true); }}
+          onDelete={(id) => deleteMutation.mutate(id)}
+          commissionsBySupplier={commissionsBySupplier}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleAll={toggleAll}
+          isAdmin={isAdmin}
+        />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map(s => (
-            <Card key={s.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => { setEditSupplier(s); setShowAdd(true); }}>
+            <Card key={s.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold">{s.name}</h3>
-                  <SupplierCategoryBadge category={s.category} />
+                  <h3 className="font-semibold cursor-pointer" onClick={() => { setEditSupplier(s); setShowAdd(true); }}>{s.name}</h3>
+                  <div className="flex items-center gap-1">
+                    <SupplierCategoryBadge category={s.category} />
+                    {isAdmin && <DeleteButton onDelete={() => deleteMutation.mutate(s.id)} entityLabel="ספק" />}
+                  </div>
                 </div>
                 <div className="space-y-1 text-sm text-muted-foreground">
                   {s.phone && (
