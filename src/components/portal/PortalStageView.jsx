@@ -16,6 +16,7 @@ import PortalQuoteView from './PortalQuoteView';
 import PortalDaysMetrics from './PortalDaysMetrics';
 import PortalSupplierDocs from './PortalSupplierDocs';
 import PortalFieldVisits from './PortalFieldVisits';
+import PortalFloorPlanConfirmation from './PortalFloorPlanConfirmation';
 
 const STAGE_CONTENT = {
   1: { questionnaire: 'short', docs: true },
@@ -303,6 +304,7 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
       )}
       {content.quotes && <PortalQuoteView projectId={project.id} clientId={project.client_id} stageNum={stageNum} />}
       {content.floor_plan && <PortalFloorPlanApproval project={project} />}
+      {content.floor_plan && <PortalFloorPlanConfirmation project={project} />}
       {content.days && <PortalDaysMetrics project={project} stageNum={Number(stageNum)} />}
       {content.meetings && <PortalStageMeetings meetings={meetings} stageNum={stageNum} />}
       {content.fieldvisits && <PortalFieldVisits project={project} visitTypeFilter={Number(stageNum) === 12 ? 'installation' : Number(stageNum) === 11 ? 'supervision' : undefined} />}
