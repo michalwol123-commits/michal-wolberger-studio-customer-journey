@@ -21,9 +21,9 @@ import { he } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 const typeLabels = {
-  intro: 'היכרות',
+  intro: 'שיחת טלפון ראשונית',
   qualifying: 'אפיון',
-  quote_presentation: 'הצגת הצעה',
+  quote_presentation: 'היכרות והצגת הצעת מחיר',
   stage_review: 'סקירת שלב',
   site_visit: 'ביקור אתר',
   zoom: 'Zoom',

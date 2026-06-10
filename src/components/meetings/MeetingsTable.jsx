@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 
 const typeLabels = {
-  intro: 'היכרות', qualifying: 'אפיון', quote_presentation: 'הצגת הצעה',
+  intro: 'שיחת טלפון ראשונית', qualifying: 'אפיון', quote_presentation: 'היכרות והצגת הצעת מחיר',
   stage_review: 'סקירת שלב', site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב'
 };
 

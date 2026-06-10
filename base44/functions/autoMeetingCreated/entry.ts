@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       if (data.type === 'quote_presentation' && data.meeting_price) {
         await base44.asServiceRole.entities.Payment.create({
           client_id: client.id,
-          milestone: 'פגישת הצגת הצעת מחיר',
+          milestone: 'היכרות והצגת הצעת מחיר',
           amount: Number(data.meeting_price),
           due_date: new Date().toISOString().split('T')[0],
           status: 'pending',

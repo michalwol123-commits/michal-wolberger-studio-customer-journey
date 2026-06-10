@@ -8,7 +8,7 @@ import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 import { format } from 'date-fns';
 
 const typeLabels = {
-  intro: 'היכרות', qualifying: 'אפיון', quote_presentation: 'הצגת הצעת מחיר',
+  intro: 'שיחת טלפון ראשונית', qualifying: 'אפיון', quote_presentation: 'היכרות והצגת הצעת מחיר',
   stage_review: 'סקירת שלב', site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב',
 };
 

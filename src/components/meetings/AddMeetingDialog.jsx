@@ -12,9 +12,9 @@ import { AlertTriangle, Loader2, Send, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 const typeOptions = [
-  { value: 'intro', label: 'היכרות' },
+  { value: 'intro', label: 'שיחת טלפון ראשונית' },
   { value: 'qualifying', label: 'אפיון' },
-  { value: 'quote_presentation', label: 'הצגת הצעת מחיר' },
+  { value: 'quote_presentation', label: 'היכרות והצגת הצעת מחיר' },
   { value: 'stage_review', label: 'סקירת שלב' },
   { value: 'site_visit', label: 'פגישת פיקוח' },
   { value: 'installation_day', label: 'יום התקנה' },
