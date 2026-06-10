@@ -56,8 +56,20 @@ export default function AddSupplierDialog({ open, onOpenChange, initialData, onC
   const handleSubmit = (e) => {
     e.preventDefault();
     const payload = { ...form };
-    if (payload.rating) payload.rating = Number(payload.rating);
-    if (payload.commission_rate !== '' && payload.commission_rate != null) payload.commission_rate = Number(payload.commission_rate);
+    if (payload.rating && payload.rating !== '') {
+      payload.rating = Number(payload.rating);
+    } else {
+      delete payload.rating;
+    }
+    if (payload.commission_rate !== '' && payload.commission_rate != null) {
+      payload.commission_rate = Number(payload.commission_rate);
+    } else {
+      delete payload.commission_rate;
+    }
+    // Remove empty string fields
+    Object.keys(payload).forEach(k => {
+      if (payload[k] === '') delete payload[k];
+    });
     mutation.mutate(payload);
   };
 
