@@ -56,8 +56,10 @@ export default function AddSupplierDialog({ open, onOpenChange, initialData, onC
   const handleSubmit = (e) => {
     e.preventDefault();
     const payload = { ...form };
-    if (payload.rating) payload.rating = Number(payload.rating);
-    if (payload.commission_rate !== '' && payload.commission_rate != null) payload.commission_rate = Number(payload.commission_rate);
+    if (payload.rating === '' || payload.rating == null) delete payload.rating;
+    else payload.rating = Number(payload.rating);
+    if (payload.commission_rate === '' || payload.commission_rate == null) delete payload.commission_rate;
+    else payload.commission_rate = Number(payload.commission_rate);
     mutation.mutate(payload);
   };
 
