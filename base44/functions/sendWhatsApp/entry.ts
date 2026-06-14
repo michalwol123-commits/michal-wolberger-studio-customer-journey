@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // =============================================
 // TEMPORARY WHITELIST — remove this array and the check below when ready to send to all
 // =============================================
-const ALLOWED_PHONES = ['0546999915', '0524687812'];
+const ALLOWED_PHONES = ['0546999915', '0524687812', '0544535688'];
 
 function normalizeToE164(phone) {
   const digits = String(phone || '').replace(/[\s\-\.\(\)\+]/g, '');
