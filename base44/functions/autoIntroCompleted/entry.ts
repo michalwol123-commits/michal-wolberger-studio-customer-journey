@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
         status: 'draft',
       });
 
-      // Log communication
+      // Log internal note
       await base44.asServiceRole.entities.Communication.create({
         client_id: client.id,
         type: 'note',
@@ -91,6 +91,36 @@ Deno.serve(async (req) => {
         status: 'sent',
         channel: 'base44_native',
       });
+
+      const price = meetingPrice != null && meetingPrice > 0 ? Number(meetingPrice) : 250;
+      const msgContent = `שלום ${clientName} 😊\n\nשמחתי לדבר איתך!\nהשלב הבא הוא פגישת היכרות והצגת הצעת מחיר.\n\nלתיאום הפגישה, נא לשלם את דמי הפגישה בסך ₪${price} מראש.\nניתן לשלם בהעברה בנקאית / ביט / פייבוקס לפי הפרטים:\n• שם: מיכל וולברגר\n• טלפון: 052-4687812\n\nלאחר התשלום, אחזור אליך לתיאום מועד הפגישה 🗓️\n\nבברכה,\nמיכל וולברגר — סטודיו עיצוב פנים`;
+
+      // Send email
+      if (client.email) {
+        await base44.asServiceRole.entities.Communication.create({
+          client_id: client.id,
+          type: 'email',
+          direction: 'outbound',
+          subject: `פגישת היכרות והצגת הצעת מחיר — תשלום דמי פגישה ₪${price}`,
+          content: msgContent,
+          sent_by: 'system',
+          status: 'pending',
+          channel: 'base44_native',
+        });
+      }
+
+      // Send WhatsApp
+      if (client.phone) {
+        await base44.asServiceRole.entities.Communication.create({
+          client_id: client.id,
+          type: 'whatsapp',
+          direction: 'outbound',
+          content: msgContent,
+          sent_by: 'system',
+          status: 'pending',
+          channel: 'base44_native',
+        });
+      }
 
       return Response.json({ success: true, action: 'continue', clientName });
 
