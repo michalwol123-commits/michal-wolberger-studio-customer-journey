@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     const client = clients[0];
 
     const MEETING_TYPE_LABELS = {
-      intro: 'פגישת היכרות',
+      intro: 'שיחת טלפון ראשונית',
       qualifying: 'פגישת סינון',
       quote_presentation: 'הצגת הצעת מחיר',
       stage_review: 'סקירת שלב',
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       meeting_id: meeting.id,
       type: meeting.type,
       type_label: MEETING_TYPE_LABELS[meeting.type] || meeting.type,
-      duration: meeting.duration || 45,
+      duration: meeting.duration || 30,
       location: meeting.location || '',
       scheduled_at: meeting.scheduled_at || null,
       client_name: client?.name || '',
