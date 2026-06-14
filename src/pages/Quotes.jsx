@@ -120,7 +120,7 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
       {/* ===== שלב 2: הסכם ===== */}
       {!contractDoc ? (
         <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
-          onClick={() => sendForSignature('contract', 'contract', 'הסכם', null)}>
+          onClick={() => sendForSignature('full', 'contract', 'הסכם', null)}>
           {busy === 'contract' ? Spin : <FileSignature className="w-3.5 h-3.5" />}
           שלב 2: הסכם לחתימה
         </Button>
@@ -129,7 +129,7 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
           <span className="text-xs font-medium">✍️ הסכם (גרסה {contractDoc.version_number || 1}):</span>
           <DocumentSignatureBadge doc={contractDoc} />
           <Button type="button" size="sm" variant="ghost" className={`gap-1 ${sz}`} disabled={!!busy}
-            onClick={() => sendForSignature('contract', 'contract', 'הסכם', contractDoc)} title="ייצר PDF מעודכן ושלח גרסה חדשה לחתימה">
+            onClick={() => sendForSignature('full', 'contract', 'הסכם', contractDoc)} title="ייצר PDF מעודכן ושלח גרסה חדשה לחתימה">
             {busy === 'contract-rev' ? Spin : <RefreshCw className="w-3 h-3" />}
             גרסה חדשה
           </Button>

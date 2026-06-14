@@ -169,6 +169,31 @@ Deno.serve(async (req) => {
         : quote.comparison;
     }
 
+    // ===== חתימת הצעת מחיר קיימת (אם יש) =====
+    let quoteSignatureBase64 = null;
+    if (quote_id) {
+      try {
+        const signedQuoteDocs = await base44.asServiceRole.entities.Document.filter({
+          quote_id: quote_id,
+          type: 'quote',
+          signature_status: 'signed',
+        });
+        // הגרסה האחרונה לפי version_number, ואז תאריך
+        const signedDoc = signedQuoteDocs
+          .filter(d => d.signature_image_url)
+          .sort((a, b) =>
+            (b.version_number || 1) - (a.version_number || 1) ||
+            new Date(b.created_date || 0) - new Date(a.created_date || 0)
+          )[0];
+        if (signedDoc?.signature_image_url) {
+          quoteSignatureBase64 = await fetchBase64(signedDoc.signature_image_url);
+          console.log('Embedded existing quote signature from doc:', signedDoc.id);
+        }
+      } catch (e) {
+        console.error('Failed to fetch signed quote signature:', e.message);
+      }
+    }
+
     let _drawn = 0;
     for (let i = PART_START; i <= PART_END; i++) {
       if (_drawn > 0) doc.addPage();
@@ -181,7 +206,7 @@ Deno.serve(async (req) => {
         put(coverDate, W / 2, 266, 'center', 11);
         // diagnostic stamp — confirms the new code is live.
         doc.setTextColor(200, 0, 0);
-        put('v8', 8, 8, 'left', 8);
+        put('v9', 8, 8, 'left', 8);
       }
 
       if (i === P15_INDEX) {
@@ -249,6 +274,26 @@ Deno.serve(async (req) => {
             yy += lh;
           }
           doc.setR2L(false);
+        }
+
+        // ===== חתימת הצעה אם נחתמה כבר =====
+        if (quoteSignatureBase64) {
+          const sigX = 140, sigY = 245, sigW = 50, sigH = 22;
+          // מסגרת רכה מתחת לחתימה
+          doc.setFillColor(247, 247, 247);
+          doc.setDrawColor(190, 190, 190);
+          doc.setLineWidth(0.3);
+          doc.rect(sigX - 2, sigY - 6, sigW + 4, sigH + 13, 'FD');
+          // החתימה עצמה
+          try {
+            doc.addImage(quoteSignatureBase64, 'PNG', sigX, sigY, sigW, sigH);
+          } catch (e) {
+            console.error('addImage signature failed:', e.message);
+          }
+          // תווית קטנה
+          doc.setTextColor(120, 120, 120);
+          doc.setFontSize(7);
+          doc.text('Digital Signature', sigX, sigY - 1);
         }
       }
 
