@@ -40,8 +40,8 @@ Deno.serve(async (req) => {
       // - quote signing -> on the offer/prices page (page 16), NOT a new page
       // - everything else (contract, floor plan, ...) -> keep the original behaviour
       let lastPage;
-      if (doc.type === 'quote' && pages[15]) {
-        lastPage = pages[15];
+      if (doc.type === 'quote' && pages[14]) {
+        lastPage = pages[14];
       } else if (pages.length >= 2) {
         lastPage = pdfDoc.addPage([origW, origH]);
       } else {
