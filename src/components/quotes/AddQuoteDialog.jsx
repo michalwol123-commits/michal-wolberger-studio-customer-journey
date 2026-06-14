@@ -313,20 +313,7 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
                 </div>
               )}
 
-              {form.quote_type === 'generated' && (
-                <div>
-                  <Label>תיאור / היקף *</Label>
-                  <Textarea value={form.scope} onChange={e => setForm(p => ({ ...p, scope: e.target.value }))} rows={3} placeholder="תיאור השירות, מה כלול בחבילה..." />
-                </div>
-              )}
 
-              {/* Scope for non-generated types */}
-              {form.quote_type !== 'generated' && (
-                <div>
-                  <Label>תיאור / היקף</Label>
-                  <Textarea value={form.scope} onChange={e => setForm(p => ({ ...p, scope: e.target.value }))} rows={2} />
-                </div>
-              )}
 
               {/* Send via + Status */}
               <div className="grid grid-cols-2 gap-3">
@@ -376,10 +363,15 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
                 )}
               </div>
 
-              {/* Notes */}
+              {/* הערות מאוחדות — אופציונלי, מופיעות מתחת למחירים ב-PDF */}
               <div>
-                <Label>הערות</Label>
-                <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2} />
+                <Label>הערות (אופציונלי)</Label>
+                <Textarea
+                  value={form.scope}
+                  onChange={e => setForm(p => ({ ...p, scope: e.target.value }))}
+                  rows={3}
+                  placeholder="מה כלול בחבילה, הערות פנימיות, פרטים נוספים... יופיע מתחת לטבלת המחירים ב-PDF"
+                />
               </div>
             </TabsContent>
 
