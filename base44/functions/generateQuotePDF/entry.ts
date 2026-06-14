@@ -18,9 +18,8 @@ const PAGE_IMAGES = [
   B + '4daa96b52_p-11.jpg', // 10
   B + '7c2d46126_p-12.jpg', // 11
   B + 'b9fa781dd_p-13.jpg', // 12
-  B + 'ef1f00041_p-14.jpg', // 13
-  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/d23b47ae7_15.png', // 14 comparison table (dynamic)
-  B + 'bdd63fda7_p-16.jpg', // 15 investment / prices (dynamic)
+  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/d23b47ae7_15.png', // 13 comparison table (dynamic)
+  B + 'bdd63fda7_p-16.jpg', // 14 investment / prices (dynamic)
   B + 'dfb07220c_p-17.jpg', // 16
   B + 'ed071e133_p-18.jpg', // 17
   B + '8ffe8d213_p-19.jpg', // 18
@@ -35,12 +34,12 @@ const PAGE_IMAGES = [
 ];
 
 const COVER_INDEX = 0;
-const P15_INDEX = 14;
-const P16_INDEX = 15;
-const CONTRACT_INDEX = 23;
+const P15_INDEX = 13;
+const P16_INDEX = 14;
+const CONTRACT_INDEX = 22;
 
 // page ranges per part (inclusive, 0-based indices)
-const RANGES = { full: [0, 26], quote: [0, 22], contract: [23, 26] };
+const RANGES = { full: [0, 25], quote: [0, 21], contract: [22, 25] };
 
 // Hebrew weekday letters for the contract signing line ("שנחתם ביום ___")
 const WEEKDAYS_HE = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'שבת'];
@@ -92,8 +91,8 @@ Deno.serve(async (req) => {
       quote = quotes[0] || null;
     }
 
-    if (PAGE_IMAGES.length !== 27) {
-      return Response.json({ error: `PAGE_IMAGES must have exactly 27 URLs in order (p-01..p-27). Got ${PAGE_IMAGES.length}.` }, { status: 500 });
+    if (PAGE_IMAGES.length !== 26) {
+      return Response.json({ error: `PAGE_IMAGES must have exactly 26 URLs in order (p-01..p-13, p-15..p-27). Got ${PAGE_IMAGES.length}.` }, { status: 500 });
     }
 
     const heeboBase64 = await fetchBase64(HEEBO_TTF_URL).catch((e) => { console.error('Heebo fetch failed:', e); return ''; });
@@ -107,7 +106,7 @@ Deno.serve(async (req) => {
         if (!b64 || b64.length < 100) throw new Error(`empty/too small (${b64.length} chars)`);
         pageImages[i] = b64;
       } catch (e) {
-        console.error(`img ${i + 1}/27 FAILED — ${PAGE_IMAGES[i]} — ${e.message}`);
+        console.error(`img ${i + 1}/26 FAILED — ${PAGE_IMAGES[i]} — ${e.message}`);
         failed.push(`#${i + 1}: ${PAGE_IMAGES[i]} (${e.message})`);
       }
     }
@@ -182,7 +181,7 @@ Deno.serve(async (req) => {
         put(coverDate, W / 2, 266, 'center', 11);
         // diagnostic stamp — confirms the new code is live.
         doc.setTextColor(200, 0, 0);
-        put('v7', 8, 8, 'left', 8);
+        put('v8', 8, 8, 'left', 8);
       }
 
       if (i === P15_INDEX) {
