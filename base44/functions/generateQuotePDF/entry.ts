@@ -223,6 +223,33 @@ Deno.serve(async (req) => {
         put(priceS, 31, 80, 'center', 16);
         put(priceM, 82, 80, 'center', 16);
         put(priceL, 130, 80, 'center', 16);
+
+        // ===== קופסת הערות אופציונלית מתחת למחירים =====
+        const notesText = (quote?.scope || '').trim();
+        if (notesText) {
+          // קופסה רכה בצבעי המסמך
+          doc.setDrawColor(196, 175, 156);
+          doc.setFillColor(252, 249, 244);
+          doc.setLineWidth(0.4);
+          doc.roundedRect(20, 110, 170, 90, 3, 3, 'FD');
+
+          // כותרת "הערות"
+          doc.setTextColor(120, 95, 70);
+          put('הערות', 185, 120, 'right', 11);
+
+          // טקסט ההערות עצמן — split אוטומטי לשורות, מקסימום 14 שורות
+          doc.setTextColor(58, 42, 30);
+          doc.setFontSize(10);
+          doc.setR2L(true);
+          const lines = doc.splitTextToSize(fixRtl(notesText), 160);
+          let yy = 130;
+          const lh = 5;
+          for (const ln of lines.slice(0, 14)) {
+            doc.text(ln, 185, yy, { align: 'right' });
+            yy += lh;
+          }
+          doc.setR2L(false);
+        }
       }
 
       if (i === CONTRACT_INDEX) {
