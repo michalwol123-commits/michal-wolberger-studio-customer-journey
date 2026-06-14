@@ -1,18 +1,39 @@
-// Stage 5 — WhatsApp Sender via 360dialog API
-// Trigger: Scheduled every 1 minute
+// WhatsApp Sender via Green API
+// Trigger: Scheduled every 5 minutes
 // Picks up Communication where type=whatsapp, status=pending, direction=outbound
-// Sends via 360dialog API, updates status to sent/failed
+// TEMPORARY WHITELIST: only sends to ALLOWED_PHONES. Remove whitelist check when ready to open up.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const DIALOG360_API_URL = 'https://waba.360dialog.io/v1/messages';
+// =============================================
+// TEMPORARY WHITELIST — remove this array and the check below when ready to send to all
+// =============================================
+const ALLOWED_PHONES = ['0546999915', '0524687812'];
+
+function normalizeToE164(phone) {
+  const digits = String(phone || '').replace(/[\s\-\.\(\)\+]/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('972')) return digits;
+  if (digits.startsWith('0')) return `972${digits.substring(1)}`;
+  if (digits.length === 9 && digits.startsWith('5')) return `972${digits}`;
+  return digits;
+}
+
+function isAllowed(phone) {
+  // TEMPORARY: only send to whitelisted numbers
+  // To open up to all, remove this function and its call below
+  const normalized = normalizeToE164(phone);
+  return ALLOWED_PHONES.some(p => normalizeToE164(p) === normalized);
+}
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const apiKey = Deno.env.get('DIALOG360_API_KEY');
 
-    if (!apiKey) {
-      return Response.json({ skipped: true, reason: 'DIALOG360_API_KEY not configured' });
+    const GREEN_ID = Deno.env.get('GREEN_ID');
+    const GREEN_TOKEN = Deno.env.get('GREEN_TOKEN');
+
+    if (!GREEN_ID || !GREEN_TOKEN) {
+      return Response.json({ skipped: true, reason: 'GREEN_ID or GREEN_TOKEN not configured' });
     }
 
     const pending = await base44.asServiceRole.entities.Communication.filter({
@@ -23,9 +44,9 @@ Deno.serve(async (req) => {
 
     let sent = 0;
     let failed = 0;
+    let skipped = 0;
 
     for (const comm of pending) {
-      // Get client phone number
       if (!comm.client_id) {
         await base44.asServiceRole.entities.Communication.update(comm.id, {
           status: 'failed',
@@ -45,40 +66,38 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const phone = clients[0].phone.replace(/[^0-9+]/g, '');
-      // Normalize: ensure starts with country code (no +)
-      const normalizedPhone = phone.startsWith('+') ? phone.slice(1) : phone;
+      const clientPhone = clients[0].phone;
 
-      // Send as free-form text message (session message)
-      // For template messages, use the template format below
-      const payload = {
-        messaging_product: 'whatsapp',
-        to: normalizedPhone,
-        type: 'text',
-        text: { body: comm.content },
-      };
+      // TEMPORARY WHITELIST CHECK — remove when ready to send to all
+      if (!isAllowed(clientPhone)) {
+        console.log(`⏭️ Skipping ${clientPhone} — not in whitelist (warming up)`);
+        skipped++;
+        continue; // leave status=pending, will send when whitelist is removed
+      }
+
+      const chatId = `${normalizeToE164(clientPhone)}@c.us`;
 
       try {
-        const response = await fetch(DIALOG360_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'D360-API-KEY': apiKey,
-          },
-          body: JSON.stringify(payload),
-        });
+        const response = await fetch(
+          `https://api.green-api.com/waInstance${GREEN_ID}/sendMessage/${GREEN_TOKEN}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId, message: comm.content }),
+          }
+        );
+        const result = await response.json();
 
-        if (response.ok) {
+        if (response.ok && result.idMessage) {
           await base44.asServiceRole.entities.Communication.update(comm.id, {
             status: 'sent',
             channel: 'base44_native',
           });
           sent++;
         } else {
-          const errorBody = await response.text();
           await base44.asServiceRole.entities.Communication.update(comm.id, {
             status: 'failed',
-            error_detail: `360dialog ${response.status}: ${errorBody.slice(0, 300)}`,
+            error_detail: `Green API error: ${JSON.stringify(result).slice(0, 300)}`,
           });
           failed++;
         }
@@ -91,7 +110,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({ success: true, sent, failed, total: pending.length });
+    return Response.json({ success: true, sent, failed, skipped, total: pending.length });
   } catch (error) {
     try {
       const base44 = createClientFromRequest(req);
