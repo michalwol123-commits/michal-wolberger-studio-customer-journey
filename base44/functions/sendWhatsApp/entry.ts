@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
 
       try {
         const response = await fetch(
-          `https://api.green-api.com/waInstance${GREEN_ID}/sendMessage/${GREEN_TOKEN}`,
+          `https://7107.api.greenapi.com/waInstance${GREEN_ID}/sendMessage/${GREEN_TOKEN}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
