@@ -29,8 +29,8 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const GREEN_ID = Deno.env.get('GREEN_ID');
-    const GREEN_TOKEN = Deno.env.get('GREEN_TOKEN');
+    const GREEN_ID = (Deno.env.get('GREEN_ID') || '').trim();
+    const GREEN_TOKEN = (Deno.env.get('GREEN_TOKEN') || '').trim();
 
     if (!GREEN_ID || !GREEN_TOKEN) {
       return Response.json({ skipped: true, reason: 'GREEN_ID or GREEN_TOKEN not configured' });
