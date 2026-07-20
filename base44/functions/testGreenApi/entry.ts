@@ -5,30 +5,22 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     await base44.auth.me();
 
-    const GREEN_ID = Deno.env.get('GREEN_ID');
-    const GREEN_TOKEN = Deno.env.get('GREEN_TOKEN');
+    const GREEN_ID = (Deno.env.get('GREEN_ID') || '').trim();
+    const GREEN_TOKEN = (Deno.env.get('GREEN_TOKEN') || '').trim();
+    const BASE = `https://7107.api.greenapi.com/waInstance${GREEN_ID}`;
 
-    // Test 1: Check state with the 7107 subdomain
-    const url1 = `https://7107.api.greenapi.com/waInstance${GREEN_ID}/getStateInstance/${GREEN_TOKEN}`;
-    const r1 = await fetch(url1);
-    const t1 = await r1.text();
+    // Instance state
+    const stateRes = await fetch(`${BASE}/getStateInstance/${GREEN_TOKEN}`);
+    const state = await stateRes.text();
 
-    // Test 2: Try without subdomain (old URL)
-    const url2 = `https://api.green-api.com/waInstance${GREEN_ID}/getStateInstance/${GREEN_TOKEN}`;
-    const r2 = await fetch(url2);
-    const t2 = await r2.text();
-
-    // Test 3: Try greenapi.com (no hyphen) without subdomain
-    const url3 = `https://api.greenapi.com/waInstance${GREEN_ID}/getStateInstance/${GREEN_TOKEN}`;
-    const r3 = await fetch(url3);
-    const t3 = await r3.text();
+    // Which WhatsApp account (phone) is connected to this instance
+    const waRes = await fetch(`${BASE}/getWaSettings/${GREEN_TOKEN}`);
+    const waSettings = await waRes.text();
 
     return Response.json({
       green_id: GREEN_ID,
-      token_length: GREEN_TOKEN?.length,
-      test_7107: { status: r1.status, body: t1.slice(0, 300) },
-      test_old: { status: r2.status, body: t2.slice(0, 300) },
-      test_no_sub: { status: r3.status, body: t3.slice(0, 300) },
+      state: { status: stateRes.status, body: state.slice(0, 300) },
+      connected_account: { status: waRes.status, body: waSettings.slice(0, 500) },
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
