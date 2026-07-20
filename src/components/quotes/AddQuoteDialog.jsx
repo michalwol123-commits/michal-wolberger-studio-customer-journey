@@ -335,7 +335,8 @@ export default function AddQuoteDialog({ open, onOpenChange, initialData }) {
                     <SelectContent>
                       <SelectItem value="draft">טיוטה</SelectItem>
                       <SelectItem value="sent">נשלח</SelectItem>
-                      <SelectItem value="sent_for_signature">נשלח לחתימה</SelectItem>
+                      <SelectItem value="sent_for_signature">נשלחה הצעה לחתימה</SelectItem>
+                      <SelectItem value="contract_sent_for_signature">נשלח הסכם לחתימה</SelectItem>
                       <SelectItem value="approved">מאושר</SelectItem>
                       <SelectItem value="rejected">נדחה</SelectItem>
                       <SelectItem value="expired">פג תוקף</SelectItem>

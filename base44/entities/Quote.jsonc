@@ -93,6 +93,7 @@
         "draft",
         "sent",
         "sent_for_signature",
+        "contract_sent_for_signature",
         "approved",
         "rejected",
         "expired"

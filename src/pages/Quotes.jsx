@@ -77,15 +77,19 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
         signature_status: 'pending_signature',
       });
 
-      // עדכון סטטוס ההצעה ל"נשלח לחתימה" (רק מטיוטה/נשלח — לא דורס מאושר/נדחה)
-      if (['draft', 'sent'].includes(quote.status)) {
-        await base44.entities.Quote.update(quote.id, { status: 'sent_for_signature' });
+      // עדכון סטטוס אוטומטי — מפעיל שליחת מייל + וואטסאפ עם קישור החתימה
+      const targetStatus = part === 'quote' ? 'sent_for_signature' : 'contract_sent_for_signature';
+      const allowedFrom = part === 'quote' ? ['draft', 'sent'] : ['draft', 'sent', 'sent_for_signature'];
+      let autoSent = false;
+      if (allowedFrom.includes(quote.status)) {
+        await base44.entities.Quote.update(quote.id, { status: targetStatus });
         queryClient.invalidateQueries({ queryKey: ['quotes'] });
+        autoSent = true;
       }
 
       const url = `${window.location.origin}/sign?token=${token}`;
       await navigator.clipboard.writeText(url);
-      toast.success(`${label}${version > 1 ? ` (גרסה ${version})` : ''}: קישור חתימה הועתק! שלחי ללקוח/ה`);
+      toast.success(`${label}${version > 1 ? ` (גרסה ${version})` : ''}: ${autoSent ? 'נשלח ללקוחה אוטומטית + הקישור הועתק' : 'קישור חתימה הועתק! שלחי ללקוח/ה'}`);
       queryClient.invalidateQueries({ queryKey: ['quote-docs', quote.id] });
       queryClient.invalidateQueries({ queryKey: ['documents'] });
     } catch (e) {
@@ -195,7 +199,7 @@ export default function Quotes() {
 
   const totalAmount = filtered.reduce((s, q) => s + (q.total_amount || 0), 0);
   const approvedCount = filtered.filter(q => q.status === 'approved').length;
-  const pendingCount = filtered.filter(q => ['sent', 'sent_for_signature'].includes(q.status)).length;
+  const pendingCount = filtered.filter(q => ['sent', 'sent_for_signature', 'contract_sent_for_signature'].includes(q.status)).length;
 
   const handleEdit = (q) => { setEditQuote(q); setShowAdd(true); };
 
@@ -295,7 +299,8 @@ export default function Quotes() {
             <SelectItem value="all">כל הסטטוסים</SelectItem>
             <SelectItem value="draft">טיוטה</SelectItem>
             <SelectItem value="sent">נשלח</SelectItem>
-            <SelectItem value="sent_for_signature">נשלח לחתימה</SelectItem>
+            <SelectItem value="sent_for_signature">נשלחה הצעה לחתימה</SelectItem>
+            <SelectItem value="contract_sent_for_signature">נשלח הסכם לחתימה</SelectItem>
             <SelectItem value="approved">מאושר</SelectItem>
             <SelectItem value="rejected">נדחה</SelectItem>
             <SelectItem value="expired">פג תוקף</SelectItem>
