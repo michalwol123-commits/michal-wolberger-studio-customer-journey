@@ -92,7 +92,7 @@
       "enum": [
         "draft",
         "sent",
-        "viewed",
+        "sent_for_signature",
         "approved",
         "rejected",
         "expired"

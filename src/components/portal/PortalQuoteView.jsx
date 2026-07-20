@@ -19,7 +19,7 @@ export default function PortalQuoteView({ projectId, clientId, stageNum }) {
   // Stage 4: show only approved quote
   const visibleQuotes = stageNum === 4
     ? quotes.filter(q => q.status === 'approved')
-    : quotes.filter(q => ['sent', 'viewed', 'approved'].includes(q.status));
+    : quotes.filter(q => ['sent', 'sent_for_signature', 'approved'].includes(q.status));
 
   if (visibleQuotes.length === 0) return null;
 

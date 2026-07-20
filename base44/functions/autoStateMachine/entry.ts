@@ -20,12 +20,13 @@ const TRANSITIONS = {
     cancelled: [],
   },
   Quote: {
-    draft: ['sent', 'viewed', 'approved', 'rejected', 'expired'],
-    sent: ['draft', 'viewed', 'approved', 'rejected', 'expired'],
+    draft: ['sent', 'sent_for_signature', 'viewed', 'approved', 'rejected', 'expired'],
+    viewed: ['draft', 'sent', 'sent_for_signature', 'approved', 'rejected', 'expired'],
+    sent: ['draft', 'sent_for_signature', 'approved', 'rejected', 'expired'],
     viewed: ['draft', 'sent', 'approved', 'rejected', 'expired'],
-    approved: ['draft', 'sent', 'viewed', 'rejected', 'expired'],
-    rejected: ['draft', 'sent', 'viewed', 'approved', 'expired'],
-    expired: ['draft', 'sent', 'viewed', 'approved', 'rejected'],
+    approved: ['draft', 'sent', 'sent_for_signature', 'rejected', 'expired'],
+    rejected: ['draft', 'sent', 'sent_for_signature', 'approved', 'expired'],
+    expired: ['draft', 'sent', 'sent_for_signature', 'approved', 'rejected'],
   },
   Task: {
     open: ['in_progress', 'done', 'cancelled'],

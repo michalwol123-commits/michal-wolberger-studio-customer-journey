@@ -20,7 +20,7 @@ const statusConfig = {
   // Quote statuses
   draft: { label: 'טיוטה', variant: 'outline', className: 'border-gray-300 text-gray-500 bg-gray-50' },
   sent: { label: 'נשלחה', variant: 'outline', className: 'border-blue-300 text-blue-700 bg-blue-50' },
-  viewed: { label: 'נצפה', variant: 'outline', className: 'border-purple-300 text-purple-700 bg-purple-50' },
+  sent_for_signature: { label: 'נשלח לחתימה', variant: 'outline', className: 'border-purple-300 text-purple-700 bg-purple-50' },
   approved: { label: 'מאושר', variant: 'outline', className: 'border-green-300 text-green-700 bg-green-50' },
   rejected: { label: 'נדחה', variant: 'outline', className: 'border-red-300 text-red-600 bg-red-50' },
   expired: { label: 'פג תוקף', variant: 'outline', className: 'border-gray-300 text-gray-500 bg-gray-50' },

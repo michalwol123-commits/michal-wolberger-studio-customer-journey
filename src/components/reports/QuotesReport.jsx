@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 const STATUS_LABELS = {
   draft: 'טיוטה',
   sent: 'נשלח',
-  viewed: 'נצפה',
+  sent_for_signature: 'נשלח לחתימה',
   approved: 'מאושר',
   rejected: 'נדחה',
   expired: 'פג תוקף',
@@ -19,7 +19,7 @@ export default function QuotesReport({ quotes, clients }) {
   clients.forEach(c => { clientMap[c.id] = c; });
 
   // Funnel data
-  const funnelSteps = ['draft', 'sent', 'viewed', 'approved', 'rejected', 'expired'];
+  const funnelSteps = ['draft', 'sent', 'sent_for_signature', 'approved', 'rejected', 'expired'];
   const funnelData = funnelSteps.map(s => ({
     name: STATUS_LABELS[s],
     value: quotes.filter(q => q.status === s).length,
@@ -27,7 +27,7 @@ export default function QuotesReport({ quotes, clients }) {
 
   // Conversion stats
   const total = quotes.length;
-  const sent = quotes.filter(q => ['sent', 'viewed', 'approved', 'rejected', 'expired'].includes(q.status)).length;
+  const sent = quotes.filter(q => ['sent', 'sent_for_signature', 'approved', 'rejected', 'expired'].includes(q.status)).length;
   const approved = quotes.filter(q => q.status === 'approved').length;
   const conversionRate = sent > 0 ? Math.round((approved / sent) * 100) : 0;
 
