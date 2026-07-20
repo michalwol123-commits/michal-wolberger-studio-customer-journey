@@ -204,9 +204,6 @@ Deno.serve(async (req) => {
         doc.setTextColor(74, 53, 38);
         put(coverLine, W / 2, 260, 'center', 12);
         put(coverDate, W / 2, 266, 'center', 11);
-        // diagnostic stamp — confirms the new code is live.
-        doc.setTextColor(200, 0, 0);
-        put('v10', 8, 8, 'left', 8);
       }
 
       if (i === P15_INDEX) {

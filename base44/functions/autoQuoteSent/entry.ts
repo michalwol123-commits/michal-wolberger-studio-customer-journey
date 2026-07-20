@@ -93,7 +93,14 @@ Deno.serve(async (req) => {
         if (pdfUrl) {
           const pdfRes = await fetch(pdfUrl);
           const pdfBuffer = await pdfRes.arrayBuffer();
-          const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
+          // chunked base64 conversion — same proven pattern as fetchBase64 in generateQuotePDF
+          const buf = new Uint8Array(pdfBuffer);
+          let binary = '';
+          const chunk = 0x8000;
+          for (let i = 0; i < buf.length; i += chunk) {
+            binary += String.fromCharCode(...buf.subarray(i, i + chunk));
+          }
+          const pdfBase64 = btoa(binary);
           brevoPayload.attachment = [{ content: pdfBase64, name: `quote_${clientName}.pdf` }];
         }
 

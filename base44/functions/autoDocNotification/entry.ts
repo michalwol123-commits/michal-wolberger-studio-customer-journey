@@ -27,8 +27,9 @@ Deno.serve(async (req) => {
     const client = clients[0];
 
     // Build portal URL
+    const appUrl = Deno.env.get('BASE44_APP_URL') || 'https://michal-design-flow.base44.app';
     const portalUrl = client.portal_token
-      ? `https://app.base44.com/portal?token=${client.portal_token}`
+      ? `${appUrl}/portal?token=${client.portal_token}`
       : 'הפורטל שלך';
 
     // WhatsApp to client

@@ -4,11 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, FolderOpen } from 'lucide-react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { motion } from 'framer-motion';
-
-const stageLabels = {
-  1: 'שאלון', 2: 'תכנית + גאנט', 3: 'תכניות עבודה', 4: 'קונספט עיצובי',
-  5: 'ימי קניות', 6: 'תמחור + ספקים', 7: 'ביצוע', 8: 'התקנה', 9: 'מסירה'
-};
+import { getStageName } from '@/lib/stageConfig';
 
 export default function PortalProjectList({ projects, onSelect }) {
   return (
@@ -39,7 +35,7 @@ export default function PortalProjectList({ projects, onSelect }) {
                     <div>
                       <h3 className="font-heading font-semibold">{project.name}</h3>
                       <p className="text-xs text-muted-foreground">
-                        שלב {project.stage_current || 1}: {stageLabels[project.stage_current || 1]}
+                        שלב {project.stage_current || 1}: {getStageName(project.stage_current || 1)}
                       </p>
                     </div>
                   </div>
