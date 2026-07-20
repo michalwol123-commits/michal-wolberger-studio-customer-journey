@@ -29,6 +29,7 @@ import QuestionnaireResponsesView from '@/components/questionnaire/Questionnaire
 import DetailedQuestionnairePreview from '@/components/questionnaire/DetailedQuestionnairePreview';
 import MeetingsList from '@/components/meetings/MeetingsList';
 import ProjectOverview from '@/components/projects/ProjectOverview';
+import ProjectNameEditor from '@/components/projects/ProjectNameEditor';
 import SendQuestionnaireDialog from '@/components/questionnaire/SendQuestionnaireDialog';
 import DocumentSignatureBadge from '@/components/documents/DocumentSignatureBadge';
 import FieldVisitCard from '@/components/fieldvisits/FieldVisitCard';
@@ -137,7 +138,7 @@ export default function ProjectDetail() {
 
       <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold font-heading">{project.name}</h1>
+          <ProjectNameEditor project={project} canEdit={isAdmin} />
           {client && (
             <Link to={`/clients/${client.id}`} className="text-sm text-primary hover:underline">{client.name}</Link>
           )}
