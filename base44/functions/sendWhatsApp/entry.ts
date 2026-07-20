@@ -10,6 +10,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // =============================================
 const ALLOWED_PHONES = ['0546999915', '0524687812', '0544535688', '0535334449'];
 
+// =============================================
+// SIMULATION MODE — set to false to resume real sending via Green API
+// While true: messages are logged as 'sent' in Communications but NOT actually sent.
+// =============================================
+const SIMULATION_MODE = true;
+
 const STALE_SENDING_MS = 10 * 60 * 1000; // 10 minutes
 
 function normalizeToE164(phone) {
@@ -106,6 +112,17 @@ Deno.serve(async (req) => {
       if (!claim.updated) {
         console.log(`🔒 ${comm.id} already claimed by a parallel run — skipping`);
         skipped++;
+        continue;
+      }
+
+      // SIMULATION MODE — log only, don't actually send
+      if (SIMULATION_MODE) {
+        await base44.asServiceRole.entities.Communication.update(comm.id, {
+          status: 'sent',
+          channel: 'base44_native',
+          error_detail: 'SIMULATION — לא נשלח בפועל',
+        });
+        sent++;
         continue;
       }
 
