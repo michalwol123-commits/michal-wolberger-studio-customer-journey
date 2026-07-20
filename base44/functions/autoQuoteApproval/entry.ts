@@ -125,6 +125,42 @@ Deno.serve(async (req) => {
       channel: 'base44_native',
     });
 
+    // Notify client via Email (Brevo)
+    if (client.email) {
+      const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
+      const emailBody = `
+        <div dir="rtl" style="font-family: 'Heebo', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #8B6F47;">ההצעה אושרה! 🎉</h1>
+          <p>שלום ${client.name},</p>
+          <p>שמחים לבשר לך שההצעה אושרה והפרויקט <strong>"${project.name}"</strong> נפתח רשמית!</p>
+          <p>בהמשך נשלח לך קישור לפורטל האישי שלך, שם תוכל/י לעקוב אחרי ההתקדמות.</p>
+          <p style="color: #666; font-size: 14px;">בברכה,<br>סטודיו מיכל וולברגר</p>
+        </div>
+      `;
+      const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender: { name: 'סטודיו מיכל וולברגר', email: 'michalwol123@gmail.com' },
+          to: [{ email: client.email, name: client.name || '' }],
+          subject: `ההצעה אושרה — הפרויקט "${project.name}" נפתח! 🎉`,
+          htmlContent: emailBody,
+        }),
+      });
+      await base44.asServiceRole.entities.Communication.create({
+        client_id: clientId,
+        project_id: project.id,
+        type: 'email',
+        direction: 'outbound',
+        subject: `ההצעה אושרה — הפרויקט "${project.name}" נפתח! 🎉`,
+        content: `מייל בשורת פתיחת פרויקט נשלח ל-${client.email}`,
+        sent_by: 'system',
+        status: brevoRes.ok ? 'sent' : 'failed',
+        channel: 'base44_native',
+        error_detail: brevoRes.ok ? undefined : JSON.stringify(await brevoRes.json()),
+      });
+    }
+
     // Notify client via WhatsApp
     await base44.asServiceRole.entities.Communication.create({
       client_id: clientId,
