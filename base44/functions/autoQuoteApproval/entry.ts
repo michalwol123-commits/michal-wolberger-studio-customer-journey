@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       const pkgType = data.package_type || null;
       project = await base44.asServiceRole.entities.Project.create({
         client_id: clientId,
-        name: data.title || `פרויקט — ${client.name}`,
+        name: `פרויקט — ${client.name}`,
         status: 'active',
         stage_current: 4,
         progress: 0,
