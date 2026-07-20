@@ -1,6 +1,7 @@
 // WhatsApp Sender via Green API
-// Trigger: Scheduled every 5 minutes
-// Picks up Communication where type=whatsapp, status=pending, direction=outbound
+// Trigger: entity automation on Communication create/update (status=pending, type=whatsapp)
+// Per-record atomic claim (pending -> sending -> sent/failed) prevents duplicate sends.
+// Stale recovery: records stuck in 'sending' over 10 minutes are reset to pending.
 // TEMPORARY WHITELIST: only sends to ALLOWED_PHONES. Remove whitelist check when ready to open up.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
@@ -8,6 +9,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // TEMPORARY WHITELIST — remove this array and the check below when ready to send to all
 // =============================================
 const ALLOWED_PHONES = ['0546999915', '0524687812', '0544535688', '0535334449'];
+
+const STALE_SENDING_MS = 10 * 60 * 1000; // 10 minutes
 
 function normalizeToE164(phone) {
   const digits = String(phone || '').replace(/[\s\-\.\(\)\+]/g, '');
@@ -34,6 +37,26 @@ Deno.serve(async (req) => {
 
     if (!GREEN_ID || !GREEN_TOKEN) {
       return Response.json({ skipped: true, reason: 'GREEN_ID or GREEN_TOKEN not configured' });
+    }
+
+    // === Stale recovery: reset records stuck in 'sending' over 10 minutes back to 'pending' ===
+    const stuck = await base44.asServiceRole.entities.Communication.filter({
+      type: 'whatsapp',
+      status: 'sending',
+      direction: 'outbound',
+    });
+    let recovered = 0;
+    const now = Date.now();
+    for (const s of stuck) {
+      const age = now - new Date(s.updated_date).getTime();
+      if (age > STALE_SENDING_MS) {
+        // atomic: only reset if still 'sending'
+        const r = await base44.asServiceRole.entities.Communication.updateMany(
+          { id: s.id, status: 'sending' },
+          { $set: { status: 'pending', retry_count: (s.retry_count || 0) + 1 } }
+        );
+        if (r.updated > 0) recovered++;
+      }
     }
 
     const pending = await base44.asServiceRole.entities.Communication.filter({
@@ -75,6 +98,17 @@ Deno.serve(async (req) => {
         continue; // leave status=pending, will send when whitelist is removed
       }
 
+      // === Atomic claim: pending -> sending. If another run already claimed it, skip. ===
+      const claim = await base44.asServiceRole.entities.Communication.updateMany(
+        { id: comm.id, status: 'pending' },
+        { $set: { status: 'sending' } }
+      );
+      if (!claim.updated) {
+        console.log(`🔒 ${comm.id} already claimed by a parallel run — skipping`);
+        skipped++;
+        continue;
+      }
+
       const chatId = `${normalizeToE164(clientPhone)}@c.us`;
 
       try {
@@ -110,7 +144,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({ success: true, sent, failed, skipped, total: pending.length });
+    return Response.json({ success: true, sent, failed, skipped, recovered, total: pending.length });
   } catch (error) {
     try {
       const base44 = createClientFromRequest(req);

@@ -116,11 +116,17 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
     const typeLabel = typeOptions.find(t => t.value === initialData.type)?.label || initialData.type;
     const sentVia = [];
 
-    // WhatsApp
+    // WhatsApp — create pending Communication record (sendWhatsApp picks it up)
     if (client.phone) {
-      await base44.functions.invoke('sendWhatsApp', {
-        to: client.phone,
-        message: `שלום ${client.name} 👋\nנא לבחור מועד ל${typeLabel} בקישור:\n${scheduleUrl}`,
+      await base44.entities.Communication.create({
+        client_id: client.id,
+        project_id: initialData.project_id || undefined,
+        type: 'whatsapp',
+        direction: 'outbound',
+        content: `שלום ${client.name} 👋\nנא לבחור מועד ל${typeLabel} בקישור:\n${scheduleUrl}`,
+        sent_by: 'michal',
+        status: 'pending',
+        channel: 'base44_native',
       });
       sentVia.push('וואטסאפ');
     }

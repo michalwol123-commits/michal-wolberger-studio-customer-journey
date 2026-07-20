@@ -60,19 +60,15 @@ Deno.serve(async (req) => {
           whatsappMsg += `\n\nלפני השיחה, אשמח שתמלאו שאלון קצר 📝:\n${questionnaireUrl}`;
         }
 
-        await base44.asServiceRole.functions.invoke('sendWhatsApp', {
-          to: client.phone,
-          message: whatsappMsg,
-        });
-
+        // Create pending Communication — the sendWhatsApp mechanism picks it up and sends
         await base44.asServiceRole.entities.Communication.create({
           client_id: client.id,
           project_id: data.project_id || undefined,
           type: 'whatsapp',
           direction: 'outbound',
-          content: `קישור תיאום ${meetingLabel} נשלח ללקוח בווטסאפ`,
+          content: whatsappMsg,
           sent_by: 'system',
-          status: 'sent',
+          status: 'pending',
           channel: 'base44_native',
         });
       }
