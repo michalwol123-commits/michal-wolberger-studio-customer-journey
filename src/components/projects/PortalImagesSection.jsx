@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 const FIELDS = [
   { key: 'portal_hero_url', label: 'תמונת כותרת', hint: 'התמונה הגדולה בראש הפורטל' },
   { key: 'portal_bg_url', label: 'תמונת רקע', hint: 'תמונה שקופה מאחורי סקשנים בפורטל' },
+  { key: 'portal_divider_url', label: 'רצועת מפריד', hint: 'הרצועה הרחבה בין הסקשנים בפורטל' },
 ];
 
 export default function PortalImagesSection({ project }) {

@@ -163,7 +163,7 @@ export default function PortalProjectView({ project, onBack }) {
       {/* מפריד תמונה — מוסתר במצב רקע חלק */}
       {!project.portal_plain_bg && (
         <div className="relative h-40 md:h-56 overflow-hidden p-reveal">
-          <img src={SECTION_IMG} alt="" className="w-full h-full object-cover" />
+          <img src={project.portal_divider_url || SECTION_IMG} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0" style={{ background: 'rgba(42,31,24,0.25)' }} />
         </div>
       )}
