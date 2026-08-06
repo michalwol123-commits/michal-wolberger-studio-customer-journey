@@ -17,6 +17,7 @@ import PortalGanttView from '@/components/portal/PortalGanttView';
 import PortalBudgetView from '@/components/portal/PortalBudgetView';
 import PortalDocApproval from '@/components/portal/PortalDocApproval';
 import PortalHero from '@/components/portal/PortalHero';
+import PortalImageSection from '@/components/portal/PortalImageSection';
 import '@/components/portal/portal-theme.css';
 
 export default function PortalDemo() {
@@ -113,7 +114,7 @@ export default function PortalDemo() {
 
       {/* Portal content */}
       {project && (
-        <div className="portal-theme rounded-2xl border-2 border-dashed border-primary/20 overflow-hidden" dir="rtl">
+        <div className="portal-theme rounded-2xl overflow-hidden" dir="rtl">
           <PortalHero clientName={client?.name} subtitle={project.name} imageUrl={project.portal_hero_url} />
           <div className="space-y-8 p-4 lg:p-8">
             {/* Project Overview */}
@@ -133,7 +134,8 @@ export default function PortalDemo() {
               </div>
             </motion.div>
 
-            {/* Timeline + Stage */}
+            {/* Timeline + Stage — על תמונת רקע שקופה */}
+            <PortalImageSection imageUrl={project.portal_bg_url} wash={0.84} className="py-10 md:py-14 px-4 md:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-4">
                 <div className="p-card lg:sticky lg:top-24 p-5 md:p-6">
@@ -158,6 +160,7 @@ export default function PortalDemo() {
                 {currentStage >= 6 && <PortalBudgetView project={project} />}
               </div>
             </div>
+            </PortalImageSection>
           </div>
         </div>
       )}
