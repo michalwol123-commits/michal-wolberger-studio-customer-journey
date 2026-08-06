@@ -160,11 +160,13 @@ export default function PortalProjectView({ project, onBack }) {
       </div>
       </PortalImageSection>
 
-      {/* מפריד תמונה */}
-      <div className="relative h-40 md:h-56 overflow-hidden p-reveal">
-        <img src={SECTION_IMG} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: 'rgba(42,31,24,0.25)' }} />
-      </div>
+      {/* מפריד תמונה — מוסתר במצב רקע חלק */}
+      {!project.portal_plain_bg && (
+        <div className="relative h-40 md:h-56 overflow-hidden p-reveal">
+          <img src={SECTION_IMG} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0" style={{ background: 'rgba(42,31,24,0.25)' }} />
+        </div>
+      )}
 
       {/* מיכל איתך — על תמונת רקע שקופה, לפני הפוטר */}
       <PortalImageSection imageUrl={project.portal_bg_url} plain={project.portal_plain_bg} className="py-10 md:py-14 px-4 md:px-8">
