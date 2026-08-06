@@ -115,7 +115,7 @@ export default function PortalDemo() {
       {/* Portal content */}
       {project && (
         <div className="portal-theme rounded-2xl overflow-hidden" dir="rtl">
-          <PortalHero clientName={client?.name} subtitle={project.name} imageUrl={project.portal_hero_url} />
+          <PortalHero clientName={client?.name} subtitle={project.name} imageUrl={project.portal_hero_url} plain={project.portal_plain_bg} />
           <div className="space-y-8 p-4 lg:p-8">
             {/* Project Overview */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -135,7 +135,7 @@ export default function PortalDemo() {
             </motion.div>
 
             {/* Timeline + Stage — על תמונת רקע שקופה */}
-            <PortalImageSection imageUrl={project.portal_bg_url} wash={0.84} className="py-10 md:py-14 px-4 md:px-8">
+            <PortalImageSection imageUrl={project.portal_bg_url} plain={project.portal_plain_bg} className="py-10 md:py-14 px-4 md:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-4">
                 <div className="p-card lg:sticky lg:top-24 p-5 md:p-6">

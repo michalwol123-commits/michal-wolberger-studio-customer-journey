@@ -111,7 +111,7 @@ export default function PortalProjectView({ project, onBack }) {
       <PortalNextStep action={nextAction} />
 
       {/* Main layout: Timeline sidebar + Stage content — על תמונת רקע שקופה */}
-      <PortalImageSection imageUrl={project.portal_bg_url} wash={0.84} className="py-10 md:py-14 px-4 md:px-8">
+      <PortalImageSection imageUrl={project.portal_bg_url} plain={project.portal_plain_bg} className="py-10 md:py-14 px-4 md:px-8">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Timeline sidebar */}
         <motion.div
@@ -167,7 +167,7 @@ export default function PortalProjectView({ project, onBack }) {
       </div>
 
       {/* מיכל איתך — על תמונת רקע שקופה, לפני הפוטר */}
-      <PortalImageSection imageUrl={project.portal_bg_url} wash={0.84} className="py-10 md:py-14 px-4 md:px-8">
+      <PortalImageSection imageUrl={project.portal_bg_url} plain={project.portal_plain_bg} className="py-10 md:py-14 px-4 md:px-8">
         <MichalContactCard />
       </PortalImageSection>
     </div>

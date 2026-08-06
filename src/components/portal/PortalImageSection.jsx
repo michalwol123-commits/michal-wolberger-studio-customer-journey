@@ -4,13 +4,15 @@ const DEFAULT_BG = 'https://media.base44.com/images/public/69c56d22dada4d9b43006
 
 /**
  * סקשן עם תמונת פרויקט ברקע ושטיפת קרם מעליה.
- * שרשרת fallback: imageUrl → תמונת ברירת המחדל של הסטודיו → גרדיאנט קרם.
+ * plain=true → בלי תמונה בכלל (גרדיאנט קרם).
+ * אחרת: imageUrl → תמונת ברירת המחדל של הסטודיו → גרדיאנט קרם.
  */
-export default function PortalImageSection({ imageUrl, wash = 0.9, className = '', children }) {
+export default function PortalImageSection({ imageUrl, plain = false, wash = 0.84, className = '', children }) {
   const src = imageUrl || DEFAULT_BG;
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
+    if (plain) { setOk(false); return; }
     let alive = true;
     setOk(false);
     const img = new Image();
@@ -18,14 +20,16 @@ export default function PortalImageSection({ imageUrl, wash = 0.9, className = '
     img.onerror = () => { if (alive) setOk(false); };
     img.src = src;
     return () => { alive = false; };
-  }, [src]);
+  }, [src, plain]);
+
+  const showImage = ok && !plain;
 
   return (
     <section
-      className={ok ? 'p-img-section' : 'p-img-fallback'}
-      style={ok ? { backgroundImage: `url('${src}')` } : undefined}
+      className={showImage ? 'p-img-section' : 'p-img-fallback'}
+      style={showImage ? { backgroundImage: `url('${src}')` } : undefined}
     >
-      <div className={className} style={{ background: `rgba(245,240,235,${wash})` }}>
+      <div className={className} style={showImage ? { background: `rgba(245,240,235,${wash})` } : undefined}>
         {children}
       </div>
     </section>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Upload, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -42,7 +43,21 @@ export default function PortalImagesSection({ project }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <label className="flex items-start gap-2 cursor-pointer">
+          <Checkbox
+            checked={!!project.portal_plain_bg}
+            disabled={busy === 'portal_plain_bg'}
+            onCheckedChange={v => save('portal_plain_bg', !!v)}
+          />
+          <span>
+            <span className="text-sm font-medium">רקע חלק בצבע בז' (בלי תמונות)</span>
+            <span className="block text-xs text-muted-foreground">
+              גובר על התמונות שהועלו — הן נשמרות ויחזרו כשמכבים את הסימון.
+            </span>
+          </span>
+        </label>
+
+        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${project.portal_plain_bg ? 'opacity-40 pointer-events-none' : ''}`}>
           {FIELDS.map(f => {
             const url = project[f.key];
             const loading = busy === f.key;
