@@ -1,15 +1,14 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { GitBranch } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
+import ArtIcon from './ArtIcon';
 
-const statusColors = {
-  pending: 'bg-muted text-muted-foreground',
-  in_progress: 'bg-primary/20 text-primary border border-primary/30',
-  completed: 'bg-green-100 text-green-700 border border-green-300',
-  delayed: 'bg-red-100 text-red-700 border border-red-300',
+const statusStyles = {
+  pending: { background: '#f0ebe4', color: '#8a7060', border: '1px solid #e0d8ce' },
+  in_progress: { background: '#2a1f18', color: '#f5f0eb', border: '1px solid #2a1f18' },
+  completed: { background: '#eef0e4', color: '#6b7a4f', border: '1px solid #6b7a4f' },
+  delayed: { background: '#f0ebe4', color: '#8a5a4a', border: '1px solid #8a5a4a' },
 };
 
 const statusLabels = {
@@ -43,20 +42,21 @@ export default function PortalGanttView({ project }) {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-heading flex items-center gap-2">
-          <GitBranch className="w-5 h-5 text-primary" />
-          ציר זמן — אבני דרך
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="p-card">
+      <div className="p-6 flex items-center gap-4" style={{ borderBottom: '1px solid #e8e0d8' }}>
+        <ArtIcon name="gantt" size={48} floatDelay={2} />
+        <div>
+          <p className="p-label mb-0.5">לוח זמנים</p>
+          <h3 className="p-display text-lg">ציר זמן — אבני דרך</h3>
+        </div>
+      </div>
+      <div className="p-5">
         {/* Month header */}
-        <div className="relative h-6 mb-2 border-b border-border">
+        <div className="relative h-6 mb-3" style={{ borderBottom: '1px solid #e8e0d8' }}>
           {months.map((m, i) => (
             <span
               key={i}
-              className="absolute text-[10px] text-muted-foreground"
+              className="absolute p-label !text-[10px]"
               style={{ right: `${(m.offset / totalDays) * 100}%` }}
             >
               {m.label}
@@ -74,11 +74,11 @@ export default function PortalGanttView({ project }) {
 
             return (
               <div key={m.id} className="flex items-center gap-2">
-                <span className="text-xs w-24 shrink-0 truncate text-right font-medium">{m.title}</span>
-                <div className="relative flex-1 h-7 bg-muted/30 rounded">
+                <span className="text-xs w-24 shrink-0 truncate text-right" style={{ color: '#4a3728' }}>{m.title}</span>
+                <div className="relative flex-1 h-7" style={{ background: '#f5f0eb' }}>
                   <div
-                    className={`absolute h-full rounded flex items-center justify-center text-[10px] font-medium ${statusColors[m.status] || statusColors.pending}`}
-                    style={{ right: `${rightPct}%`, width: `${widthPct}%`, minWidth: '2rem' }}
+                    className="absolute h-full flex items-center justify-center text-[10px]"
+                    style={{ right: `${rightPct}%`, width: `${widthPct}%`, minWidth: '2rem', ...(statusStyles[m.status] || statusStyles.pending) }}
                   >
                     {widthPct > 8 && (statusLabels[m.status] || '')}
                   </div>
@@ -89,15 +89,15 @@ export default function PortalGanttView({ project }) {
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap gap-3 mt-4 text-[10px]">
+        <div className="flex flex-wrap gap-4 mt-5">
           {Object.entries(statusLabels).map(([key, label]) => (
-            <span key={key} className="flex items-center gap-1">
-              <span className={`w-3 h-3 rounded ${statusColors[key]}`} />
+            <span key={key} className="flex items-center gap-1.5 p-label !text-[10px]">
+              <span className="w-3 h-3 inline-block" style={statusStyles[key]} />
               {label}
             </span>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

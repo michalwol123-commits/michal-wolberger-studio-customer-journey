@@ -1,11 +1,15 @@
 import React from 'react';
+import '@/components/portal/portal-theme.css';
 
 export default function PortalLoading() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center" dir="rtl">
+    <div className="portal-theme min-h-screen flex items-center justify-center" dir="rtl">
       <div className="text-center">
-        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm text-muted-foreground">טוען את הפורטל שלך...</p>
+        <div
+          className="w-10 h-10 rounded-full animate-spin mx-auto mb-5"
+          style={{ border: '2px solid #e0d8ce', borderTopColor: '#2a1f18' }}
+        />
+        <p className="p-label">טוען את הפורטל שלך...</p>
       </div>
     </div>
   );

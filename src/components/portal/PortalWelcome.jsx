@@ -2,11 +2,9 @@ import React from 'react';
 import { usePortal } from '@/lib/PortalContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Sparkles, FileText, Check, X } from 'lucide-react';
-import StatusBadge from '@/components/shared/StatusBadge';
 import { motion } from 'framer-motion';
+import ArtIcon from '@/components/portal/ArtIcon';
+import MichalContactCard from '@/components/portal/MichalContactCard';
 
 export default function PortalWelcome() {
   const { client } = usePortal();
@@ -42,35 +40,47 @@ export default function PortalWelcome() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12 md:space-y-16">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <div className="text-center mb-10">
-          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Sparkles className="w-8 h-8 text-primary" />
+        <div className="text-center">
+          <div className="flex justify-center mb-6">
+            <ArtIcon name="wave" size={104} />
           </div>
-          <h1 className="font-heading font-bold text-3xl mb-2">ברוך הבא, {client.name}</h1>
-          <p className="text-muted-foreground">הפורטל האישי שלך בסטודיו מיכל וולברגר</p>
+          <p className="p-label mb-3">מיכל וולברגר · סטודיו לעיצוב פנים</p>
+          <h1 className="p-display text-3xl md:text-4xl mb-4" style={{ fontWeight: 300 }}>
+            הבית שחלמת עליו מתחיל כאן
+          </h1>
+          <p className="max-w-md mx-auto leading-relaxed" style={{ color: '#4a3728' }}>
+            כאן מתחיל המסע לבית שתמיד חלמת עליו — הכל במקום אחד, בקצב שלך.
+          </p>
         </div>
       </motion.div>
 
       {latestQuote ? (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}>
-          <Card className="border-2 border-primary/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg font-heading">
-                <FileText className="w-5 h-5 text-primary" />
-                הצעת מחיר
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div>
-                  <p className="font-medium">{latestQuote.title}</p>
-                  <p className="text-2xl font-bold font-heading mt-1">₪{latestQuote.total_amount?.toLocaleString()}</p>
-                  {latestQuote.scope && <p className="text-sm text-muted-foreground mt-2">{latestQuote.scope}</p>}
-                </div>
-                <StatusBadge status={latestQuote.status} />
+          <div className="p-card overflow-hidden">
+            {/* פס עליון */}
+            <div className="px-8 pt-8 pb-6 text-center" style={{ borderBottom: '1px solid #e8e0d8' }}>
+              <div className="flex justify-center mb-4">
+                <ArtIcon name="doc" size={56} />
               </div>
+              <p className="p-label mb-2">הצעת מחיר עבורך</p>
+              <h2 className="p-display text-2xl md:text-3xl">{latestQuote.title}</h2>
+            </div>
+
+            <div className="px-8 py-8 space-y-6 text-center">
+              <div>
+                <p className="p-label mb-2">סה״כ השקעה</p>
+                <p className="p-display text-4xl md:text-5xl" style={{ fontWeight: 400 }}>
+                  ₪{latestQuote.total_amount?.toLocaleString()}
+                </p>
+              </div>
+
+              {latestQuote.scope && (
+                <p className="text-sm max-w-lg mx-auto leading-relaxed" style={{ color: '#4a3728' }}>
+                  {latestQuote.scope}
+                </p>
+              )}
 
               {latestQuote.url && (
                 <a
@@ -78,50 +88,52 @@ export default function PortalWelcome() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleMarkViewed}
-                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                  className="p-btn-outline text-sm"
                 >
-                  <FileText className="w-4 h-4" />
-                  צפה בהצעה המלאה
+                  לצפייה בהצעה המלאה <span className="p-arrow">←</span>
                 </a>
               )}
 
               {['sent', 'viewed'].includes(latestQuote.status) && (
-                <div className="flex gap-3 pt-2">
-                  <Button onClick={handleApprove} disabled={updateQuote.isPending} className="gap-2 flex-1">
-                    <Check className="w-4 h-4" />
-                    אישור הצעה
-                  </Button>
-                  <Button onClick={handleReject} disabled={updateQuote.isPending} variant="outline" className="gap-2 flex-1">
-                    <X className="w-4 h-4" />
-                    דחיית הצעה
-                  </Button>
+                <div className="flex flex-col sm:flex-row gap-3 pt-2 max-w-md mx-auto">
+                  <button onClick={handleApprove} disabled={updateQuote.isPending} className="p-btn flex-1">
+                    אישור ההצעה <span className="p-arrow">←</span>
+                  </button>
+                  <button onClick={handleReject} disabled={updateQuote.isPending} className="p-btn-outline flex-1">
+                    דחיית ההצעה
+                  </button>
                 </div>
               )}
 
               {latestQuote.status === 'approved' && (
-                <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl p-4 text-center text-sm">
+                <div className="p-5 text-sm" style={{ background: '#eef0e4', border: '1px solid #6b7a4f', color: '#6b7a4f' }}>
                   ההצעה אושרה בהצלחה! מיכל תיצור איתך קשר בקרוב.
                 </div>
               )}
 
               {latestQuote.status === 'rejected' && (
-                <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-center text-sm">
+                <div className="p-5 text-sm" style={{ background: '#f0ebe4', border: '1px solid #8a7060', color: '#8a7060' }}>
                   ההצעה נדחתה. אם ברצונך לדון בשינויים, אנא פני למיכל.
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </motion.div>
       ) : (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}>
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">טרם הוכנה הצעת מחיר עבורך.</p>
-              <p className="text-sm text-muted-foreground mt-1">מיכל תעדכן אותך ברגע שההצעה תהיה מוכנה.</p>
-            </CardContent>
-          </Card>
+          <div className="p-card py-16 text-center">
+            <div className="flex justify-center mb-6">
+              <ArtIcon name="compass" size={88} />
+            </div>
+            <p className="p-display text-xl mb-2">טרם הוכנה הצעת מחיר עבורך</p>
+            <p className="text-sm" style={{ color: '#8a7060' }}>מיכל תעדכן אותך ברגע שההצעה תהיה מוכנה.</p>
+          </div>
         </motion.div>
       )}
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.5 }}>
+        <MichalContactCard />
+      </motion.div>
     </div>
   );
 }

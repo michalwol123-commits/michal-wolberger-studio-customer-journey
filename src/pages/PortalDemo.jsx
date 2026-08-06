@@ -16,6 +16,8 @@ import PortalStageView from '@/components/portal/PortalStageView';
 import PortalGanttView from '@/components/portal/PortalGanttView';
 import PortalBudgetView from '@/components/portal/PortalBudgetView';
 import PortalDocApproval from '@/components/portal/PortalDocApproval';
+import PortalHero from '@/components/portal/PortalHero';
+import '@/components/portal/portal-theme.css';
 
 export default function PortalDemo() {
   const [selectedProjectId, setSelectedProjectId] = useState('');
@@ -111,38 +113,37 @@ export default function PortalDemo() {
 
       {/* Portal content */}
       {project && (
-        <div className="bg-background rounded-2xl border-2 border-dashed border-primary/20 p-4 lg:p-6">
-          <div className="space-y-6">
+        <div className="portal-theme rounded-2xl border-2 border-dashed border-primary/20 overflow-hidden" dir="rtl">
+          <PortalHero clientName={client?.name} subtitle={project.name} />
+          <div className="space-y-8 p-4 lg:p-8">
             {/* Project Overview */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="font-heading font-bold text-2xl mb-1">{project.name}</h2>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {client && `שלום ${client.name} 👋`}
-                    {project.start_date && ` • התחלה: ${format(new Date(project.start_date), 'dd/MM/yyyy')}`}
-                  </p>
-                  <Progress value={project.progress || 0} className="h-3 mb-2" />
-                  <p className="text-sm text-muted-foreground">{project.progress || 0}% הושלם</p>
-                </CardContent>
-              </Card>
+              <div className="p-card p-8">
+                <p className="p-label mb-3">הפרויקט שלך</p>
+                <h2 className="p-display text-3xl mb-4" style={{ fontWeight: 300 }}>{project.name}</h2>
+                <div className="flex flex-wrap gap-x-8 gap-y-1 mb-8">
+                  {project.start_date && (
+                    <span className="p-label">התחלה · {format(new Date(project.start_date), 'dd/MM/yyyy')}</span>
+                  )}
+                </div>
+                <div className="w-full" style={{ height: 2, background: '#c8bdb2' }}>
+                  <div style={{ height: 2, background: '#2a1f18', width: `${project.progress || 0}%`, transition: 'width 0.6s ease' }} />
+                </div>
+                <p className="text-sm mt-3" style={{ color: '#8a7060' }}>{project.progress || 0}% הושלם</p>
+              </div>
             </motion.div>
 
             {/* Timeline + Stage */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-4">
-                <Card className="sticky top-24">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base font-heading">מהלך הפרויקט</CardTitle>
-                    <p className="text-xs text-muted-foreground">לחצי על שלב לצפייה בתכנון</p>
-                  </CardHeader>
-                  <CardContent>
-                    <PortalTimeline project={project} selectedStage={currentStage} onSelectStage={setSelectedStage} />
-                  </CardContent>
-                </Card>
+                <div className="p-card lg:sticky lg:top-24 p-5 md:p-6">
+                  <p className="p-label mb-1">מהלך הפרויקט</p>
+                  <h3 className="p-display text-lg mb-4">המסע שלך, שלב אחר שלב</h3>
+                  <PortalTimeline project={project} selectedStage={currentStage} onSelectStage={setSelectedStage} />
+                </div>
               </motion.div>
 
-              <div className="lg:col-span-8 space-y-6">
+              <div className="lg:col-span-8 space-y-8">
                 <PortalDocApproval documents={allDocs} projectId={project.id} />
 
                 <PortalStageView

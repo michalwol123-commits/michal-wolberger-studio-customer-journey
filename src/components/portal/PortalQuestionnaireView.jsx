@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ClipboardList, CheckCircle2 } from 'lucide-react';
+import ArtIcon from './ArtIcon';
 
 const STYLE_LABELS = {
   modern: 'מודרני',
@@ -27,19 +26,20 @@ const GIFT_LABELS = {
 export default function PortalQuestionnaireView({ questionnaire }) {
   if (!questionnaire || questionnaire.status !== 'submitted') {
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-heading flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-primary" />
-            שאלון טרום שיחה
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-4">
+      <div className="p-card">
+        <div className="p-6 flex items-center gap-4" style={{ borderBottom: '1px solid #e8e0d8' }}>
+          <ArtIcon name="list" size={48} />
+          <div>
+            <p className="p-label mb-0.5">מכירים אתכם</p>
+            <h3 className="p-display text-lg">שאלון טרום שיחה</h3>
+          </div>
+        </div>
+        <div className="p-6">
+          <p className="text-sm text-center py-4" style={{ color: '#8a7060' }}>
             השאלון טרם מולא
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -60,23 +60,24 @@ export default function PortalQuestionnaireView({ questionnaire }) {
   ].filter(r => r.value);
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-heading flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-green-500" />
-          שאלון טרום שיחה — מולא ✅
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
+    <div className="p-card">
+      <div className="p-6 flex items-center gap-4" style={{ borderBottom: '1px solid #e8e0d8' }}>
+        <ArtIcon name="check" size={48} />
+        <div>
+          <p className="p-label mb-0.5" style={{ color: '#6b7a4f' }}>הושלם</p>
+          <h3 className="p-display text-lg">שאלון טרום שיחה — מולא</h3>
+        </div>
+      </div>
+      <div className="p-6">
+        <div className="space-y-0">
           {rows.map((row, i) => (
-            <div key={i} className="flex gap-2 text-sm py-1.5 border-b border-border last:border-0">
-              <span className="font-medium text-muted-foreground w-28 shrink-0">{row.label}</span>
-              <span className="text-foreground">{row.value}</span>
+            <div key={i} className="flex gap-3 text-sm py-2.5" style={{ borderBottom: i < rows.length - 1 ? '1px solid #e8e0d8' : 'none' }}>
+              <span className="p-label !text-[11px] w-28 shrink-0 pt-0.5">{row.label}</span>
+              <span style={{ color: '#2a1f18' }}>{row.value}</span>
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

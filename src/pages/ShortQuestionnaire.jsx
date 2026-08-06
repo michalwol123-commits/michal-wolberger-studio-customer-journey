@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Loader2, Send, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import ArtIcon from '@/components/portal/ArtIcon';
+import '@/components/portal/portal-theme.css';
 
 const SPACE_OPTIONS = [
   { value: 'up_to_80', label: 'עד 80 מ"ר' },
@@ -112,36 +114,36 @@ export default function ShortQuestionnaire() {
   };
 
   if (submitted) return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-        <Card className="max-w-md w-full"><CardContent className="p-8 text-center space-y-4">
-          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto" />
-          <h2 className="font-heading text-2xl font-bold">תודה רבה! 🙏</h2>
-          <p className="text-muted-foreground">התשובות נשמרו בהצלחה. ניצור איתך קשר בהקדם.</p>
-          <p className="text-sm text-muted-foreground">מיכל וולברגר — עיצוב פנים</p>
-        </CardContent></Card>
+    <div className="portal-theme min-h-screen flex items-center justify-center p-4" dir="rtl">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+        <div className="p-card max-w-md w-full p-10 text-center space-y-5">
+          <div className="flex justify-center"><ArtIcon name="check" size={88} /></div>
+          <h2 className="p-display text-3xl" style={{ fontWeight: 300 }}>תודה רבה!</h2>
+          <p style={{ color: '#4a3728' }}>התשובות נשמרו בהצלחה. ניצור איתך קשר בהקדם.</p>
+          <p className="p-label">מיכל וולברגר · עיצוב פנים</p>
+        </div>
       </motion.div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4" dir="rtl">
+    <div className="portal-theme min-h-screen py-10 md:py-16 px-4" dir="rtl">
       <div className="max-w-2xl mx-auto space-y-6">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-          <Card>
-            <CardContent className="p-8 text-center space-y-3">
-              <h1 className="font-heading text-2xl font-bold">שאלון טרום שיחת היכרות</h1>
-              <p className="text-muted-foreground leading-relaxed">
-                אשמח שתקחו מספר דקות לענות על השאלון הבא, כדי שנוכל לדייק ולמקד את שיחת הטלפון שלנו.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                נעים מאוד, מיכל. אם פניתם אליי כנראה שאתם נמצאים לפני רגע גדול ומרגש בחייכם,
-                ומחפשים מישהי שתלווה אתכם יד ביד במסע המרגש הזה.
-                אני יותר מאשמח לשתף פעולה יחד וליצור חיבורים מרגשים שלכם.
-              </p>
-              <p className="text-xs text-muted-foreground">כוכבית (*) מציינת שאלה שאי אפשר לדלג עליה</p>
-            </CardContent>
-          </Card>
+          <div className="p-card p-8 md:p-12 text-center space-y-4">
+            <div className="flex justify-center mb-2"><ArtIcon name="chat" size={80} /></div>
+            <p className="p-label">מיכל וולברגר · סטודיו לעיצוב פנים</p>
+            <h1 className="p-display text-3xl md:text-4xl" style={{ fontWeight: 300 }}>שאלון טרום שיחת היכרות</h1>
+            <p className="leading-relaxed" style={{ color: '#4a3728' }}>
+              אשמח שתקחו מספר דקות לענות על השאלון הבא, כדי שנוכל לדייק ולמקד את שיחת הטלפון שלנו.
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: '#8a7060' }}>
+              נעים מאוד, מיכל. אם פניתם אליי כנראה שאתם נמצאים לפני רגע גדול ומרגש בחייכם,
+              ומחפשים מישהי שתלווה אתכם יד ביד במסע המרגש הזה.
+              אני יותר מאשמח לשתף פעולה יחד וליצור חיבורים מרגשים שלכם.
+            </p>
+            <p className="text-xs" style={{ color: '#8a7060' }}>כוכבית (*) מציינת שאלה שאי אפשר לדלג עליה</p>
+          </div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="space-y-4">
@@ -252,15 +254,15 @@ export default function ShortQuestionnaire() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
           <Card>
             <CardContent className="p-6 text-center space-y-4">
-              <p className="text-sm text-muted-foreground">תודה על הזמן! 💛 נשמח לדבר בקרוב.</p>
+              <p className="text-sm" style={{ color: '#8a7060' }}>תודה על הזמן! נשמח לדבר בקרוב.</p>
               {(!form.name || !form.phone) && (
                 <p className="text-sm text-destructive">יש למלא שם מלא וטלפון כדי לשלוח</p>
               )}
-              <Button size="lg" className="gap-2 w-full max-w-xs" onClick={handleSubmit} disabled={submitting || !form.name || !form.phone}>
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                שליחה
-              </Button>
-              <p className="text-xs text-muted-foreground">מיכל וולברגר — עיצוב פנים</p>
+              <button className="p-btn w-full max-w-xs mx-auto" onClick={handleSubmit} disabled={submitting || !form.name || !form.phone}>
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                שליחה <span className="p-arrow">←</span>
+              </button>
+              <p className="p-label !text-[10px]">מיכל וולברגר · עיצוב פנים</p>
               <Link to="/">
                 <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
                   <ArrowRight className="w-4 h-4" />

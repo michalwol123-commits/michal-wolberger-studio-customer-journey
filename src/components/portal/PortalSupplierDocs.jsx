@@ -1,8 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, ExternalLink, CheckCircle2 } from 'lucide-react';
+import ArtIcon from './ArtIcon';
 
 export default function PortalSupplierDocs({ project }) {
   const { data: orders = [] } = useQuery({
@@ -23,28 +22,23 @@ export default function PortalSupplierDocs({ project }) {
   const supplierName = (id) => suppliers.find(s => s.id === id)?.name || '—';
 
   const renderItem = (order, showBadge) => (
-    <div key={order.id} className="flex items-center justify-between p-3 rounded-xl border border-border hover:bg-muted/50 transition-all">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-          <FileText className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <p className="text-sm font-medium">{order.description || order.category || 'מסמך ספק'}</p>
-          <p className="text-xs text-muted-foreground">
-            {supplierName(order.supplier_id)} • {order.category || '—'} • ₪{(order.amount || 0).toLocaleString()}
-          </p>
-        </div>
+    <div key={order.id} className="flex items-center justify-between gap-3 p-4 transition-colors" style={{ border: '1px solid #e8e0d8' }}>
+      <div className="min-w-0">
+        <p className="text-sm font-medium truncate" style={{ color: '#2a1f18' }}>{order.description || order.category || 'מסמך ספק'}</p>
+        <p className="text-xs mt-0.5" style={{ color: '#8a7060' }}>
+          {supplierName(order.supplier_id)} · {order.category || '—'} · ₪{(order.amount || 0).toLocaleString()}
+        </p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 shrink-0">
         {showBadge && (
-          <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
-            <CheckCircle2 className="w-3.5 h-3.5" /> מאושר
+          <span className="p-label !text-[10px] px-2.5 py-1" style={{ border: '1px solid #6b7a4f', color: '#6b7a4f' }}>
+            מאושר
           </span>
         )}
         {order.attachment_url && (
           <a href={order.attachment_url} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border text-xs font-medium hover:bg-muted transition-colors">
-            <ExternalLink className="w-3.5 h-3.5" /> צפייה
+            className="text-xs underline" style={{ color: '#4a3728' }}>
+            צפייה ←
           </a>
         )}
       </div>
@@ -52,17 +46,18 @@ export default function PortalSupplierDocs({ project }) {
   );
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-heading flex items-center gap-2">
-          <FileText className="w-5 h-5 text-primary" />
-          מסמכי ספקים
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="p-card">
+      <div className="p-6 flex items-center gap-4" style={{ borderBottom: '1px solid #e8e0d8' }}>
+        <ArtIcon name="box" size={48} floatDelay={1} />
+        <div>
+          <p className="p-label mb-0.5">רכש והזמנות</p>
+          <h3 className="p-display text-lg">מסמכי ספקים</h3>
+        </div>
+      </div>
+      <div className="p-5 space-y-5">
         {quotes.length > 0 && (
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-2">הצעות מחיר מספקים</p>
+            <p className="p-label mb-2">הצעות מחיר מספקים</p>
             <div className="space-y-2">
               {quotes.map(o => renderItem(o, false))}
             </div>
@@ -70,13 +65,13 @@ export default function PortalSupplierDocs({ project }) {
         )}
         {confirmed.length > 0 && (
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-2">הזמנות מאושרות</p>
+            <p className="p-label mb-2">הזמנות מאושרות</p>
             <div className="space-y-2">
               {confirmed.map(o => renderItem(o, true))}
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

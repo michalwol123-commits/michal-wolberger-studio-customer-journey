@@ -1,5 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import ArtIcon from '@/components/portal/ArtIcon';
+import '@/components/portal/portal-theme.css';
 
 export default function SignDocument() {
   const token = new URLSearchParams(window.location.search).get('token');
@@ -125,10 +127,10 @@ export default function SignDocument() {
 
   // ---- LOADING ----
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAF8F5' }}>
-      <div style={{ textAlign: 'center', color: '#8B7355' }}>
-        <div style={{ width: 40, height: 40, border: '3px solid #8B7355', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
-        <p>טוען מסמך...</p>
+    <div className="portal-theme" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} dir="rtl">
+      <div style={{ textAlign: 'center', color: '#8a7060' }}>
+        <div style={{ width: 40, height: 40, border: '2px solid #e0d8ce', borderTopColor: '#2a1f18', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 14px' }} />
+        <p className="p-label">טוען מסמך...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     </div>
@@ -136,21 +138,21 @@ export default function SignDocument() {
 
   // ---- ERROR ----
   if (error) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAF8F5' }}>
-      <div style={{ textAlign: 'center', padding: 32, maxWidth: 400 }}>
+    <div className="portal-theme" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} dir="rtl">
+      <div className="p-card" style={{ textAlign: 'center', padding: 40, maxWidth: 420 }}>
         {error === 'already_signed' ? (
           <>
-            <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
-            <h2 style={{ color: '#8B7355' }}>המסמך כבר נחתם</h2>
-            <p style={{ color: '#666' }}>החתימה התקבלה ונשמרה במערכת.</p>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}><ArtIcon name="check" size={80} /></div>
+            <h2 className="p-display" style={{ fontSize: 26, marginBottom: 8 }}>המסמך כבר נחתם</h2>
+            <p style={{ color: '#8a7060' }}>החתימה התקבלה ונשמרה במערכת.</p>
           </>
         ) : (
           <>
-            <div style={{ fontSize: 52, marginBottom: 16 }}>❌</div>
-            <h2 style={{ color: '#c0392b' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}><ArtIcon name="compass" size={80} /></div>
+            <h2 className="p-display" style={{ fontSize: 26, marginBottom: 8 }}>
               {error === 'missing_token' ? 'קישור חסר' : error === 'not_found' ? 'מסמך לא נמצא' : 'שגיאה'}
             </h2>
-            <p style={{ color: '#666' }}>נא לפנות לסטודיו מיכל וולברגר.</p>
+            <p style={{ color: '#8a7060' }}>נא לפנות לסטודיו מיכל וולברגר.</p>
           </>
         )}
       </div>
@@ -159,12 +161,12 @@ export default function SignDocument() {
 
   // ---- SUCCESS ----
   if (success) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAF8F5' }}>
-      <div style={{ textAlign: 'center', padding: 32, maxWidth: 420, background: 'white', borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
-        <div style={{ fontSize: 60, marginBottom: 16 }}>✍️</div>
-        <h2 style={{ color: '#8B7355', marginBottom: 8 }}>החתימה בוצעה בהצלחה!</h2>
-        <p style={{ color: '#555' }}>המסמך <strong>{docData?.name}</strong> נחתם.</p>
-        <p style={{ color: '#888', fontSize: 14, marginTop: 8 }}>תודה, {signerName}!</p>
+    <div className="portal-theme" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} dir="rtl">
+      <div className="p-card" style={{ textAlign: 'center', padding: 44, maxWidth: 440 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}><ArtIcon name="pen" size={88} /></div>
+        <h2 className="p-display" style={{ fontSize: 28, marginBottom: 10, fontWeight: 300 }}>החתימה בוצעה בהצלחה!</h2>
+        <p style={{ color: '#4a3728' }}>המסמך <strong>{docData?.name}</strong> נחתם.</p>
+        <p style={{ color: '#8a7060', fontSize: 14, marginTop: 10 }}>תודה, {signerName}!</p>
       </div>
     </div>
   );
@@ -173,52 +175,51 @@ export default function SignDocument() {
 
   // ---- MAIN FORM ----
   const s = {
-    page: { minHeight: '100vh', background: '#FAF8F5', padding: '24px 16px', fontFamily: 'Assistant, Arial, sans-serif', direction: 'rtl' },
-    card: { maxWidth: 540, margin: '0 auto', background: 'white', borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', overflow: 'hidden' },
-    header: { background: '#8B7355', padding: '20px 24px', color: 'white' },
-    body: { padding: 24 },
-    label: { display: 'block', fontSize: 13, fontWeight: 600, color: '#555', marginBottom: 6 },
-    input: { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 15, direction: 'rtl', boxSizing: 'border-box' },
-    canvasWrap: { border: '2px solid #ddd', borderRadius: 10, overflow: 'hidden', background: '#fafafa', cursor: 'crosshair', touchAction: 'none' },
-    btnPrimary: { width: '100%', padding: 13, background: submitting ? '#b0997c' : '#8B7355', color: 'white', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: submitting ? 'default' : 'pointer', marginTop: 16 },
-    btnClear: { fontSize: 12, color: '#888', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' },
+    page: { minHeight: '100vh', padding: '32px 16px', direction: 'rtl' },
+    card: { maxWidth: 560, margin: '0 auto', background: '#fffdfa', border: '1px solid #e8e0d8', boxShadow: '0 4px 24px rgba(42,31,24,0.08)', overflow: 'hidden' },
+    header: { background: '#2a1f18', padding: '28px 28px', color: '#f5f0eb' },
+    body: { padding: 28 },
+    label: { display: 'block', fontSize: 11, letterSpacing: 2, color: '#8a7060', marginBottom: 8 },
+    input: { width: '100%', padding: '11px 14px', border: '1px solid #e0d8ce', borderRadius: 0, fontSize: 15, direction: 'rtl', boxSizing: 'border-box', background: '#fffdfa', color: '#2a1f18' },
+    canvasWrap: { border: '1px solid #c8bdb2', overflow: 'hidden', background: '#f5f0eb', cursor: 'crosshair', touchAction: 'none' },
+    btnClear: { fontSize: 12, color: '#8a7060', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' },
   };
 
   return (
-    <div style={s.page}>
+    <div className="portal-theme" style={s.page}>
       <div style={s.card}>
         <div style={s.header}>
-          <p style={{ fontSize: 11, opacity: 0.7, margin: '0 0 4px' }}>Michal Wolberger Interior Design</p>
-          <h1 style={{ margin: 0, fontSize: 20 }}>חתימה דיגיטלית</h1>
-          <p style={{ margin: '4px 0 0', opacity: 0.85, fontSize: 14 }}>{docData.name}</p>
+          <p className="p-label" style={{ color: '#c8bdb2', margin: '0 0 6px' }}>מיכל וולברגר · סטודיו לעיצוב פנים</p>
+          <h1 className="p-display" style={{ margin: 0, fontSize: 26, color: '#f5f0eb', fontWeight: 300 }}>חתימה דיגיטלית</h1>
+          <p style={{ margin: '6px 0 0', color: 'rgba(245,240,235,0.8)', fontSize: 14 }}>{docData.name}</p>
         </div>
 
         <div style={s.body}>
           {(docData.client_name || docData.project_name) && (
-            <p style={{ fontSize: 13, color: '#888', margin: '0 0 20px' }}>
-              {docData.client_name && <span>לקוח: <strong>{docData.client_name}</strong></span>}
-              {docData.project_name && <span style={{ marginRight: 12 }}>פרויקט: <strong>{docData.project_name}</strong></span>}
+            <p style={{ fontSize: 13, color: '#8a7060', margin: '0 0 22px' }}>
+              {docData.client_name && <span>לקוח: <strong style={{ color: '#2a1f18' }}>{docData.client_name}</strong></span>}
+              {docData.project_name && <span style={{ marginRight: 12 }}>פרויקט: <strong style={{ color: '#2a1f18' }}>{docData.project_name}</strong></span>}
             </p>
           )}
 
           {docData.file_url && (
-            <div style={{ marginBottom: 20, padding: '12px 16px', background: '#FAF8F5', borderRadius: 8, border: '1px solid #e8e0d5' }}>
-              <p style={{ margin: '0 0 8px', fontSize: 13, color: '#555' }}>לפני החתימה, מומלץ לעיין במסמך:</p>
+            <div style={{ marginBottom: 22, padding: '14px 18px', background: '#f0ebe4', border: '1px solid #e0d8ce' }}>
+              <p style={{ margin: '0 0 8px', fontSize: 13, color: '#4a3728' }}>לפני החתימה, מומלץ לעיין במסמך:</p>
               <a href={docData.file_url} target="_blank" rel="noopener noreferrer"
-                style={{ color: '#8B7355', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
-                📄 פתח את המסמך לצפייה ←
+                style={{ color: '#2a1f18', fontWeight: 600, fontSize: 14, textDecoration: 'underline' }}>
+                פתח את המסמך לצפייה ←
               </a>
             </div>
           )}
 
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 22 }}>
             <label style={s.label}>שם מלא *</label>
             <input style={s.input} type="text" placeholder="הזן שם מלא"
               value={signerName} onChange={e => setSignerName(e.target.value)} />
           </div>
 
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <label style={{ ...s.label, margin: 0 }}>חתימה *</label>
               <button style={s.btnClear} onClick={clearCanvas}>נקה</button>
             </div>
@@ -229,23 +230,23 @@ export default function SignDocument() {
                 onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
             </div>
             {!hasSignature && (
-              <p style={{ fontSize: 12, color: '#aaa', margin: '4px 0 0', textAlign: 'center' }}>חתום כאן עם העכבר / האצבע</p>
+              <p style={{ fontSize: 12, color: '#c8bdb2', margin: '6px 0 0', textAlign: 'center' }}>חתום כאן עם העכבר / האצבע</p>
             )}
           </div>
 
-          <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ marginBottom: 22, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
             <input type="checkbox" id="agree" checked={agreed} onChange={e => setAgreed(e.target.checked)}
-              style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }} />
-            <label htmlFor="agree" style={{ fontSize: 13, color: '#444', cursor: 'pointer', lineHeight: 1.5 }}>
+              style={{ marginTop: 2, width: 16, height: 16, cursor: 'pointer', flexShrink: 0, accentColor: '#2a1f18' }} />
+            <label htmlFor="agree" style={{ fontSize: 13, color: '#4a3728', cursor: 'pointer', lineHeight: 1.5 }}>
               קראתי את המסמך <strong>{docData.name}</strong> ומסכים/ה לתוכנו.
             </label>
           </div>
 
-          <button style={s.btnPrimary} onClick={handleSubmit} disabled={submitting}>
-            {submitting ? '⏳ שומר חתימה...' : '✍️ חתום ואשר מסמך'}
+          <button className="p-btn" style={{ width: '100%', marginTop: 4 }} onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'שומר חתימה...' : 'חתום ואשר מסמך'} <span className="p-arrow">←</span>
           </button>
 
-          <p style={{ fontSize: 11, color: '#aaa', textAlign: 'center', marginTop: 12 }}>
+          <p style={{ fontSize: 11, color: '#c8bdb2', textAlign: 'center', marginTop: 14 }}>
             החתימה הדיגיטלית מחייבת כחתימה על המסמך ותישמר במערכת.
           </p>
         </div>

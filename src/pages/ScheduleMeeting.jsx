@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import ScheduleTimePicker from '@/components/schedule/ScheduleTimePicker';
+import ArtIcon from '@/components/portal/ArtIcon';
+import '@/components/portal/portal-theme.css';
+
+const LOGO = 'https://media.base44.com/images/public/69c56d22dada4d9b43006820/d9f91c02a_image-removebg-preview.png';
 
 export default function ScheduleMeeting() {
   const [loading, setLoading] = useState(true);
@@ -41,24 +44,27 @@ export default function ScheduleMeeting() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background" dir="rtl">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="portal-theme min-h-screen flex items-center justify-center" dir="rtl">
+        <div
+          className="w-10 h-10 rounded-full animate-spin"
+          style={{ border: '2px solid #e0d8ce', borderTopColor: '#2a1f18' }}
+        />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
-        <div className="text-center space-y-3 max-w-sm">
-          <XCircle className="w-12 h-12 text-destructive mx-auto" />
-          <h2 className="font-heading text-xl font-bold">
+      <div className="portal-theme min-h-screen flex items-center justify-center p-4" dir="rtl">
+        <div className="p-card text-center space-y-4 max-w-sm p-10">
+          <div className="flex justify-center"><ArtIcon name="compass" size={80} /></div>
+          <h2 className="p-display text-2xl">
             {error === 'not_found' && 'קישור לא תקין'}
             {error === 'meeting_closed' && 'הפגישה כבר לא פעילה'}
             {error === 'missing_token' && 'קישור חסר'}
             {error === 'unknown' && 'שגיאה'}
           </h2>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm" style={{ color: '#8a7060' }}>
             {error === 'not_found' && 'הקישור אינו תקין או שהפגישה נמחקה.'}
             {error === 'meeting_closed' && 'הפגישה הסתיימה או בוטלה ולא ניתן לתאם מועד חדש.'}
             {error === 'missing_token' && 'חסר פרמטר בקישור. נא לפנות לסטודיו.'}
@@ -72,11 +78,11 @@ export default function ScheduleMeeting() {
   if (scheduled) {
     const dt = new Date(scheduledTime);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
-        <div className="text-center space-y-4 max-w-sm">
-          <CheckCircle2 className="w-14 h-14 text-green-600 mx-auto" />
-          <h2 className="font-heading text-2xl font-bold">הפגישה נקבעה!</h2>
-          <p className="text-muted-foreground">
+      <div className="portal-theme min-h-screen flex items-center justify-center p-4" dir="rtl">
+        <div className="p-card text-center space-y-5 max-w-sm p-10">
+          <div className="flex justify-center"><ArtIcon name="check" size={88} /></div>
+          <h2 className="p-display text-3xl" style={{ fontWeight: 300 }}>הפגישה נקבעה!</h2>
+          <p style={{ color: '#4a3728' }}>
             {meetingData.type_label} — {dt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             {' '}בשעה {dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
           </p>
@@ -90,9 +96,9 @@ export default function ScheduleMeeting() {
                 href={gcalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90"
+                className="p-btn text-sm"
               >
-                הוסף ליומן Google
+                הוסף ליומן Google <span className="p-arrow">←</span>
               </a>
             );
           })()}
@@ -102,13 +108,16 @@ export default function ScheduleMeeting() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
-      <div className="w-full max-w-md space-y-6">
+    <div className="portal-theme min-h-screen flex items-center justify-center p-4 py-12" dir="rtl">
+      <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="font-heading text-2xl font-bold text-foreground">Michal Wolberger Studio</h1>
-          <p className="text-muted-foreground mt-1">
-            שלום {meetingData.client_name} 👋 — נא לבחור מועד נוח
-          </p>
+          <img src={LOGO} alt="סטודיו מיכל וולברגר" className="h-14 w-auto mx-auto mb-5" />
+          <p className="p-label mb-2">מיכל וולברגר · סטודיו לעיצוב פנים</p>
+          <h1 className="p-display text-3xl" style={{ fontWeight: 300 }}>שלום, {meetingData.client_name}</h1>
+          <p className="mt-2 text-sm" style={{ color: '#8a7060' }}>נא לבחור מועד נוח לפגישה</p>
+        </div>
+        <div className="flex justify-center">
+          <ArtIcon name="calendar" size={72} />
         </div>
         <ScheduleTimePicker
           meetingData={meetingData}

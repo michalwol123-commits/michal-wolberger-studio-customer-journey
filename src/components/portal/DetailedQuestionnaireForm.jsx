@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Send, CheckCircle2, ClipboardList } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -95,9 +95,9 @@ export default function DetailedQuestionnaireForm({ questionnaire, projectId, cl
   };
 
   const steps = [
-    { title: 'פרטים כלליים', icon: '🏠' },
-    { title: 'סלון', icon: '🛋️' },
-    { title: 'פינת אוכל', icon: '🍽️' },
+    { title: 'פרטים כלליים' },
+    { title: 'סלון' },
+    { title: 'פינת אוכל' },
   ];
 
   return (
@@ -110,11 +110,14 @@ export default function DetailedQuestionnaireForm({ questionnaire, projectId, cl
               <button
                 key={i}
                 onClick={() => setStep(i)}
-                className={`flex-1 text-center py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                  step === i ? 'bg-primary text-primary-foreground' : i < step ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'
-                }`}
+                className="flex-1 text-center py-3 px-3 text-sm transition-all"
+                style={step === i
+                  ? { background: '#2a1f18', color: '#f5f0eb' }
+                  : i < step
+                    ? { background: '#eef0e4', color: '#6b7a4f' }
+                    : { background: '#f0ebe4', color: '#8a7060' }}
               >
-                <span className="text-lg block">{s.icon}</span>
+                <span className="p-label !text-[10px] block mb-0.5" style={{ color: 'inherit' }}>שלב {i + 1}</span>
                 {s.title}
               </button>
             ))}
@@ -138,7 +141,7 @@ export default function DetailedQuestionnaireForm({ questionnaire, projectId, cl
             <Button onClick={() => setStep(step + 1)}>הבא</Button>
           ) : (
             <Button onClick={handleSubmit} disabled={submitting} className="gap-2">
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               שליחת השאלון
             </Button>
           )}
@@ -161,7 +164,7 @@ function GeneralSection({ form, update }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-heading">🏠 פרטים כלליים</CardTitle>
+        <CardTitle className="text-base p-display">פרטים כלליים</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="שמות כל מי שמתגורר + גילאים *">
@@ -211,7 +214,7 @@ function LivingRoomSection({ form, update, toggleCheckbox }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-heading">🛋️ סלון</CardTitle>
+        <CardTitle className="text-base p-display">סלון</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="מה חשוב שיהיה בסלון? *">
@@ -275,7 +278,7 @@ function DiningSection({ form, update, toggleCheckbox }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-heading">🍽️ פינת אוכל</CardTitle>
+        <CardTitle className="text-base p-display">פינת אוכל</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="מה חשוב בפינת האוכל? *">

@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Upload, Link, CheckCircle, Clock, XCircle, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import ArtIcon from './ArtIcon';
 import MoodBoardBuilder from '@/components/projects/MoodBoardBuilder';
 
 function LinkPreviewCard({ url, title }) {
@@ -31,7 +32,7 @@ function LinkPreviewCard({ url, title }) {
         <img src={preview} alt={title || url} className="w-full object-cover" />
       ) : (
         <div className="flex flex-col items-center justify-center py-8 px-4 gap-2 text-primary hover:bg-accent/20">
-          {failed ? <Link size={28} /> : <Loader2 size={28} className="animate-spin text-muted-foreground" />}
+          {failed ? <span className="text-xs underline" style={{ color: '#4a3728' }}>פתיחת קישור ←</span> : <Loader2 size={28} className="animate-spin text-muted-foreground" />}
           <span className="text-xs text-center text-muted-foreground">{title || url}</span>
         </div>
       )}
@@ -40,10 +41,10 @@ function LinkPreviewCard({ url, title }) {
 }
 
 const REACTIONS = [
-  { value: 'love', emoji: '❤️', label: 'אוהבת!' },
-  { value: 'like', emoji: '👍', label: 'נחמד' },
-  { value: 'neutral', emoji: '😐', label: 'לא בטוחה' },
-  { value: 'dislike', emoji: '👎', label: 'לא בשבילי' },
+  { value: 'love', label: 'אוהבת!' },
+  { value: 'like', label: 'נחמד' },
+  { value: 'neutral', label: 'לא בטוחה' },
+  { value: 'dislike', label: 'לא בשבילי' },
 ];
 const TYPE_LABELS = { render: 'רנדר', inspiration: 'השראה', texture: 'טקסטורה', sketch: 'סקיצה', material: 'חומרים' };
 const FILTER_LABELS = { all: 'הכל', render: 'רנדרים', inspiration: 'השראה', texture: 'טקסטורות', sketch: 'סקיצות', material: 'חומרים' };
@@ -174,10 +175,10 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-        <Clock size={48} className="text-muted-foreground/40" />
-        <h3 className="text-lg font-medium text-muted-foreground">לוח ההשראה בהכנה</h3>
-        <p className="text-muted-foreground text-sm">מיכל עובדת על לוח ההשראה שלך. ברגע שיהיה מוכן תקבלי הודעה.</p>
+      <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+        <ArtIcon name="palette" size={88} />
+        <h3 className="p-display text-xl">לוח ההשראה בהכנה</h3>
+        <p className="text-sm" style={{ color: '#8a7060' }}>מיכל עובדת על לוח ההשראה שלך. ברגע שיהיה מוכן תקבלי הודעה.</p>
       </div>
     );
   }
@@ -188,8 +189,10 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
   return (
     <div className="space-y-6" dir="rtl">
       <div className="text-center">
-        <h2 className="text-2xl font-heading font-bold text-foreground">לוח ההשראה שלך</h2>
-        <p className="text-muted-foreground mt-1 text-sm">עברי על התמונות, הגיבי לכל אחת ובסוף אשרי את הקונספט</p>
+        <div className="flex justify-center mb-4"><ArtIcon name="heart" size={64} /></div>
+        <p className="p-label mb-2">הקונספט שלך מתגבש</p>
+        <h2 className="p-display text-2xl md:text-3xl">לוח ההשראה שלך</h2>
+        <p className="mt-2 text-sm" style={{ color: '#8a7060' }}>עברי על התמונות, הגיבי לכל אחת ובסוף אשרי את הקונספט</p>
       </div>
 
       {/* Filter tabs */}
@@ -206,11 +209,11 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
       {/* AI Render */}
       <div>
         <button onClick={() => setShowRenderSuggest(!showRenderSuggest)}
-          className="flex items-center gap-2 text-sm text-primary hover:underline font-medium">
-          <Sparkles size={16} /> צור רנדר AI
+          className="flex items-center gap-2 text-sm hover:underline" style={{ color: '#2a1f18' }}>
+          ✦ צור רנדר AI
         </button>
         {showRenderSuggest && (
-          <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+          <div className="mt-2 p-3 space-y-2" style={{ background: '#f0ebe4', border: '1px solid #e0d8ce' }}>
             <Textarea placeholder="תארי את החזון העיצובי שלך..." value={renderPrompt} onChange={e => setRenderPrompt(e.target.value)} className="text-right" rows={3} />
             <Button size="sm" disabled={submittingRender || !renderPrompt.trim()} onClick={async () => {
               setSubmittingRender(true);
@@ -226,7 +229,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
               }
               setRenderPrompt(''); setShowRenderSuggest(false); setSubmittingRender(false);
             }}>
-              {submittingRender ? <><Loader2 size={14} className="animate-spin ml-1" /> יוצר רנדר...</> : <><Sparkles size={14} className="ml-1" /> צור רנדר</>}
+              {submittingRender ? <><Loader2 size={14} className="animate-spin ml-1" /> יוצר רנדר...</> : <>✦ צור רנדר</>}
             </Button>
           </div>
         )}
@@ -236,12 +239,15 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
       <div className="columns-2 md:columns-3 gap-3">
         {(activeFilter === 'all' ? visibleItems : visibleItems.filter(i => i.type === activeFilter)).map(item => (
           <div key={item.id} className="break-inside-avoid mb-3 rounded-xl overflow-hidden border bg-card shadow-sm relative">
-            <span className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full font-medium z-10 ${item.uploader_role === 'staff' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'}`}>
+            <span className="absolute top-2 right-2 text-xs px-2 py-0.5 z-10"
+              style={item.uploader_role === 'staff'
+                ? { background: '#2a1f18', color: '#f5f0eb' }
+                : { background: '#f0ebe4', color: '#4a3728', border: '1px solid #e0d8ce' }}>
               {item.uploader_role === 'staff' ? 'מיכל' : 'לקוחה'}
             </span>
             {item.ai_prompt && !item.file_url && !item.external_url ? (
               <div className="flex items-center min-h-[80px] p-4 italic text-sm" style={{background:'#f3f0eb', color:'#555'}}>
-                💡 הצעת רנדר: {item.ai_prompt}
+                הצעת רנדר: {item.ai_prompt}
               </div>
             ) : item.file_url ? (
               <img src={item.file_url} alt={item.title || ''} className="w-full object-cover cursor-zoom-in" onClick={() => setZoomedItem(item.file_url)} />
@@ -253,16 +259,16 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{TYPE_LABELS[item.type] || item.type}</span>
                 {item.uploader_role === 'client' && (
-                  <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">השראה שלי</span>
+                  <span className="text-xs px-2 py-0.5" style={{ background: '#eef0e4', color: '#6b7a4f' }}>השראה שלי</span>
                 )}
               </div>
               {item.title && <p className="text-xs font-medium text-foreground">{item.title}</p>}
 
               {/* Staff reply */}
               {item.staff_reply && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs">
-                  <span className="font-medium text-amber-800">מיכל: </span>
-                  <span className="text-amber-700">{item.staff_reply}</span>
+                <div className="p-2 text-xs" style={{ background: '#f0ebe4', border: '1px solid #e0d8ce' }}>
+                  <span className="font-medium" style={{ color: '#2a1f18' }}>מיכל: </span>
+                  <span style={{ color: '#4a3728' }}>{item.staff_reply}</span>
                 </div>
               )}
 
@@ -279,7 +285,7 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
                         : 'bg-card border-border text-muted-foreground hover:border-primary'
                     }`}
                   >
-                    <span>{opt.emoji}</span><span>{opt.label}</span>
+                    <span>{opt.label}</span>
                   </button>
                 ))}
               </div>
@@ -313,17 +319,18 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
 
       {/* Category approval (only on specific category tabs, not "all" or "render") */}
       {isApprovableTab && items.some(i => i.type === activeFilter) && (
-        <div className={`border-2 rounded-xl p-4 text-center space-y-2 ${isCategoryApproved(activeFilter) ? 'border-green-300 bg-green-50' : 'border-border bg-muted/30'}`}>
+        <div className="p-4 text-center space-y-2"
+          style={isCategoryApproved(activeFilter)
+            ? { border: '1px solid #6b7a4f', background: '#eef0e4' }
+            : { border: '1px solid #e0d8ce', background: '#f0ebe4' }}>
           {isCategoryApproved(activeFilter) ? (
             <>
-              <div className="flex items-center justify-center gap-2 text-green-700 font-medium">
-                <CheckCircle size={20} />
-                <span>קטגוריית {CATEGORY_LABELS[activeFilter]} אושרה</span>
+              <div className="flex items-center justify-center gap-2 font-medium" style={{ color: '#6b7a4f' }}>
+                <span>✓ קטגוריית {CATEGORY_LABELS[activeFilter]} אושרה</span>
               </div>
               <Button size="sm" variant="outline" onClick={() => handleRevokeCategoryApproval(activeFilter)}
-                disabled={approvingCategory === activeFilter}
-                className="text-red-600 border-red-200 hover:bg-red-50">
-                {approvingCategory === activeFilter ? <Loader2 size={14} className="animate-spin ml-1" /> : <XCircle size={14} className="ml-1" />}
+                disabled={approvingCategory === activeFilter}>
+                {approvingCategory === activeFilter ? <Loader2 size={14} className="animate-spin ml-1" /> : null}
                 ביטול אישור קטגוריה
               </Button>
             </>
@@ -339,8 +346,8 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
       )}
 
       {/* Client upload & link */}
-      <div className="border-2 border-dashed border-border rounded-xl p-6 text-center space-y-3">
-        <Upload size={24} className="mx-auto text-muted-foreground/40" />
+      <div className="p-6 text-center space-y-3" style={{ border: '1px dashed #c8bdb2' }}>
+        <div className="flex justify-center"><ArtIcon name="palette" size={56} floatDelay={2} /></div>
         <p className="text-sm text-muted-foreground">יש לך תמונות השראה משלך? העלי כאן</p>
         <div className="flex justify-center">
           <select value={selectedUploadType} onChange={e => setSelectedUploadType(e.target.value)}
@@ -360,11 +367,11 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
           </label>
           <button onClick={() => setShowLinkForm(!showLinkForm)}
              className="px-4 py-2 border border-primary text-primary rounded-lg text-sm hover:bg-accent/20">
-              🔗 הוסף קישור
+              הוסף קישור
             </button>
             <button onClick={() => setShowMoodBoard(true)}
               className="px-4 py-2 border border-primary text-primary rounded-lg text-sm hover:bg-accent/20">
-              📋 צור מוד בורד
+              צור מוד בורד
             </button>
           </div>
         {showLinkForm && (
@@ -387,22 +394,25 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
       </div>
 
       {/* Category checklist + Global concept approval */}
-      <div className={`border-2 rounded-xl p-6 text-center space-y-4 ${conceptApproved ? 'border-green-300 bg-green-50' : 'border-primary bg-accent/10'}`}>
+      <div className="p-6 text-center space-y-4"
+        style={conceptApproved
+          ? { border: '1px solid #6b7a4f', background: '#eef0e4' }
+          : { border: '1px solid #2a1f18', background: '#fffdfa' }}>
         {conceptApproved ? (
           <>
-            <CheckCircle size={40} className="mx-auto text-green-500" />
-            <h3 className="text-lg font-bold text-green-700">הקונספט אושר!</h3>
-            <p className="text-green-600 text-sm">תודה! מיכל תמשיך לשלב הבא.</p>
-            <Button size="sm" variant="outline" onClick={handleRevokeAll} disabled={approving}
-              className="text-red-600 border-red-200 hover:bg-red-50">
-              {approving ? <Loader2 size={14} className="animate-spin ml-1" /> : <XCircle size={14} className="ml-1" />}
+            <div className="flex justify-center"><ArtIcon name="check" size={64} /></div>
+            <h3 className="p-display text-xl" style={{ color: '#6b7a4f' }}>הקונספט אושר!</h3>
+            <p className="text-sm" style={{ color: '#6b7a4f' }}>תודה! מיכל תמשיך לשלב הבא.</p>
+            <Button size="sm" variant="outline" onClick={handleRevokeAll} disabled={approving}>
+              {approving ? <Loader2 size={14} className="animate-spin ml-1" /> : null}
               ביטול אישור קונספט
             </Button>
           </>
         ) : (
           <>
-            <h3 className="text-lg font-bold">אישור קונספט עיצובי</h3>
-            <p className="text-muted-foreground text-sm">אשרי כל קטגוריה בנפרד, ואז אשרי את הקונספט</p>
+            <p className="p-label">רגע חשוב</p>
+            <h3 className="p-display text-xl">אישור קונספט עיצובי</h3>
+            <p className="text-sm" style={{ color: '#8a7060' }}>אשרי כל קטגוריה בנפרד, ואז אשרי את הקונספט</p>
 
             {/* Category checklist */}
             {categoriesWithItems.length > 0 && (
@@ -414,18 +424,17 @@ export default function InspirationBoardViewer({ projectId, project: projectProp
                       key={cat}
                       onClick={() => catApproved ? handleRevokeCategoryApproval(cat) : handleApproveCategory(cat)}
                       disabled={approvingCategory === cat}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
-                        catApproved
-                          ? 'bg-green-50 border-green-300 text-green-700'
-                          : 'bg-card border-border text-muted-foreground hover:border-primary'
-                      }`}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors"
+                      style={catApproved
+                        ? { background: '#eef0e4', border: '1px solid #6b7a4f', color: '#6b7a4f' }
+                        : { background: '#fffdfa', border: '1px solid #e0d8ce', color: '#8a7060' }}
                     >
                       {approvingCategory === cat ? (
                         <Loader2 size={16} className="animate-spin" />
                       ) : catApproved ? (
-                        <CheckCircle size={16} className="text-green-600" />
+                        <span style={{ color: '#6b7a4f' }}>✓</span>
                       ) : (
-                        <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40" />
+                        <span className="w-4 h-4 rounded-full inline-block" style={{ border: '1.5px solid #c8bdb2' }} />
                       )}
                       <span className="font-medium">{CATEGORY_LABELS[cat]}</span>
                       <span className="mr-auto text-xs text-muted-foreground">

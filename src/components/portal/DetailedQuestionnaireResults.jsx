@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2 } from 'lucide-react';
+import ArtIcon from './ArtIcon';
 
 const STYLE_LABELS = {
   modern: 'מודרני', country: 'כפרי', elegant: 'אלגנטי',
@@ -26,12 +25,12 @@ function Section({ title, rows }) {
   const filtered = rows.filter(r => r.value);
   if (filtered.length === 0) return null;
   return (
-    <div className="space-y-1">
-      <h4 className="text-sm font-heading font-semibold text-primary mt-3 mb-1">{title}</h4>
+    <div className="space-y-0 mb-6 last:mb-0">
+      <h4 className="p-display text-base mt-4 mb-2 pb-2" style={{ borderBottom: '1px solid #e0d8ce' }}>{title}</h4>
       {filtered.map((row, i) => (
-        <div key={i} className="flex gap-2 text-sm py-1.5 border-b border-border last:border-0">
-          <span className="font-medium text-muted-foreground w-36 shrink-0">{row.label}</span>
-          <span className="text-foreground">{Array.isArray(row.value) ? row.value.join(', ') : row.value}</span>
+        <div key={i} className="flex gap-3 text-sm py-2" style={{ borderBottom: i < filtered.length - 1 ? '1px solid #e8e0d8' : 'none' }}>
+          <span className="p-label !text-[11px] w-36 shrink-0 pt-0.5">{row.label}</span>
+          <span style={{ color: '#2a1f18' }}>{Array.isArray(row.value) ? row.value.join(', ') : row.value}</span>
         </div>
       ))}
     </div>
@@ -43,20 +42,21 @@ export default function DetailedQuestionnaireResults({ questionnaire }) {
   try { r = JSON.parse(questionnaire.responses || '{}'); } catch {}
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-heading flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-green-500" />
-          שאלון מפורט — מולא ✅
-          {questionnaire.submitted_at && (
-            <span className="text-xs font-normal text-muted-foreground mr-auto">
-              {new Date(questionnaire.submitted_at).toLocaleDateString('he-IL')}
-            </span>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Section title="🏠 כללי" rows={[
+    <div className="p-card">
+      <div className="p-6 flex items-center gap-4" style={{ borderBottom: '1px solid #e8e0d8' }}>
+        <ArtIcon name="check" size={48} />
+        <div className="flex-1">
+          <p className="p-label mb-0.5" style={{ color: '#6b7a4f' }}>הושלם</p>
+          <h3 className="p-display text-lg">שאלון מפורט — מולא</h3>
+        </div>
+        {questionnaire.submitted_at && (
+          <span className="p-label !text-[10px]">
+            {new Date(questionnaire.submitted_at).toLocaleDateString('he-IL')}
+          </span>
+        )}
+      </div>
+      <div className="p-6">
+        <Section title="כללי" rows={[
           { label: 'דיירים + גילאים', value: r.residents },
           { label: 'תאריכי לידה', value: r.birth_dates },
           { label: 'מבלים רוב הזמן ב-', value: TIME_LABELS[r.time_area] || r.time_area_other },
@@ -65,7 +65,7 @@ export default function DetailedQuestionnaireResults({ questionnaire }) {
           { label: 'צבעים מועדפים', value: r.preferred_colors },
           { label: 'צבעים שלא', value: r.disliked_colors },
         ]} />
-        <Section title="🛋️ סלון" rows={[
+        <Section title="סלון" rows={[
           { label: 'פריטים חשובים', value: r.living_items },
           { label: 'פריטים נוספים', value: r.living_items_other },
           { label: 'גודל טלוויזיה', value: r.tv_size },
@@ -74,14 +74,14 @@ export default function DetailedQuestionnaireResults({ questionnaire }) {
           { label: 'רהיטים קיימים', value: r.existing_furniture },
           { label: 'הערות', value: r.living_notes },
         ]} />
-        <Section title="🍽️ פינת אוכל" rows={[
+        <Section title="פינת אוכל" rows={[
           { label: 'פריטים חשובים', value: r.dining_items?.map(v => DINING_LABELS[v] || v) },
           { label: 'פריטים נוספים', value: r.dining_items_other },
           { label: 'מספר סועדים', value: r.table_seats },
           { label: 'סגנון אירוח', value: r.hosting_style },
           { label: 'הערות', value: r.dining_notes },
         ]} />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

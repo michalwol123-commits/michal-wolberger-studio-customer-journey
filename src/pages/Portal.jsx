@@ -10,6 +10,7 @@ import PortalProjectList from '@/components/portal/PortalProjectList';
 import PortalProjectView from '@/components/portal/PortalProjectView';
 import PortalCompleted from '@/components/portal/PortalCompleted';
 import PortalGuide from '@/components/portal/PortalGuide';
+import PortalHero from '@/components/portal/PortalHero';
 
 function PortalRouter() {
   const { client, loading, error } = usePortal();
@@ -43,7 +44,7 @@ function PortalRouter() {
   // If a project is selected
   if (selectedProject) {
     return (
-      <PortalLayout {...guideProps}>
+      <PortalLayout {...guideProps} hero={<PortalHero clientName={client.name} subtitle={selectedProject.name} />}>
         <PortalProjectView
           project={selectedProject}
           onBack={allProjects.length > 1 ? () => setSelectedProject(null) : null}
@@ -55,7 +56,7 @@ function PortalRouter() {
   // State A — no active project (lead/qualified)
   if (allProjects.length === 0) {
     return (
-      <PortalLayout {...guideProps}>
+      <PortalLayout {...guideProps} hero={<PortalHero clientName={client.name} subtitle="חוויית הסטודיו שלך מתחילה כאן" />}>
         <PortalWelcome />
       </PortalLayout>
     );
@@ -65,7 +66,7 @@ function PortalRouter() {
   if (allProjects.length === 1) {
     const proj = allProjects[0];
     return (
-      <PortalLayout {...guideProps}>
+      <PortalLayout {...guideProps} hero={<PortalHero clientName={client.name} subtitle={proj.name} />}>
         <PortalProjectView project={proj} />
       </PortalLayout>
     );
@@ -73,7 +74,7 @@ function PortalRouter() {
 
   // State C — multiple projects
   return (
-    <PortalLayout {...guideProps}>
+    <PortalLayout {...guideProps} hero={<PortalHero clientName={client.name} subtitle="הפרויקטים שלך בסטודיו" />}>
       <PortalProjectList projects={allProjects} onSelect={setSelectedProject} />
     </PortalLayout>
   );

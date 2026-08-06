@@ -1,9 +1,15 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import ArtIcon from './ArtIcon';
+
+function ThinBar({ pct }) {
+  return (
+    <div className="w-full" style={{ height: 2, background: '#e8e0d8' }}>
+      <div style={{ height: 2, background: pct > 110 ? '#8a5a4a' : '#2a1f18', width: `${Math.min(pct, 100)}%`, transition: 'width 0.5s ease' }} />
+    </div>
+  );
+}
 
 export default function PortalBudgetView({ project }) {
   const { data: budgetItems = [] } = useQuery({
@@ -35,41 +41,42 @@ export default function PortalBudgetView({ project }) {
   const totalActual = categories.reduce((s, c) => s + c.actual, 0);
   const totalPct = totalPlanned > 0 ? Math.round((totalActual / totalPlanned) * 100) : 0;
 
-  const pctColor = (pct) => pct > 110 ? 'text-red-600' : pct > 90 ? 'text-amber-600' : 'text-green-600';
+  const pctColor = (pct) => pct > 110 ? '#8a5a4a' : pct > 90 ? '#8a7060' : '#6b7a4f';
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-heading flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-primary" />
-          מעקב תקציב
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="p-card">
+      <div className="p-6 flex items-center gap-4" style={{ borderBottom: '1px solid #e8e0d8' }}>
+        <ArtIcon name="coin" size={48} floatDelay={3} />
+        <div>
+          <p className="p-label mb-0.5">תקציב</p>
+          <h3 className="p-display text-lg">מעקב תקציב</h3>
+        </div>
+      </div>
+      <div className="p-6 space-y-6">
         {/* Overall */}
-        <div className="p-3 rounded-lg bg-muted/40 border border-border">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium">ניצול כולל</span>
-            <span className={`text-sm font-bold ${pctColor(totalPct)}`}>{totalPct}%</span>
+        <div className="p-4" style={{ background: '#f0ebe4', border: '1px solid #e8e0d8' }}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm" style={{ color: '#2a1f18' }}>ניצול כולל</span>
+            <span className="p-display text-lg" style={{ color: pctColor(totalPct) }}>{totalPct}%</span>
           </div>
-          <Progress value={Math.min(totalPct, 100)} className="h-2.5" />
+          <ThinBar pct={totalPct} />
         </div>
 
         {/* By category */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {categories.map(cat => (
             <div key={cat.name}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium">{cat.name}</span>
-                <span className={`text-xs font-semibold ${pctColor(cat.pct)}`}>{cat.pct}%</span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs" style={{ color: '#4a3728' }}>{cat.name}</span>
+                <span className="text-xs" style={{ color: pctColor(cat.pct) }}>{cat.pct}%</span>
               </div>
-              <Progress value={Math.min(cat.pct, 100)} className="h-1.5" />
+              <ThinBar pct={cat.pct} />
             </div>
           ))}
         </div>
 
-        <p className="text-[10px] text-muted-foreground text-center">* אחוז הניצול מתוך התקציב המתוכנן</p>
-      </CardContent>
-    </Card>
+        <p className="p-label !text-[10px] text-center">* אחוז הניצול מתוך התקציב המתוכנן</p>
+      </div>
+    </div>
   );
 }

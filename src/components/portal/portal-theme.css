@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500&display=swap');
+
+/* ============================================================
+   Portal Theme — סקופ עיצוב לפורטל הלקוחות בלבד (.portal-theme)
+   לא נוגע ב-tokens הגלובליים של ה-CRM.
+   ============================================================ */
+
+.portal-theme {
+  /* פלטת הסטודיו */
+  --p-bg: #f5f0eb;
+  --p-bg2: #f0ebe4;
+  --p-card: #fffdfa;
+  --p-ink: #2a1f18;
+  --p-text: #4a3728;
+  --p-accent: #c8bdb2;
+  --p-meta: #8a7060;
+  --p-line: #e8e0d8;
+  --p-line2: #e0d8ce;
+  --p-olive: #6b7a4f;
+  --p-olive-bg: #eef0e4;
+
+  /* דריסת shadcn tokens בהיקף הפורטל בלבד */
+  --background: 30 33% 94%;
+  --foreground: 26 30% 22%;
+  --card: 36 100% 99%;
+  --card-foreground: 26 30% 22%;
+  --popover: 36 100% 99%;
+  --popover-foreground: 26 30% 22%;
+  --primary: 23 27% 13%;
+  --primary-foreground: 30 33% 94%;
+  --secondary: 30 17% 74%;
+  --secondary-foreground: 23 27% 13%;
+  --muted: 35 29% 92%;
+  --muted-foreground: 23 18% 46%;
+  --accent: 35 29% 92%;
+  --accent-foreground: 23 27% 13%;
+  --success: 81 21% 39%;
+  --border: 30 26% 88%;
+  --input: 33 23% 84%;
+  --ring: 23 27% 13%;
+  --radius: 0rem;
+
+  background: var(--p-bg);
+  color: var(--p-text);
+  font-family: 'Rubik', sans-serif;
+}
+
+/* פינות חדות — החתימה של הסטודיו (rounded-full נשאר לעיגולי האייקונים) */
+.portal-theme .rounded,
+.portal-theme .rounded-sm,
+.portal-theme .rounded-md,
+.portal-theme .rounded-lg,
+.portal-theme .rounded-xl,
+.portal-theme .rounded-2xl,
+.portal-theme .rounded-3xl {
+  border-radius: 0 !important;
+}
+
+.portal-theme h1,
+.portal-theme h2,
+.portal-theme h3,
+.portal-theme .p-display {
+  font-family: 'Frank Ruhl Libre', 'Heebo', serif;
+  font-weight: 400;
+  color: var(--p-ink);
+}
+
+/* תווית מרווחת קטנה — כמו בדף הנחיתה */
+.p-label {
+  font-family: 'Rubik', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--p-meta);
+  text-transform: none;
+}
+
+/* כרטיס סטודיו */
+.p-card {
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 0;
+  box-shadow: 0 4px 24px rgba(42, 31, 24, 0.08);
+}
+
+/* כפתור ראשי — אספרסו עם shimmer וחץ זז */
+.p-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--p-ink);
+  color: var(--p-bg);
+  border: 1px solid var(--p-ink);
+  border-radius: 0;
+  padding: 14px 32px;
+  font-family: 'Rubik', sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.35s ease;
+}
+.p-btn:hover {
+  background: #3d2e22;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(42, 31, 24, 0.25);
+}
+.p-btn:disabled { opacity: 0.5; pointer-events: none; }
+.p-btn .p-arrow { transition: transform 0.3s ease; display: inline-block; }
+.p-btn:hover .p-arrow { transform: translateX(-4px); }
+.p-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 40%;
+  left: -60%;
+  background: linear-gradient(105deg, transparent, rgba(255, 253, 250, 0.18), transparent);
+  transform: skewX(-20deg);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* כפתור משני — outline דק */
+.p-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--p-ink);
+  border: 1px solid var(--p-ink);
+  border-radius: 0;
+  padding: 13px 28px;
+  font-family: 'Rubik', sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.35s ease;
+}
+.p-btn-outline:hover {
+  background: var(--p-ink);
+  color: var(--p-bg);
+  transform: translateY(-2px);
+}
+.p-btn-outline .p-arrow { transition: transform 0.3s ease; display: inline-block; }
+.p-btn-outline:hover .p-arrow { transform: translateX(-4px); }
+
+/* keyframes — זהים לדף הנחיתה */
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes pulseRing {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+@keyframes shimmer {
+  100% { transform: translateX(400%) skewX(-20deg); }
+}
+@keyframes revealRight {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* עיגול אייקון מרחף */
+.portal-art-circle {
+  background: var(--p-bg2);
+  border: 1.5px solid var(--p-text);
+  animation: floatY 6s ease-in-out infinite;
+}
+.group:hover .portal-art-circle {
+  box-shadow: 0 8px 24px rgba(42, 31, 24, 0.15);
+}
+
+/* חלקיק רקע צף */
+.p-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* חשיפת תמונות */
+.p-reveal {
+  animation: revealRight 1s ease both;
+}
+
+/* כיבוד reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .portal-theme *,
+  .portal-art-circle,
+  .p-btn::after,
+  .p-reveal,
+  .p-particle {
+    animation: none !important;
+    transition: none !important;
+  }
+}

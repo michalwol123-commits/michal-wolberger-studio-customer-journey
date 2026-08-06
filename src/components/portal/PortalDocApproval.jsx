@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FileCheck, Check, X, Download, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import ArtIcon from './ArtIcon';
 
 export default function PortalDocApproval({ documents, projectId }) {
   const pendingDocs = documents.filter(d =>
@@ -14,19 +12,20 @@ export default function PortalDocApproval({ documents, projectId }) {
   if (pendingDocs.length === 0) return null;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-heading flex items-center gap-2">
-          <FileCheck className="w-5 h-5 text-primary" />
-          מסמכים לאישור ({pendingDocs.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <div className="p-card">
+      <div className="p-6 flex items-center gap-4" style={{ borderBottom: '1px solid #e8e0d8' }}>
+        <ArtIcon name="doc" size={48} />
+        <div>
+          <p className="p-label mb-0.5">ממתין לך</p>
+          <h3 className="p-display text-lg">מסמכים לאישור ({pendingDocs.length})</h3>
+        </div>
+      </div>
+      <div className="p-5 space-y-3">
         {pendingDocs.map(doc => (
           <ApprovalRow key={doc.id} doc={doc} projectId={projectId} />
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -47,44 +46,37 @@ function ApprovalRow({ doc, projectId }) {
   });
 
   return (
-    <div className="p-3 rounded-xl border border-border space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileCheck className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium">{doc.name}</span>
+    <div className="p-4 space-y-3" style={{ border: '1px solid #e8e0d8' }}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium truncate" style={{ color: '#2a1f18' }}>{doc.name}</p>
           {doc.version_number > 1 && (
-            <span className="text-[10px] text-muted-foreground">גרסה {doc.version_number}</span>
+            <p className="p-label mt-0.5">גרסה {doc.version_number}</p>
           )}
         </div>
         {doc.file_url && (
-          <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-            <Button variant="ghost" size="icon" className="h-7 w-7">
-              <Download className="w-3.5 h-3.5" />
-            </Button>
+          <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
+            className="text-xs shrink-0 underline" style={{ color: '#8a7060' }}>
+            לצפייה ←
           </a>
         )}
       </div>
 
       {!showReject ? (
         <div className="flex gap-2">
-          <Button
-            size="sm"
-            className="flex-1 gap-1"
+          <button
+            className="p-btn flex-1 text-sm !py-2.5"
             disabled={mutation.isPending}
             onClick={() => mutation.mutate({ status: 'approved' })}
           >
-            {mutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-            אישור
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1 gap-1"
+            {mutation.isPending ? 'רק רגע...' : 'אישור'}
+          </button>
+          <button
+            className="p-btn-outline flex-1 text-sm !py-2.5"
             onClick={() => setShowReject(true)}
           >
-            <X className="w-3.5 h-3.5" />
             דחייה
-          </Button>
+          </button>
         </div>
       ) : (
         <div className="space-y-2">
@@ -95,24 +87,19 @@ function ApprovalRow({ doc, projectId }) {
             className="h-16 text-sm"
           />
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="destructive"
-              className="flex-1 gap-1"
+            <button
+              className="p-btn flex-1 text-sm !py-2.5"
               disabled={mutation.isPending}
               onClick={() => mutation.mutate({ status: 'rejected' })}
             >
-              {mutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
-              אישור דחייה
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="flex-1"
+              {mutation.isPending ? 'רק רגע...' : 'אישור דחייה'}
+            </button>
+            <button
+              className="p-btn-outline flex-1 text-sm !py-2.5"
               onClick={() => setShowReject(false)}
             >
               ביטול
-            </Button>
+            </button>
           </div>
         </div>
       )}
