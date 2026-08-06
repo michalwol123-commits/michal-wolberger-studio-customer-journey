@@ -8,6 +8,7 @@ import { Pencil, Check, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import PortalImagesSection from './PortalImagesSection';
 
 export default function ProjectOverview({ project }) {
   const [editing, setEditing] = useState(false);
@@ -127,6 +128,9 @@ export default function ProjectOverview({ project }) {
           )}
         </CardContent>
       </Card>
+
+      {/* תמונות הפורטל */}
+      <PortalImagesSection project={project} />
     </div>
   );
 }

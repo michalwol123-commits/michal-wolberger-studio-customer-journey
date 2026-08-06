@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
 
 /* ============================================================
    Portal Theme — סקופ עיצוב לפורטל הלקוחות בלבד (.portal-theme)
@@ -60,9 +60,43 @@
 .portal-theme h2,
 .portal-theme h3,
 .portal-theme .p-display {
-  font-family: 'Frank Ruhl Libre', 'Heebo', serif;
-  font-weight: 400;
+  font-family: 'Rubik', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   color: var(--p-ink);
+}
+
+/* כותרת hero — משקל מלא */
+.portal-theme .p-hero-title {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* מספרים גדולים — Rubik קליל וגדול */
+.portal-theme .p-number {
+  font-family: 'Rubik', sans-serif;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--p-ink);
+}
+
+/* סקשן עם תמונת רקע שקופה — פרלקס בדסקטופ, scroll במובייל */
+.p-img-section {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+@media (max-width: 1024px) {
+  .p-img-section {
+    background-attachment: scroll;
+  }
+}
+.p-img-fallback {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(200, 189, 178, 0.35), transparent 55%),
+    radial-gradient(circle at 80% 70%, rgba(180, 160, 140, 0.25), transparent 55%),
+    linear-gradient(160deg, #f5f0eb, #f0ebe4);
 }
 
 /* תווית מרווחת קטנה — כמו בדף הנחיתה */

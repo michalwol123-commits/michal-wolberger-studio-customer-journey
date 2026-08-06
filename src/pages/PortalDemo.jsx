@@ -114,13 +114,13 @@ export default function PortalDemo() {
       {/* Portal content */}
       {project && (
         <div className="portal-theme rounded-2xl border-2 border-dashed border-primary/20 overflow-hidden" dir="rtl">
-          <PortalHero clientName={client?.name} subtitle={project.name} />
+          <PortalHero clientName={client?.name} subtitle={project.name} imageUrl={project.portal_hero_url} />
           <div className="space-y-8 p-4 lg:p-8">
             {/* Project Overview */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <div className="p-card p-8">
                 <p className="p-label mb-3">הפרויקט שלך</p>
-                <h2 className="p-display text-3xl mb-4" style={{ fontWeight: 300 }}>{project.name}</h2>
+                <h2 className="p-display text-3xl mb-4">{project.name}</h2>
                 <div className="flex flex-wrap gap-x-8 gap-y-1 mb-8">
                   {project.start_date && (
                     <span className="p-label">התחלה · {format(new Date(project.start_date), 'dd/MM/yyyy')}</span>

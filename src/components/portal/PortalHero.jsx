@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-const HERO_IMG = 'https://media.base44.com/images/public/69c56d22dada4d9b43006820/5a1c7b41c_Image37of491.jpg';
+const DEFAULT_HERO = 'https://media.base44.com/images/public/69c56d22dada4d9b43006820/5a1c7b41c_Image37of491.jpg';
 
-export default function PortalHero({ clientName, subtitle }) {
+export default function PortalHero({ clientName, subtitle, imageUrl }) {
+  const [src, setSrc] = useState(imageUrl || DEFAULT_HERO);
+
+  useEffect(() => { setSrc(imageUrl || DEFAULT_HERO); }, [imageUrl]);
+
   return (
     <div className="relative w-full overflow-hidden" style={{ height: '40vh', minHeight: 280 }}>
       <img
-        src={HERO_IMG}
+        src={src}
         alt="עיצוב פנים — סטודיו מיכל וולברגר"
         className="absolute inset-0 w-full h-full object-cover"
+        onError={() => { if (src !== DEFAULT_HERO) setSrc(DEFAULT_HERO); }}
       />
       {/* overlay גרדיאנט חום */}
       <div
@@ -32,8 +37,8 @@ export default function PortalHero({ clientName, subtitle }) {
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}
-            className="p-display text-4xl md:text-5xl lg:text-[52px] leading-tight"
-            style={{ color: '#f5f0eb', fontWeight: 300 }}
+            className="p-display p-hero-title text-4xl md:text-5xl lg:text-[52px] leading-tight"
+            style={{ color: '#f5f0eb' }}
           >
             {clientName ? `שלום, ${clientName}` : 'ברוכים הבאים'}
           </motion.h1>

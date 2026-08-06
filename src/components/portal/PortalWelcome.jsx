@@ -47,7 +47,7 @@ export default function PortalWelcome() {
             <ArtIcon name="wave" size={104} />
           </div>
           <p className="p-label mb-3">מיכל וולברגר · סטודיו לעיצוב פנים</p>
-          <h1 className="p-display text-3xl md:text-4xl mb-4" style={{ fontWeight: 300 }}>
+          <h1 className="p-display p-hero-title text-3xl md:text-4xl mb-4">
             הבית שחלמת עליו מתחיל כאן
           </h1>
           <p className="max-w-md mx-auto leading-relaxed" style={{ color: '#4a3728' }}>
@@ -71,7 +71,7 @@ export default function PortalWelcome() {
             <div className="px-8 py-8 space-y-6 text-center">
               <div>
                 <p className="p-label mb-2">סה״כ השקעה</p>
-                <p className="p-display text-4xl md:text-5xl" style={{ fontWeight: 400 }}>
+                <p className="p-number text-4xl md:text-5xl">
                   ₪{latestQuote.total_amount?.toLocaleString()}
                 </p>
               </div>

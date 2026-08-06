@@ -44,7 +44,7 @@ function PortalRouter() {
   // If a project is selected
   if (selectedProject) {
     return (
-      <PortalLayout {...guideProps} hero={<PortalHero clientName={client.name} subtitle={selectedProject.name} />}>
+      <PortalLayout {...guideProps} hero={<PortalHero clientName={client.name} subtitle={selectedProject.name} imageUrl={selectedProject.portal_hero_url} />}>
         <PortalProjectView
           project={selectedProject}
           onBack={allProjects.length > 1 ? () => setSelectedProject(null) : null}
@@ -66,7 +66,7 @@ function PortalRouter() {
   if (allProjects.length === 1) {
     const proj = allProjects[0];
     return (
-      <PortalLayout {...guideProps} hero={<PortalHero clientName={client.name} subtitle={proj.name} />}>
+      <PortalLayout {...guideProps} hero={<PortalHero clientName={client.name} subtitle={proj.name} imageUrl={proj.portal_hero_url} />}>
         <PortalProjectView project={proj} />
       </PortalLayout>
     );

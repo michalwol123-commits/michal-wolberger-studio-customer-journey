@@ -81,7 +81,7 @@ export default function ScheduleMeeting() {
       <div className="portal-theme min-h-screen flex items-center justify-center p-4" dir="rtl">
         <div className="p-card text-center space-y-5 max-w-sm p-10">
           <div className="flex justify-center"><ArtIcon name="check" size={88} /></div>
-          <h2 className="p-display text-3xl" style={{ fontWeight: 300 }}>הפגישה נקבעה!</h2>
+          <h2 className="p-display text-3xl">הפגישה נקבעה!</h2>
           <p style={{ color: '#4a3728' }}>
             {meetingData.type_label} — {dt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             {' '}בשעה {dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
@@ -113,7 +113,7 @@ export default function ScheduleMeeting() {
         <div className="text-center">
           <img src={LOGO} alt="סטודיו מיכל וולברגר" className="h-14 w-auto mx-auto mb-5" />
           <p className="p-label mb-2">מיכל וולברגר · סטודיו לעיצוב פנים</p>
-          <h1 className="p-display text-3xl" style={{ fontWeight: 300 }}>שלום, {meetingData.client_name}</h1>
+          <h1 className="p-display p-hero-title text-3xl">שלום, {meetingData.client_name}</h1>
           <p className="mt-2 text-sm" style={{ color: '#8a7060' }}>נא לבחור מועד נוח לפגישה</p>
         </div>
         <div className="flex justify-center">

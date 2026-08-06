@@ -10,6 +10,7 @@ import PortalDocApproval from './PortalDocApproval';
 import PortalDaysMetrics from './PortalDaysMetrics';
 import PortalNextStep from './PortalNextStep';
 import MichalContactCard from './MichalContactCard';
+import PortalImageSection from './PortalImageSection';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 
@@ -89,7 +90,7 @@ export default function PortalProjectView({ project, onBack }) {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="p-card p-8 md:p-10">
           <p className="p-label mb-3">הפרויקט שלך</p>
-          <h2 className="p-display text-3xl md:text-4xl mb-4" style={{ fontWeight: 300 }}>{project.name}</h2>
+          <h2 className="p-display text-3xl md:text-4xl mb-4">{project.name}</h2>
           <div className="flex flex-wrap gap-x-8 gap-y-1 mb-8">
             {project.start_date && (
               <span className="p-label">התחלה · {format(new Date(project.start_date), 'dd/MM/yyyy')}</span>
@@ -109,7 +110,8 @@ export default function PortalProjectView({ project, onBack }) {
       {/* הצעד הבא שלך */}
       <PortalNextStep action={nextAction} />
 
-      {/* Main layout: Timeline sidebar + Stage content */}
+      {/* Main layout: Timeline sidebar + Stage content — על תמונת רקע שקופה */}
+      <PortalImageSection imageUrl={project.portal_bg_url} wash={0.9} className="py-10 md:py-14 px-4 md:px-8">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Timeline sidebar */}
         <motion.div
@@ -156,6 +158,7 @@ export default function PortalProjectView({ project, onBack }) {
           {selectedStage >= 6 && <PortalBudgetView project={project} />}
         </div>
       </div>
+      </PortalImageSection>
 
       {/* מפריד תמונה */}
       <div className="relative h-40 md:h-56 overflow-hidden p-reveal">
@@ -163,8 +166,10 @@ export default function PortalProjectView({ project, onBack }) {
         <div className="absolute inset-0" style={{ background: 'rgba(42,31,24,0.25)' }} />
       </div>
 
-      {/* מיכל איתך */}
-      <MichalContactCard />
+      {/* מיכל איתך — על תמונת רקע שקופה, לפני הפוטר */}
+      <PortalImageSection imageUrl={project.portal_bg_url} wash={0.88} className="py-10 md:py-14 px-4 md:px-8">
+        <MichalContactCard />
+      </PortalImageSection>
     </div>
   );
 }

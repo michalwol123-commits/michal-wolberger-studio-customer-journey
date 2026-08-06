@@ -164,7 +164,7 @@ export default function SignDocument() {
     <div className="portal-theme" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} dir="rtl">
       <div className="p-card" style={{ textAlign: 'center', padding: 44, maxWidth: 440 }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}><ArtIcon name="pen" size={88} /></div>
-        <h2 className="p-display" style={{ fontSize: 28, marginBottom: 10, fontWeight: 300 }}>החתימה בוצעה בהצלחה!</h2>
+        <h2 className="p-display" style={{ fontSize: 28, marginBottom: 10 }}>החתימה בוצעה בהצלחה!</h2>
         <p style={{ color: '#4a3728' }}>המסמך <strong>{docData?.name}</strong> נחתם.</p>
         <p style={{ color: '#8a7060', fontSize: 14, marginTop: 10 }}>תודה, {signerName}!</p>
       </div>
@@ -190,7 +190,7 @@ export default function SignDocument() {
       <div style={s.card}>
         <div style={s.header}>
           <p className="p-label" style={{ color: '#c8bdb2', margin: '0 0 6px' }}>מיכל וולברגר · סטודיו לעיצוב פנים</p>
-          <h1 className="p-display" style={{ margin: 0, fontSize: 26, color: '#f5f0eb', fontWeight: 300 }}>חתימה דיגיטלית</h1>
+          <h1 className="p-display p-hero-title" style={{ margin: 0, fontSize: 26, color: '#f5f0eb' }}>חתימה דיגיטלית</h1>
           <p style={{ margin: '6px 0 0', color: 'rgba(245,240,235,0.8)', fontSize: 14 }}>{docData.name}</p>
         </div>
 

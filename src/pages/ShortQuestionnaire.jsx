@@ -118,7 +118,7 @@ export default function ShortQuestionnaire() {
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
         <div className="p-card max-w-md w-full p-10 text-center space-y-5">
           <div className="flex justify-center"><ArtIcon name="check" size={88} /></div>
-          <h2 className="p-display text-3xl" style={{ fontWeight: 300 }}>תודה רבה!</h2>
+          <h2 className="p-display text-3xl">תודה רבה!</h2>
           <p style={{ color: '#4a3728' }}>התשובות נשמרו בהצלחה. ניצור איתך קשר בהקדם.</p>
           <p className="p-label">מיכל וולברגר · עיצוב פנים</p>
         </div>
@@ -133,7 +133,7 @@ export default function ShortQuestionnaire() {
           <div className="p-card p-8 md:p-12 text-center space-y-4">
             <div className="flex justify-center mb-2"><ArtIcon name="chat" size={80} /></div>
             <p className="p-label">מיכל וולברגר · סטודיו לעיצוב פנים</p>
-            <h1 className="p-display text-3xl md:text-4xl" style={{ fontWeight: 300 }}>שאלון טרום שיחת היכרות</h1>
+            <h1 className="p-display p-hero-title text-3xl md:text-4xl">שאלון טרום שיחת היכרות</h1>
             <p className="leading-relaxed" style={{ color: '#4a3728' }}>
               אשמח שתקחו מספר דקות לענות על השאלון הבא, כדי שנוכל לדייק ולמקד את שיחת הטלפון שלנו.
             </p>
