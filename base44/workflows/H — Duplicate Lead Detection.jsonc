@@ -1,0 +1,37 @@
+{
+  "name": "H \u2014 Duplicate Lead Detection",
+  "description": "\u05dc\u05d9\u05d3 \u05d7\u05d3\u05e9 \u2192 \u05d1\u05d3\u05d9\u05e7\u05ea \u05db\u05e4\u05d9\u05dc\u05d5\u05ea \u05dc\u05e4\u05d9 \u05d8\u05dc\u05e4\u05d5\u05df/\u05d0\u05d9\u05de\u05d9\u05d9\u05dc",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "Client"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "h_duplicate_lead_detection",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoDuplicateDetection",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "autoDuplicateDetection"
+  }
+}

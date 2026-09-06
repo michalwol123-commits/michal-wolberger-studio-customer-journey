@@ -1,0 +1,37 @@
+{
+  "name": "G \u2014 Project Completion",
+  "description": "\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 \u05d4\u05d5\u05e9\u05dc\u05dd \u2192 \u05e2\u05d3\u05db\u05d5\u05df \u05dc\u05e7\u05d5\u05d7 + NPS + portal token",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"status\") != null) and (.trigger.data.status == \"completed\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "Project"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "g_project_completion",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoProjectCompletion",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "autoProjectCompletion"
+  }
+}

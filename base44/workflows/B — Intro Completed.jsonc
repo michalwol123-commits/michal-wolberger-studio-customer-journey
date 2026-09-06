@@ -1,0 +1,37 @@
+{
+  "name": "B \u2014 Intro Completed",
+  "description": "\u05db\u05e9\u05e4\u05d2\u05d9\u05e9\u05ea \u05d4\u05d9\u05db\u05e8\u05d5\u05ea \u05d4\u05d5\u05e9\u05dc\u05de\u05d4 \u2192 \u05e4\u05d5\u05ea\u05d7 \u05d3\u05d9\u05d0\u05dc\u05d5\u05d2 \u05d4\u05de\u05e9\u05da/\u05d0\u05e8\u05db\u05d9\u05d5\u05df",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"status\") != null) and (.trigger.data.status == \"completed\") and (.trigger.data.type == \"intro\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "Meeting"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "b_intro_completed",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoIntroCompleted",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "autoIntroCompleted"
+  }
+}

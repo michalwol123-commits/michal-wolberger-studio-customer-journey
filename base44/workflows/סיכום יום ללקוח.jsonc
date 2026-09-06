@@ -1,0 +1,37 @@
+{
+  "name": "\u05e1\u05d9\u05db\u05d5\u05dd \u05d9\u05d5\u05dd \u05dc\u05dc\u05e7\u05d5\u05d7",
+  "description": "",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"shopping_days_actual\") != null) or (.trigger.changed_fields | index(\"supervision_days_actual\") != null) or (.trigger.changed_fields | index(\"installation_days_actual\") != null)) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "Project"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "migrated_workflow",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoDaysSummary",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "autoDaysSummary"
+  }
+}

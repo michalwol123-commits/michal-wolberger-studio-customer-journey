@@ -1,0 +1,44 @@
+{
+  "name": "K \u2014 Communication Retry",
+  "description": "\u05db\u05dc 5 \u05d3\u05e7\u05d5\u05ea \u2014 retry \u05dc\u05d4\u05d5\u05d3\u05e2\u05d5\u05ea \u05e9\u05e0\u05db\u05e9\u05dc\u05d5 (\u05e2\u05d3 3 \u05e0\u05d9\u05e1\u05d9\u05d5\u05e0\u05d5\u05ea)",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 5,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-04-19T15:53:47.968000",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "k_communication_retry",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoRetryComms",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "autoRetryComms"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "M \u2014 Cancel Guard",
+  "description": "\u05de\u05d2\u05df \u05de\u05d1\u05d9\u05d8\u05d5\u05dc \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 \u05d1\u05d8\u05e2\u05d5\u05ea",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"status\") != null) and (.trigger.data.status == \"cancelled\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "Project"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "m_cancel_guard",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "autoCancelGuard",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "autoCancelGuard"
+  }
+}

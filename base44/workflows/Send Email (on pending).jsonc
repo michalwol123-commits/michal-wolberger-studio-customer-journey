@@ -1,0 +1,38 @@
+{
+  "name": "Send Email (on pending)",
+  "description": "\u05db\u05e9\u05e0\u05d5\u05e6\u05e8\u05ea/\u05de\u05ea\u05e2\u05d3\u05db\u05e0\u05ea \u05e8\u05e9\u05d5\u05de\u05ea Communication \u05e2\u05dd status=pending \u05d5-type=email \u2192 \u05e9\u05d5\u05dc\u05d7 \u05de\u05d9\u05d9\u05dc \u05de\u05d9\u05d9\u05d3\u05d9\u05ea",
+  "trigger": {
+    "condition": "${ ((.trigger.data.status == \"pending\") and (.trigger.data.type == \"email\") and (.trigger.data.direction == \"outbound\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create",
+        "update"
+      ],
+      "entity_name": "Communication"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "send_email_on_pending",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendEmail",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "sendEmail"
+  }
+}
