@@ -10,6 +10,90 @@
         "update",
         "delete"
       ]
+    },
+    {
+      "entity_name": "Client",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "Project",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "Meeting",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "Task",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "Quote",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "Communication",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "Document",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "Supplier",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "PurchaseOrder",
+      "allowed_operations": [
+        "read",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "entity_name": "Payment",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Commission",
+      "allowed_operations": [
+        "read"
+      ]
     }
   ],
   "context_files": [],
