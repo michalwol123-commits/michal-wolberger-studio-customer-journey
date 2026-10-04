@@ -30,7 +30,10 @@ export default function PortalGuide() {
       </div>
 
       {sections.map((section, i) => (
-        <div key={i} className="p-card">
+        <div key={i} className="p-card overflow-hidden">
+          {section.image_url && (
+            <img src={section.image_url} alt={section.title} className="w-full h-56 md:h-72 object-cover" loading="lazy" />
+          )}
           <div className="p-6 flex items-center gap-4" style={{ borderBottom: '1px solid #e8e0d8' }}>
             <ArtIcon name={section.art} size={52} floatDelay={i} />
             <h3 className="p-display text-lg">{section.title}</h3>
@@ -49,6 +52,22 @@ export default function PortalGuide() {
           </div>
         </div>
       ))}
+
+      <div className="pt-6">
+        <p className="p-label mb-4 text-center">מהפרויקטים שלנו</p>
+        <div className="grid grid-cols-2 gap-3">
+          {GALLERY.map((src) => (
+            <img key={src} src={src} alt="פרויקט של הסטודיו" className="w-full aspect-[2/3] object-cover rounded-lg" loading="lazy" />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
+
+const GALLERY = [
+  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/3da36e98a_Image9of501.jpeg',
+  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/bd86bc29c_Image5of571.jpeg',
+  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/6ad67680b_IMG_0155.jpeg',
+  'https://media.base44.com/images/public/69e4e3a98f5f3e4e5bd49dba/600ee217f_Image41of71.jpeg',
+];
