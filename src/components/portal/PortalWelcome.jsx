@@ -48,10 +48,10 @@ export default function PortalWelcome() {
           </div>
           <p className="p-label mb-3">מיכל וולברגר · סטודיו לעיצוב פנים</p>
           <h1 className="p-display p-hero-title text-3xl md:text-4xl mb-4">
-            הבית שחלמת עליו מתחיל כאן
+            נעים להכיר, זה המקום שלנו ביחד
           </h1>
           <p className="max-w-md mx-auto leading-relaxed" style={{ color: '#4a3728' }}>
-            כאן מתחיל המסע לבית שתמיד חלמת עליו — הכל במקום אחד, בקצב שלך.
+            בניתי את הפורטל הזה כדי שתמיד תדעו איפה אנחנו עומדים ומה הצעד הבא. בין אם זה שאלון, אישור קונספט או מעקב אחרי התקציב, הכל כאן, מסודר וברור. קחו כמה דקות לעבור על המדריך, ואני כאן לכל שאלה.
           </p>
         </div>
       </motion.div>
