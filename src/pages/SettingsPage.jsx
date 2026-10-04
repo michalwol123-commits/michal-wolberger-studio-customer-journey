@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navigate } from 'react-router-dom';
 import { Shield, Users, Settings, MessageCircle } from 'lucide-react';
 import WhatsAppAgentTab from '@/components/settings/WhatsAppAgentTab';
+import AgentModeCard from '@/components/settings/AgentModeCard';
 
 export default function SettingsPage() {
   const { user, isAdmin, loading } = useCurrentUser();
@@ -83,6 +84,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="whatsapp">
+          <div className="mb-6"><AgentModeCard /></div>
           <WhatsAppAgentTab />
         </TabsContent>
       </Tabs>

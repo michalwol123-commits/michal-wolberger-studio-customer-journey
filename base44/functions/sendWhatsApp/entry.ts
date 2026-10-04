@@ -14,7 +14,7 @@ const ALLOWED_PHONES = ['0546999915', '0524687812', '0544535688', '0535334449'];
 // SIMULATION MODE — set to false to resume real sending via Green API
 // While true: messages are logged as 'sent' in Communications but NOT actually sent.
 // =============================================
-const SIMULATION_MODE = true;
+const SIMULATION_MODE = false;
 
 const STALE_SENDING_MS = 10 * 60 * 1000; // 10 minutes
 
