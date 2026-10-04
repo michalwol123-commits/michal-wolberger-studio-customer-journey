@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
           project_id: meeting.project_id || '',
           type: 'whatsapp',
           direction: 'outbound',
-          content: `שלום ${clientName}, תזכורת: יש לנו פגישה מחר (${meetingTime.toLocaleDateString('he-IL')}) בשעה ${meetingTime.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}${meeting.location ? ` ב${meeting.location}` : ''}. נתראה!`,
+          content: `שלום ${clientName}, תזכורת: יש לנו פגישה מחר (${meetingTime.toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' })}) בשעה ${meetingTime.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' })}${meeting.location ? ` ב${meeting.location}` : ''}. נתראה!`,
           sent_by: 'system',
           status: 'pending',
           channel: 'base44_native',

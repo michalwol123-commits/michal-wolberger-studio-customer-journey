@@ -61,7 +61,7 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
         project_id: initialData.project_id || '',
         quote_id: initialData.quote_id || '',
         type: initialData.type || 'intro',
-        scheduled_at: initialData.scheduled_at ? initialData.scheduled_at.slice(0, 16) : '',
+        scheduled_at: initialData.scheduled_at ? (() => { const d = new Date(initialData.scheduled_at); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); })() : '',
         duration: initialData.duration || 45,
         location: initialData.location || '',
         status: initialData.status || 'scheduled',

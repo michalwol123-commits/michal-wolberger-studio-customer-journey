@@ -170,8 +170,8 @@ Deno.serve(async (req) => {
 
     // 2. Send email invitation to client (if email exists)
     if (client.email) {
-      const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-      const timeStr = scheduledAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jerusalem' });
+      const timeStr = scheduledAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' });
 
       const emailBody = `
         <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

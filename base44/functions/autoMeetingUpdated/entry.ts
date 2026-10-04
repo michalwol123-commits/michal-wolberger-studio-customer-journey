@@ -113,8 +113,8 @@ Deno.serve(async (req) => {
 
     // --- 2. Send email via Brevo (Communication pending) ---
     if (client.email) {
-      const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-      const timeStr = scheduledAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = scheduledAt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jerusalem' });
+      const timeStr = scheduledAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' });
 
       const isReschedule = !!data.google_event_id && old_data?.scheduled_at;
       const subject = isReschedule
