@@ -51,8 +51,12 @@ Deno.serve(async (req) => {
       { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chatId: `${toE164(settings.preview_phone)}@c.us`, message: body }) }
     );
-    const r = await res.json();
-    sent.push({ whatsapp: res.ok && !!r.idMessage, detail: res.ok ? undefined : r });
+    const text = await res.text();
+    let r = {};
+    try { r = JSON.parse(text); } catch { /* non-JSON error page */ }
+    const ok = res.ok && !!r.idMessage;
+    if (!ok) console.error('Green API failed', res.status, text.slice(0, 300));
+    sent.push({ whatsapp: ok, error: ok ? undefined : `WhatsApp error ${res.status}` });
   }
 
   if (settings.preview_email) {
@@ -66,7 +70,8 @@ Deno.serve(async (req) => {
         htmlContent: `<div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.8">${body.replace(/\n/g, '<br>')}</div>`,
       }),
     });
-    sent.push({ email: res.ok });
+    if (!res.ok) console.error('Brevo failed', res.status, (await res.text()).slice(0, 300));
+    sent.push({ email: res.ok, error: res.ok ? undefined : `Email error ${res.status}` });
   }
 
   return Response.json({ mode: 'preview', sent, client: client.name });
