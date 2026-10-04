@@ -1,3 +1,4 @@
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -368,7 +369,7 @@ export default function ProjectDetail() {
               onOpenChange={setShowSendDetailedQ}
               client={client}
               questionnaireType="detailed"
-              questionnaireLink={`${window.location.origin}/portal?token=${client.portal_token}`}
+              questionnaireLink={`${PUBLIC_APP_URL}/portal?token=${client.portal_token}`}
             />
           )}
         </TabsContent>

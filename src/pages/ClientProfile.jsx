@@ -1,3 +1,4 @@
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -52,8 +53,7 @@ export default function ClientProfile() {
   });
 
   const getPortalUrl = (token) => {
-    const origin = window.location.origin;
-    return `${origin}/portal?token=${token}`;
+    return `${PUBLIC_APP_URL}/portal?token=${token}`;
   };
 
   const handleOpenPortal = async () => {
@@ -378,7 +378,7 @@ export default function ClientProfile() {
               onOpenChange={setShowSendDetailedQ}
               client={client}
               questionnaireType="detailed"
-              questionnaireLink={`${window.location.origin}/portal?token=${client.portal_token}`}
+              questionnaireLink={`${PUBLIC_APP_URL}/portal?token=${client.portal_token}`}
             />
           )}
         </TabsContent>

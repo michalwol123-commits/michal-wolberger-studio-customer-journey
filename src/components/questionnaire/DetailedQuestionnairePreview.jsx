@@ -1,3 +1,4 @@
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ export default function DetailedQuestionnairePreview({ questionnaires, projectId
 
   const getPortalUrl = () => {
     if (!client?.portal_token || client.portal_token_revoked) return null;
-    return `${window.location.origin}/portal?token=${client.portal_token}`;
+    return `${PUBLIC_APP_URL}/portal?token=${client.portal_token}`;
   };
 
   const createMutation = useMutation({

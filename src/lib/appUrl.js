@@ -1,0 +1,1 @@
+export const PUBLIC_APP_URL = 'https://michal-design-flow.base44.app';
