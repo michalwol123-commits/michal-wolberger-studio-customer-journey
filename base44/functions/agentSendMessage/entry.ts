@@ -47,16 +47,19 @@ Deno.serve(async (req) => {
 
   if (settings.preview_phone) {
     const res = await fetch(
-      `https://7107.api.greenapi.com/waInstance${Deno.env.get('GREEN_ID')}/sendMessage/${Deno.env.get('GREEN_TOKEN')}`,
+      `https://${String(Deno.env.get('GREEN_ID')).trim().slice(0, 4)}.api.greenapi.com/waInstance${String(Deno.env.get('GREEN_ID')).trim()}/sendMessage/${String(Deno.env.get('GREEN_TOKEN')).trim()}`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chatId: `${toE164(settings.preview_phone)}@c.us`, message: body }) }
-    );
+    ).catch((e) => { console.error('Green API fetch failed', e.message); return null; });
+    if (!res) { sent.push({ whatsapp: false, error: 'WhatsApp connection failed' }); }
+    else {
     const text = await res.text();
     let r = {};
     try { r = JSON.parse(text); } catch { /* non-JSON error page */ }
     const ok = res.ok && !!r.idMessage;
     if (!ok) console.error('Green API failed', res.status, text.slice(0, 300));
     sent.push({ whatsapp: ok, error: ok ? undefined : `WhatsApp error ${res.status}` });
+    }
   }
 
   if (settings.preview_email) {
