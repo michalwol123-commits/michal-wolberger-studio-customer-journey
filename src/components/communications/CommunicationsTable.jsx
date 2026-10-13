@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatIsraelDateTime } from '@/lib/israelTime';
 import StatusBadge from '@/components/shared/StatusBadge';
 import DeleteButton from '@/components/shared/DeleteButton';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -49,7 +50,7 @@ export default function CommunicationsTable({ communications, clientMap, isAdmin
                   <td className="px-4 py-3 text-muted-foreground">{client?.name || '—'}</td>
                   <td className="px-4 py-3 hidden md:table-cell text-muted-foreground truncate max-w-[250px]">{c.content}</td>
                   <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground">
-                    {c.created_date ? new Date(c.created_date).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' }) : '—'}
+                    {formatIsraelDateTime(c.created_date, { year: false }) || '—'}
                   </td>
                   <td className="px-4 py-3">{c.status && <StatusBadge status={c.status} />}</td>
                   {isAdmin && (

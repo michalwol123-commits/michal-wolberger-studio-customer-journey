@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { format } from 'date-fns';
+import { formatIsraelDateTime } from '@/lib/israelTime';
 import { UserPlus, Phone, CheckCircle, FileText, Send, PartyPopper } from 'lucide-react';
 
 const EVENTS = [
@@ -29,7 +29,6 @@ export default function ClientTimeline({ client }) {
       <div className="space-y-6">
         {events.map((event) => {
           const Icon = event.icon;
-          const date = new Date(client[event.key]);
           return (
             <div key={event.key} className="flex items-start gap-4 relative">
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center z-10 shrink-0">
@@ -38,7 +37,7 @@ export default function ClientTimeline({ client }) {
               <div>
                 <p className="font-medium text-sm">{event.label}</p>
                 <p className="text-xs text-muted-foreground">
-                  {format(date, 'dd/MM/yyyy HH:mm')}
+                  {formatIsraelDateTime(client[event.key])}
                 </p>
               </div>
             </div>

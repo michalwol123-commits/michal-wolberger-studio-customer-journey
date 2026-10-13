@@ -2,6 +2,7 @@ import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { formatIsraelDateTime } from '@/lib/israelTime';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import useCurrentUser from '@/lib/useCurrentUser';
@@ -382,7 +383,7 @@ export default function ProjectDetail() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-1">
                       <StatusBadge status={c.type} />
-                      <span className="text-xs text-muted-foreground">{c.created_date ? format(new Date(c.created_date), 'dd/MM/yyyy HH:mm') : ''}</span>
+                      <span className="text-xs text-muted-foreground">{formatIsraelDateTime(c.created_date)}</span>
                     </div>
                     <p className="text-sm">{c.content}</p>
                   </CardContent>

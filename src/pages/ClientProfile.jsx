@@ -2,6 +2,7 @@ import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { formatIsraelDateTime } from '@/lib/israelTime';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import useCurrentUser from '@/lib/useCurrentUser';
@@ -403,7 +404,7 @@ export default function ClientProfile() {
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {comm.created_date ? new Date(comm.created_date).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                        {formatIsraelDateTime(comm.created_date)}
                       </span>
                     </div>
                     <p className="text-sm">{comm.content}</p>

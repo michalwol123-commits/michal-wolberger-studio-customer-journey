@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { formatIsraelDateTime } from '@/lib/israelTime';
 import PageHeader from '@/components/shared/PageHeader';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
@@ -142,7 +143,7 @@ export default function Communications() {
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <span className="text-xs text-muted-foreground">
-                        {comm.created_date ? new Date(comm.created_date).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' }) : ''}
+                        {formatIsraelDateTime(comm.created_date, { year: false })}
                       </span>
                       {isAdmin && <DeleteButton onDelete={() => deleteMutation.mutate(comm.id)} entityLabel="הודעה" />}
                     </div>
