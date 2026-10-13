@@ -84,7 +84,16 @@ Deno.serve(async (req) => {
   if (!events.includes(event)) return Response.json({ skipped: true, reason: 'event off' });
 
   const { text, link } = await buildAlert(sr, event, entity_name, entity_id);
-  const ok = WA_EVENTS.includes(event) ? await sendWA(phone, `עדכון מהמערכת\n${text}\n\n${link}`) : false;
   const pushed = await pushAll(sr, { title: 'עדכון מהמערכת', body: text, url: link, tag: `${event}-${entity_id}` });
+  let ok = false;
+  if (WA_EVENTS.includes(event)) {
+    // 30s gap between WhatsApp alerts: reserve the next free slot, wait for it, then send
+    const fresh = (await sr.entities.AgentSettings.list())[0];
+    const last = fresh?.michal_wa_slot_at ? new Date(fresh.michal_wa_slot_at).getTime() : 0;
+    const slot = Math.max(Date.now(), last + 30000);
+    if (fresh) await sr.entities.AgentSettings.update(fresh.id, { michal_wa_slot_at: new Date(slot).toISOString() });
+    if (slot > Date.now()) await new Promise((r) => setTimeout(r, slot - Date.now()));
+    ok = await sendWA(phone, `עדכון מהמערכת\n${text}\n\n${link}`);
+  }
   return Response.json({ sent: ok, pushed, event });
 });
