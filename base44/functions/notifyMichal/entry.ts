@@ -6,6 +6,8 @@ import { sendToSubs } from '../../shared/webPush.ts';
 
 const APP = 'https://michal-design-flow.base44.app';
 const ALL_EVENTS = ['questionnaire_submitted', 'document_signed', 'document_approval', 'portal_comment', 'concept_approved', 'floor_plan_confirmed', 'quote_approved'];
+// WhatsApp only for the 4 core events; push goes for all events
+const WA_EVENTS = ['questionnaire_submitted', 'document_signed', 'concept_approved', 'quote_approved'];
 
 function toE164(phone) {
   const d = String(phone || '').replace(/[^\d]/g, '');
@@ -82,7 +84,7 @@ Deno.serve(async (req) => {
   if (!events.includes(event)) return Response.json({ skipped: true, reason: 'event off' });
 
   const { text, link } = await buildAlert(sr, event, entity_name, entity_id);
-  const ok = await sendWA(phone, `עדכון מהמערכת\n${text}\n\n${link}`);
+  const ok = WA_EVENTS.includes(event) ? await sendWA(phone, `עדכון מהמערכת\n${text}\n\n${link}`) : false;
   const pushed = await pushAll(sr, { title: 'עדכון מהמערכת', body: text, url: link, tag: `${event}-${entity_id}` });
   return Response.json({ sent: ok, pushed, event });
 });
