@@ -10,9 +10,11 @@ Deno.serve(async (req) => {
   if (typeof endpoint !== 'string' || !endpoint.startsWith('https://') || !keys.p256dh || !keys.auth) {
     return Response.json({ error: 'invalid subscription' }, { status: 400 });
   }
-  await base44.asServiceRole.entities.PushSubscription.upsert(
-    [{ endpoint, p256dh: keys.p256dh, auth: keys.auth, user_email: user.email, user_agent: String(user_agent || '').slice(0, 300) }],
-    { key: 'endpoint' },
-  );
+  // entities.upsert does not exist in @base44/sdk@0.8.25 — filter, then update or create.
+  const data = { endpoint, p256dh: keys.p256dh, auth: keys.auth, user_email: user.email, user_agent: String(user_agent || '').slice(0, 300) };
+  const sr = base44.asServiceRole;
+  const [existing] = await sr.entities.PushSubscription.filter({ endpoint });
+  if (existing) await sr.entities.PushSubscription.update(existing.id, data);
+  else await sr.entities.PushSubscription.create(data);
   return Response.json({ ok: true });
 });
