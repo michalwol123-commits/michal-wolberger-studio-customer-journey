@@ -7,6 +7,7 @@ import { Navigate } from 'react-router-dom';
 import { Shield, Users, Settings, MessageCircle } from 'lucide-react';
 import WhatsAppAgentTab from '@/components/settings/WhatsAppAgentTab';
 import AgentModeCard from '@/components/settings/AgentModeCard';
+import PushNotificationsCard from '@/components/settings/PushNotificationsCard';
 
 export default function SettingsPage() {
   const { user, isAdmin, loading } = useCurrentUser();
@@ -31,6 +32,7 @@ export default function SettingsPage() {
 
         <TabsContent value="general">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <PushNotificationsCard />
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base font-heading">

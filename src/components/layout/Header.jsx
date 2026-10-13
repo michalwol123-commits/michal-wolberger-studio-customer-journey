@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { syncPush } from '@/lib/push';
 import { Menu, Bell, Search } from 'lucide-react';
 import useCurrentUser from '@/lib/useCurrentUser';
 import GlobalSearch from './GlobalSearch';
@@ -6,6 +8,9 @@ import GlobalSearch from './GlobalSearch';
 export default function Header({ onMenuToggle }) {
   const { user } = useCurrentUser();
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Staff screens only: keep an existing push subscription synced with the server
+  useEffect(() => { if (user?.role === 'admin') syncPush(); }, [user?.role]);
 
   return (
     <>
@@ -31,9 +36,9 @@ export default function Header({ onMenuToggle }) {
             </button>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
+            <Link to="/settings#push" title="התראות פוש" className="relative p-2 rounded-lg hover:bg-muted transition-colors">
               <Bell className="w-5 h-5 text-muted-foreground" />
-            </button>
+            </Link>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
                 {user?.full_name?.[0] || 'מ'}
