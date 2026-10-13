@@ -1,11 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { sendToSubs } from '../../shared/webPush.ts';
 
-// Admin callers, or internal calls via service role (workflows / other functions).
+// Admin callers only. Other functions import sendToSubs from shared/webPush.ts directly (see notifyMichal).
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   const user = await base44.auth.me().catch(() => null);
-  if (user && user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+  if (user?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
   try {
     const { title, body, url, tag } = await req.json();
     const subs = await base44.asServiceRole.entities.PushSubscription.list();
