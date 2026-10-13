@@ -1,7 +1,8 @@
-// Real-time WhatsApp alerts to Michal (from the system bot number).
+// Real-time WhatsApp alerts to Michal (from the system bot number). Mode A also sends a push to every subscribed device.
 // Mode A (workflows): { event, entity_name, entity_id } → builds the alert from the record.
 // Mode B (admin / agent): { message } → sends free text to Michal.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { sendToSubs } from '../../shared/webPush.ts';
 
 const APP = 'https://michal-design-flow.base44.app';
 const ALL_EVENTS = ['questionnaire_submitted', 'document_signed', 'document_approval', 'portal_comment', 'concept_approved', 'floor_plan_confirmed', 'quote_approved'];
@@ -46,7 +47,17 @@ async function buildAlert(sr, event, entity_name, entity_id) {
     floor_plan_confirmed: `${who} אישר/ה את תכנית ההעמדה`,
     quote_approved: `${who} אישר/ה את הצעת המחיר "${rec.title || ''}"`,
   };
-  return `עדכון מהמערכת\n${texts[event]}\n\n${link}`;
+  return { text: texts[event], link };
+}
+
+async function pushAll(sr, payload) {
+  try {
+    const subs = await sr.entities.PushSubscription.list();
+    return await sendToSubs(sr, subs, payload);
+  } catch (e) {
+    console.error('push failed', e?.message);
+    return 0;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -70,7 +81,8 @@ Deno.serve(async (req) => {
   const events = settings.notify_events?.length ? settings.notify_events : ALL_EVENTS;
   if (!events.includes(event)) return Response.json({ skipped: true, reason: 'event off' });
 
-  const message = await buildAlert(sr, event, entity_name, entity_id);
-  const ok = await sendWA(phone, message);
-  return Response.json({ sent: ok, event });
+  const { text, link } = await buildAlert(sr, event, entity_name, entity_id);
+  const ok = await sendWA(phone, `עדכון מהמערכת\n${text}\n\n${link}`);
+  const pushed = await pushAll(sr, { title: 'עדכון מהמערכת', body: text, url: link, tag: `${event}-${entity_id}` });
+  return Response.json({ sent: ok, pushed, event });
 });
