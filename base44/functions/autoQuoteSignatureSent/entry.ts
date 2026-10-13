@@ -45,6 +45,18 @@ Deno.serve(async (req) => {
         new Date(b.created_date || 0) - new Date(a.created_date || 0)
       )[0];
 
+    // Requested PDF part: quote → 'quote'; contract → quote.contract_pdf_part (empty = 'full')
+    const requested = data.status === 'contract_sent_for_signature' ? (data.contract_pdf_part || 'full') : target.pdfPart;
+    const partOf = (d) => d.pdf_part || target.pdfPart;
+
+    // === Pending doc exists but with a different part — create a new version instead ===
+    let prevDoc = null;
+    if (doc && data.status === 'contract_sent_for_signature' && partOf(doc) !== requested) {
+      console.log(`Pending doc part ${partOf(doc)} != requested ${requested} — creating new version`);
+      prevDoc = doc;
+      doc = null;
+    }
+
     // === Not found (manual status change) — generate PDF + Document ===
     if (!doc) {
       console.log('No pending signature doc found — generating PDF...');
@@ -53,7 +65,7 @@ Deno.serve(async (req) => {
         quote_id: quoteId,
         total_amount: data.total_amount,
         meeting_date: data.meeting_date,
-        part: target.pdfPart,
+        part: requested,
       });
       const fileUrl = pdfResult?.data?.file_url;
       if (!fileUrl) throw new Error('PDF generation failed: ' + (pdfResult?.data?.error || 'unknown'));
@@ -66,7 +78,9 @@ Deno.serve(async (req) => {
         quote_id: quoteId,
         stage: target.docType === 'contract' ? 4 : undefined,
         visible_to_client: true,
-        version_number: 1,
+        version_number: prevDoc ? (prevDoc.version_number || 1) + 1 : 1,
+        parent_doc_id: prevDoc?.id || undefined,
+        pdf_part: requested,
         signature_token: makeToken(),
         signature_status: 'pending_signature',
       });
@@ -74,6 +88,7 @@ Deno.serve(async (req) => {
 
     const appUrl = 'https://michal-design-flow.base44.app';
     const signUrl = `${appUrl}/sign?token=${doc.signature_token}`;
+    const contractOnly = doc.pdf_part === 'contract';
     const results = [];
 
     // === Email via Brevo ===
@@ -88,7 +103,7 @@ Deno.serve(async (req) => {
           </div>
           <div style="padding:32px;background:white;border:1px solid #e8e0d5;border-top:none;">
             <p>שלום ${clientName},</p>
-            <p>${target.label === 'הסכם' ? 'ההצעה וההסכם' : 'הצעת המחיר'} <strong>"${title}"</strong> ממתינים לחתימתך הדיגיטלית.</p>
+            <p>${contractOnly ? `ההסכם <strong>"${title}"</strong> ממתין לחתימתך הדיגיטלית.` : `${target.label === 'הסכם' ? 'ההצעה וההסכם' : 'הצעת המחיר'} <strong>"${title}"</strong> ממתינים לחתימתך הדיגיטלית.`}</p>
             <p style="margin-top:24px;text-align:center;">
               <a href="${signUrl}" style="background:#8B7355;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;display:inline-block;font-size:16px;">
                 ✍️ לצפייה וחתימה על המסמך
@@ -135,7 +150,7 @@ Deno.serve(async (req) => {
           client_id: clientId,
           type: 'whatsapp',
           direction: 'outbound',
-          content: `שלום ${clientName} 👋\n\n${target.label === 'הסכם' ? 'ההצעה וההסכם ממתינים' : 'הצעת המחיר ממתינה'} לחתימתך הדיגיטלית ✍️\n"${title}"\n\nלצפייה וחתימה:\n${signUrl}\n\nמיכל וולברגר - עיצוב פנים`,
+          content: `שלום ${clientName} 👋\n\n${contractOnly ? 'ההסכם ממתין' : target.label === 'הסכם' ? 'ההצעה וההסכם ממתינים' : 'הצעת המחיר ממתינה'} לחתימתך הדיגיטלית ✍️\n"${title}"\n\nלצפייה וחתימה:\n${signUrl}\n\nמיכל וולברגר - עיצוב פנים`,
           sent_by: 'system',
           status: 'pending',
           channel: 'base44_native',

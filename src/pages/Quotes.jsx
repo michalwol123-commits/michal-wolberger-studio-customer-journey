@@ -45,6 +45,9 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
     )[0];
   const quoteDoc = latestOf('quote');
   const contractDoc = latestOf('contract');
+  const contractPart = contractDoc?.pdf_part === 'contract' ? 'contract' : 'full';
+  // הצעה שהועלתה כקובץ/לינק: ה-PDF של ההצעה נבנה מהתבנית, לכן שולחים רק הסכם
+  const quoteOnlyContract = ['uploaded', 'link'].includes(quote?.quote_type);
 
   const sendForSignature = async (part, type, label, prevDoc) => {
     if (!quote?.id) { toast.error('צריך לשמור את ההצעה קודם'); return; }
@@ -73,6 +76,7 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
         visible_to_client: true,
         version_number: version,
         parent_doc_id: prevDoc?.id || undefined,
+        pdf_part: part,
         signature_token: token,
         signature_status: 'pending_signature',
       });
@@ -82,7 +86,9 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
       const allowedFrom = part === 'quote' ? ['draft', 'sent'] : ['draft', 'sent', 'sent_for_signature'];
       let autoSent = false;
       if (allowedFrom.includes(quote.status)) {
-        await base44.entities.Quote.update(quote.id, { status: targetStatus });
+        await base44.entities.Quote.update(quote.id, part === 'quote'
+          ? { status: targetStatus }
+          : { status: targetStatus, contract_pdf_part: part });
         queryClient.invalidateQueries({ queryKey: ['quotes'] });
         autoSent = true;
       }
@@ -109,7 +115,7 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
   return (
     <div className="space-y-2">
       {/* ===== שלב 1: הצעה ===== */}
-      {!quoteDoc ? (
+      {quoteOnlyContract ? null : !quoteDoc ? (
         <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
           onClick={() => sendForSignature('quote', 'quote', 'הצעת מחיר', null)}>
           {busy === 'quote' ? Spin : <FileText className="w-3.5 h-3.5" />}
@@ -127,32 +133,37 @@ function QuoteSigningButtons({ quote, clientName, compact = false }) {
         </div>
       )}
 
-      {/* ===== שלב 2: הסכם ===== */}
+      {/* ===== הסכם: הסכם בלבד / הצעה + הסכם ===== */}
       {!contractDoc ? (
-        <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
-          onClick={() => sendForSignature('full', 'contract', 'הסכם', null)}>
-          {busy === 'contract' ? Spin : <FileSignature className="w-3.5 h-3.5" />}
-          שלב 2: הסכם לחתימה
-        </Button>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
+              onClick={() => sendForSignature('contract', 'contract', 'הסכם', null)}>
+              {busy === 'contract' ? Spin : <FileSignature className="w-3.5 h-3.5" />}
+              הסכם בלבד לחתימה
+            </Button>
+            {!quoteOnlyContract && (
+              <Button type="button" size="sm" variant="outline" className={`gap-1.5 ${sz}`} disabled={!!busy}
+                onClick={() => sendForSignature('full', 'contract', 'הצעה + הסכם', null)}>
+                {busy === 'full' ? Spin : <Layers className="w-3.5 h-3.5" />}
+                הצעה + הסכם לחתימה
+              </Button>
+            )}
+          </div>
+          {quoteOnlyContract && (
+            <p className="text-xs text-muted-foreground">ההצעה הועלתה כקובץ או כלינק, לכן לחתימה נשלח ההסכם בלבד</p>
+          )}
+        </div>
       ) : (
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs font-medium">✍️ הסכם (גרסה {contractDoc.version_number || 1}):</span>
+          <span className="text-xs font-medium">✍️ {contractPart === 'contract' ? 'הסכם בלבד' : 'הצעה + הסכם'} (גרסה {contractDoc.version_number || 1}):</span>
           <DocumentSignatureBadge doc={contractDoc} />
           <Button type="button" size="sm" variant="ghost" className={`gap-1 ${sz}`} disabled={!!busy}
-            onClick={() => sendForSignature('full', 'contract', 'הסכם', contractDoc)} title="ייצר PDF מעודכן ושלח גרסה חדשה לחתימה">
-            {busy === 'contract-rev' ? Spin : <RefreshCw className="w-3 h-3" />}
+            onClick={() => sendForSignature(contractPart, 'contract', contractPart === 'contract' ? 'הסכם' : 'הצעה + הסכם', contractDoc)} title="ייצר PDF מעודכן ושלח גרסה חדשה לחתימה">
+            {busy === `${contractPart}-rev` ? Spin : <RefreshCw className="w-3 h-3" />}
             גרסה חדשה
           </Button>
         </div>
-      )}
-
-      {/* ===== שלח הכל יחד — רק כשעוד לא נשלח כלום ===== */}
-      {!quoteDoc && !contractDoc && (
-        <Button type="button" size="sm" variant="ghost" className={`gap-1.5 ${sz}`} disabled={!!busy}
-          onClick={() => sendForSignature('full', 'contract', 'הצעה + הסכם', null)}>
-          {busy === 'full' ? Spin : <Layers className="w-3.5 h-3.5" />}
-          שלח הכל יחד
-        </Button>
       )}
     </div>
   );
