@@ -21,8 +21,9 @@ export default function SendQuestionnaireDialog({ open, onOpenChange, client, qu
   const typeLabel = questionnaireType === 'short' ? 'שאלון קצר' : 'שאלון מפורט';
 
   const messageContent = questionnaireType === 'short'
-    ? `שלום ${client?.name || ''} 👋\nנעים מאוד! לקראת שיחת ההיכרות שלנו, אשמח שתקדישו מספר דקות למילוי שאלון קצר:\n${questionnaireLink}\nתודה רבה 💛\nמיכל וולברגר — עיצוב פנים`
-    : `שלום ${client?.name || ''} 👋\nהפרויקט שלכם מתקדם! 🎉\nאשמח שתמלאו את השאלון המפורט — זה יעזור לי לדייק את העיצוב:\n${questionnaireLink}\nתודה רבה 💛\nמיכל וולברגר — עיצוב פנים`;
+    ? `שלום ${client?.name || ''}\nנעים מאוד! לקראת שיחת ההיכרות שלנו, אשמח שתקדישו מספר דקות למילוי שאלון קצר:\n${questionnaireLink}\nתודה רבה 💛\nמיכל וולברגר — עיצוב פנים`
+    : `שלום ${client?.name || ''}\nהפרויקט שלכם מתקדם!\nאשמח שתמלאו את השאלון המפורט, זה יעזור לי לדייק את העיצוב:\n${questionnaireLink}\nתודה רבה 💛\nמיכל וולברגר, עיצוב פנים`;
+  const emailContent = messageContent.replace(/ ?💛/g, '');
 
   const emailSubject = questionnaireType === 'short'
     ? 'שאלון טרום שיחת היכרות — סטודיו מיכל וולברגר'
@@ -54,7 +55,7 @@ export default function SendQuestionnaireDialog({ open, onOpenChange, client, qu
         client_id: client.id,
         type: 'email',
         direction: 'outbound',
-        content: messageContent,
+        content: emailContent,
         subject: emailSubject,
         sent_by: 'system',
         status: 'pending',

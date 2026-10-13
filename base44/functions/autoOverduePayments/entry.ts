@@ -19,9 +19,12 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.Payment.update(payment.id, { status: 'overdue' });
 
       // Get project → client
-      const projects = await base44.asServiceRole.entities.Project.filter({ id: payment.project_id });
-      if (projects.length === 0) continue;
-      const clientId = projects[0].client_id;
+      let clientId = payment.client_id;
+      if (payment.project_id) {
+        const projects = await base44.asServiceRole.entities.Project.filter({ id: payment.project_id });
+        if (projects.length > 0) clientId = projects[0].client_id;
+      }
+      if (!clientId) continue;
 
       const clients = await base44.asServiceRole.entities.Client.filter({ id: clientId });
       const clientName = clients[0]?.name || 'לקוח';

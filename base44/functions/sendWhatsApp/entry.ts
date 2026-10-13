@@ -2,13 +2,7 @@
 // Trigger: entity automation on Communication create/update (status=pending, type=whatsapp)
 // Per-record atomic claim (pending -> sending -> sent/failed) prevents duplicate sends.
 // Stale recovery: records stuck in 'sending' over 10 minutes are reset to pending.
-// TEMPORARY WHITELIST: only sends to ALLOWED_PHONES. Remove whitelist check when ready to open up.
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-
-// =============================================
-// TEMPORARY WHITELIST — remove this array and the check below when ready to send to all
-// =============================================
-const ALLOWED_PHONES = ['0546999915', '0524687812', '0544535688', '0535334449'];
 
 // =============================================
 // SIMULATION MODE — set to false to resume real sending via Green API
@@ -27,12 +21,6 @@ function normalizeToE164(phone) {
   return digits;
 }
 
-function isAllowed(phone) {
-  // TEMPORARY: only send to whitelisted numbers
-  // To open up to all, remove this function and its call below
-  const normalized = normalizeToE164(phone);
-  return ALLOWED_PHONES.some(p => normalizeToE164(p) === normalized);
-}
 
 Deno.serve(async (req) => {
   try {
@@ -96,13 +84,6 @@ Deno.serve(async (req) => {
       }
 
       const clientPhone = clients[0].phone;
-
-      // TEMPORARY WHITELIST CHECK — remove when ready to send to all
-      if (!isAllowed(clientPhone)) {
-        console.log(`⏭️ Skipping ${clientPhone} — not in whitelist (warming up)`);
-        skipped++;
-        continue; // leave status=pending, will send when whitelist is removed
-      }
 
       // === Atomic claim: pending -> sending. If another run already claimed it, skip. ===
       const claim = await base44.asServiceRole.entities.Communication.updateMany(

@@ -29,16 +29,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // WhatsApp notification to michal about cancellation
-    await base44.asServiceRole.entities.Communication.create({
+    // Internal task for Michal about cancellation (not sent to client)
+    await base44.asServiceRole.entities.Task.create({
+      title: `⚠️ פרויקט "${data.name}" בוטל — בדקי לקוח ${client.name} (${client.phone})`,
+      type: 'manual',
+      priority: 'high',
+      status: 'open',
       client_id: clientId,
       project_id: projectId,
-      type: 'whatsapp',
-      direction: 'outbound',
-      content: `⚠️ פרויקט "${data.name}" בוטל — בדקי לקוח ${client.name} (${client.phone})`,
-      sent_by: 'system',
-      status: 'pending',
-      channel: 'base44_native',
+      due_date: new Date().toISOString().split('T')[0],
+      auto_generated: true,
     });
 
     // System log
