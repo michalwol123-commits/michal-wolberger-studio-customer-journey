@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PageHeader from '@/components/shared/PageHeader';
 import useCurrentUser from '@/lib/useCurrentUser';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navigate } from 'react-router-dom';
@@ -12,6 +13,13 @@ import PushNotificationsCard from '@/components/settings/PushNotificationsCard';
 export default function SettingsPage() {
   const { user, isAdmin, loading } = useCurrentUser();
 
+  // Not logged in (e.g. the iPhone home-screen app has its own storage): log in and come back here.
+  // No hash in the return URL, so the access_token query param lands in location.search.
+  useEffect(() => {
+    if (!loading && !user) base44.auth.redirectToLogin(`${window.location.origin}/settings`);
+  }, [loading, user]);
+
+  if (!loading && !user) return null;
   if (!loading && !isAdmin) return <Navigate to="/" />;
 
   return (
