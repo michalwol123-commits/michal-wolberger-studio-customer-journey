@@ -1,5 +1,6 @@
 import React from 'react';
 import ArtIcon from './ArtIcon';
+import { getRoomSections } from '@/components/questionnaire/roomQuestions';
 
 const STYLE_LABELS = {
   modern: 'מודרני', country: 'כפרי', elegant: 'אלגנטי',
@@ -81,6 +82,7 @@ export default function DetailedQuestionnaireResults({ questionnaire }) {
           { label: 'סגנון אירוח', value: r.hosting_style },
           { label: 'הערות', value: r.dining_notes },
         ]} />
+        {getRoomSections(r).map(s => <Section key={s.title} title={s.title} rows={s.rows} />)}
       </div>
     </div>
   );

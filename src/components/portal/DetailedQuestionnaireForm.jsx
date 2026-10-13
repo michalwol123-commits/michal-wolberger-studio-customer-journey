@@ -10,6 +10,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import RoomSelectSection from '@/components/portal/RoomSelectSection';
+import RoomSection from '@/components/portal/RoomSection';
+import { ROOMS } from '@/components/questionnaire/roomQuestions';
 
 const DESIGN_STYLES = [
   { value: 'modern', label: 'מודרני' },
@@ -50,7 +53,7 @@ const DINING_ITEMS = [
 ];
 
 export default function DetailedQuestionnaireForm({ questionnaire, projectId, clientId, onSubmitted }) {
-  const [step, setStep] = useState(0); // 0=כללי, 1=סלון, 2=פינת אוכל
+  const [step, setStep] = useState(0); // 0=כללי, 1=בחירת חללים, 2=סלון, 3=פינת אוכל, 4+=חללים נבחרים
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     residents: '', birth_dates: '', time_area: '', time_area_other: '',
@@ -61,6 +64,7 @@ export default function DetailedQuestionnaireForm({ questionnaire, projectId, cl
     // פינת אוכל
     dining_items: [], dining_items_other: '', table_seats: '',
     hosting_style: '', dining_notes: '',
+    selected_rooms: [],
   });
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -94,23 +98,27 @@ export default function DetailedQuestionnaireForm({ questionnaire, projectId, cl
     onSubmitted?.();
   };
 
+  const chosenRooms = ROOMS.filter(r => (form.selected_rooms || []).includes(r.id));
   const steps = [
     { title: 'פרטים כלליים' },
+    { title: 'החללים בבית' },
     { title: 'סלון' },
     { title: 'פינת אוכל' },
+    ...chosenRooms.map(r => ({ title: r.title, room: r })),
   ];
+  const last = steps.length - 1;
 
   return (
     <div className="space-y-4">
       {/* Progress */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto">
             {steps.map((s, i) => (
               <button
                 key={i}
                 onClick={() => setStep(i)}
-                className="flex-1 text-center py-3 px-3 text-sm transition-all"
+                className="flex-1 min-w-[96px] shrink-0 text-center py-3 px-3 text-sm transition-all"
                 style={step === i
                   ? { background: '#2a1f18', color: '#f5f0eb' }
                   : i < step
@@ -127,8 +135,10 @@ export default function DetailedQuestionnaireForm({ questionnaire, projectId, cl
 
       <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
         {step === 0 && <GeneralSection form={form} update={update} />}
-        {step === 1 && <LivingRoomSection form={form} update={update} toggleCheckbox={toggleCheckbox} />}
-        {step === 2 && <DiningSection form={form} update={update} toggleCheckbox={toggleCheckbox} />}
+        {step === 1 && <RoomSelectSection form={form} toggleCheckbox={toggleCheckbox} />}
+        {step === 2 && <LivingRoomSection form={form} update={update} toggleCheckbox={toggleCheckbox} />}
+        {step === 3 && <DiningSection form={form} update={update} toggleCheckbox={toggleCheckbox} />}
+        {steps[step]?.room && <RoomSection room={steps[step].room} form={form} update={update} toggleCheckbox={toggleCheckbox} />}
       </motion.div>
 
       {/* Navigation */}
@@ -137,7 +147,7 @@ export default function DetailedQuestionnaireForm({ questionnaire, projectId, cl
           {step > 0 ? (
             <Button variant="outline" onClick={() => setStep(step - 1)}>הקודם</Button>
           ) : <div />}
-          {step < 2 ? (
+          {step < last ? (
             <Button onClick={() => setStep(step + 1)}>הבא</Button>
           ) : (
             <Button onClick={handleSubmit} disabled={submitting} className="gap-2">
