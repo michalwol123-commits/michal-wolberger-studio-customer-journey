@@ -1,6 +1,6 @@
 import React from 'react';
 import ArtIcon from './ArtIcon';
-import { getRoomSections } from '@/components/questionnaire/roomQuestions';
+import { getRoomSections, showLegacySpace } from '@/components/questionnaire/roomQuestions';
 
 const STYLE_LABELS = {
   modern: 'מודרני', country: 'כפרי', elegant: 'אלגנטי',
@@ -66,7 +66,7 @@ export default function DetailedQuestionnaireResults({ questionnaire }) {
           { label: 'צבעים מועדפים', value: r.preferred_colors },
           { label: 'צבעים שלא', value: r.disliked_colors },
         ]} />
-        <Section title="סלון" rows={[
+        {showLegacySpace(r, 'living') && <Section title="סלון" rows={[
           { label: 'פריטים חשובים', value: r.living_items },
           { label: 'פריטים נוספים', value: r.living_items_other },
           { label: 'גודל טלוויזיה', value: r.tv_size },
@@ -74,14 +74,14 @@ export default function DetailedQuestionnaireResults({ questionnaire }) {
           { label: 'סוג ישיבה', value: SEATING_LABELS[r.seating_type] || r.seating_other },
           { label: 'רהיטים קיימים', value: r.existing_furniture },
           { label: 'הערות', value: r.living_notes },
-        ]} />
-        <Section title="פינת אוכל" rows={[
+        ]} />}
+        {showLegacySpace(r, 'dining') && <Section title="פינת אוכל" rows={[
           { label: 'פריטים חשובים', value: r.dining_items?.map(v => DINING_LABELS[v] || v) },
           { label: 'פריטים נוספים', value: r.dining_items_other },
           { label: 'מספר סועדים', value: r.table_seats },
           { label: 'סגנון אירוח', value: r.hosting_style },
           { label: 'הערות', value: r.dining_notes },
-        ]} />
+        ]} />}
         {getRoomSections(r).map(s => <Section key={s.title} title={s.title} rows={s.rows} />)}
       </div>
     </div>

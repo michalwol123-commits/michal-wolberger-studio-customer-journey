@@ -100,6 +100,19 @@ export const ROOMS = [
   },
 ];
 
+const LEGACY_FIELDS = {
+  living: ['living_items', 'living_items_other', 'tv_size', 'accent_wall', 'seating_type', 'seating_other', 'existing_furniture', 'living_notes'],
+  dining: ['dining_items', 'dining_items_other', 'table_seats', 'hosting_style', 'dining_notes'],
+};
+
+export const ALL_SPACES = [{ id: 'living', title: 'סלון' }, { id: 'dining', title: 'פינת אוכל' }, ...ROOMS];
+
+export const spaceFieldIds = (id) =>
+  LEGACY_FIELDS[id] || (ROOMS.find(r => r.id === id)?.fields.map(f => f.id) ?? []);
+
+// living/dining shown in results: always for older questionnaires, otherwise only if selected
+export const showLegacySpace = (r, id) => !r.spaces_v2 || (r.selected_rooms || []).includes(id);
+
 // rows for result views: [{ title, rows: [{label, value}] }]
 export function getRoomSections(r) {
   const selected = r.selected_rooms || [];

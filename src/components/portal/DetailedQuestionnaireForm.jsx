@@ -12,7 +12,8 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import RoomSelectSection from '@/components/portal/RoomSelectSection';
 import RoomSection from '@/components/portal/RoomSection';
-import { ROOMS } from '@/components/questionnaire/roomQuestions';
+import RemoveSpaceButton from '@/components/portal/RemoveSpaceButton';
+import { ALL_SPACES, spaceFieldIds } from '@/components/questionnaire/roomQuestions';
 
 const DESIGN_STYLES = [
   { value: 'modern', label: 'מודרני' },
@@ -80,7 +81,7 @@ export default function DetailedQuestionnaireForm({ questionnaire, projectId, cl
     const data = {
       type: 'detailed',
       status: 'submitted',
-      responses: JSON.stringify(form),
+      responses: JSON.stringify({ ...form, spaces_v2: true }),
       submitted_at: new Date().toISOString(),
       stage: 5,
       client_id: clientId,
@@ -98,15 +99,27 @@ export default function DetailedQuestionnaireForm({ questionnaire, projectId, cl
     onSubmitted?.();
   };
 
-  const chosenRooms = ROOMS.filter(r => (form.selected_rooms || []).includes(r.id));
+  const chosen = ALL_SPACES.filter(s => (form.selected_rooms || []).includes(s.id));
   const steps = [
     { title: 'פרטים כלליים' },
     { title: 'החללים בבית' },
-    { title: 'סלון' },
-    { title: 'פינת אוכל' },
-    ...chosenRooms.map(r => ({ title: r.title, room: r })),
+    ...chosen.map(s => ({ title: s.title, space: s })),
   ];
   const last = steps.length - 1;
+  const current = steps[step]?.space;
+
+  const removeSpace = (id) => {
+    setForm(prev => {
+      const next = { ...prev, selected_rooms: (prev.selected_rooms || []).filter(x => x !== id) };
+      spaceFieldIds(id).forEach(f => { next[f] = Array.isArray(prev[f]) ? [] : ''; });
+      return next;
+    });
+    setStep(s => Math.min(s, last - 1));
+  };
+  const toggleSpace = (id) => {
+    if ((form.selected_rooms || []).includes(id)) removeSpace(id);
+    else toggleCheckbox('selected_rooms', id);
+  };
 
   return (
     <div className="space-y-4">
@@ -135,10 +148,11 @@ export default function DetailedQuestionnaireForm({ questionnaire, projectId, cl
 
       <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
         {step === 0 && <GeneralSection form={form} update={update} />}
-        {step === 1 && <RoomSelectSection form={form} toggleCheckbox={toggleCheckbox} />}
-        {step === 2 && <LivingRoomSection form={form} update={update} toggleCheckbox={toggleCheckbox} />}
-        {step === 3 && <DiningSection form={form} update={update} toggleCheckbox={toggleCheckbox} />}
-        {steps[step]?.room && <RoomSection room={steps[step].room} form={form} update={update} toggleCheckbox={toggleCheckbox} />}
+        {step === 1 && <RoomSelectSection form={form} onToggle={toggleSpace} />}
+        {current && <RemoveSpaceButton title={current.title} onRemove={() => removeSpace(current.id)} />}
+        {current?.id === 'living' && <LivingRoomSection form={form} update={update} toggleCheckbox={toggleCheckbox} />}
+        {current?.id === 'dining' && <DiningSection form={form} update={update} toggleCheckbox={toggleCheckbox} />}
+        {current?.fields && <RoomSection room={current} form={form} update={update} toggleCheckbox={toggleCheckbox} />}
       </motion.div>
 
       {/* Navigation */}

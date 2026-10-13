@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClipboardList, CheckCircle2, Clock } from 'lucide-react';
-import { getRoomSections } from '@/components/questionnaire/roomQuestions';
+import { getRoomSections, showLegacySpace } from '@/components/questionnaire/roomQuestions';
 
 const STYLE_LABELS = {
   modern: 'מודרני', country: 'כפרי', industrial: 'תעשייתי',
@@ -157,8 +157,8 @@ function QuestionnaireCard({ questionnaire }) {
             {isDetailed && detailedRows && (
               <>
                 {detailedRows.general.length > 0 && <SectionBlock title="🏠 כללי" rows={detailedRows.general} />}
-                {detailedRows.living.length > 0 && <SectionBlock title="🛋️ סלון" rows={detailedRows.living} />}
-                {detailedRows.dining.length > 0 && <SectionBlock title="🍽️ פינת אוכל" rows={detailedRows.dining} />}
+                {showLegacySpace(responses, 'living') && detailedRows.living.length > 0 && <SectionBlock title="🛋️ סלון" rows={detailedRows.living} />}
+                {showLegacySpace(responses, 'dining') && detailedRows.dining.length > 0 && <SectionBlock title="🍽️ פינת אוכל" rows={detailedRows.dining} />}
                 {getRoomSections(responses).map(s => <SectionBlock key={s.title} title={s.title} rows={s.rows} />)}
               </>
             )}
