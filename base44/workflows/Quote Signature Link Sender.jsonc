@@ -2,10 +2,11 @@
   "name": "Quote Signature Link Sender",
   "description": "\u05e9\u05d5\u05dc\u05d7 \u05de\u05d9\u05d9\u05dc + \u05d5\u05d5\u05d0\u05d8\u05e1\u05d0\u05e4 \u05e2\u05dd \u05e7\u05d9\u05e9\u05d5\u05e8 \u05d7\u05ea\u05d9\u05de\u05d4 \u05db\u05e9\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d4\u05e6\u05e2\u05d4 \u05de\u05e9\u05ea\u05e0\u05d4 \u05dc\"\u05e0\u05e9\u05dc\u05d7\u05d4 \u05d4\u05e6\u05e2\u05d4 \u05dc\u05d7\u05ea\u05d9\u05de\u05d4\" \u05d0\u05d5 \"\u05e0\u05e9\u05dc\u05d7 \u05d4\u05e1\u05db\u05dd \u05dc\u05d7\u05ea\u05d9\u05de\u05d4\"",
   "trigger": {
-    "condition": "${ ((.trigger.changed_fields | index(\"status\") != null) and (.trigger.data.status == \"sent_for_signature\" or .trigger.data.status == \"contract_sent_for_signature\")) }",
+    "condition": "${ (.trigger.data.status == \"sent_for_signature\" or .trigger.data.status == \"contract_sent_for_signature\") }",
     "config": {
       "trigger_type": "entity",
       "events": [
+        "create",
         "update"
       ],
       "entity_name": "Quote"

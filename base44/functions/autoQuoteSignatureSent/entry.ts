@@ -18,10 +18,11 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const { data, old_data, event } = await req.json();
 
-    if (!data || !old_data || !event) return Response.json({ skipped: true });
+    if (!data || !event) return Response.json({ skipped: true });
 
+    // create: no old_data — proceed if created directly in a signature status
     const target = TARGETS[data.status];
-    if (!target || old_data.status === data.status) {
+    if (!target || (old_data && old_data.status === data.status)) {
       return Response.json({ skipped: true, reason: 'not a signature status transition' });
     }
 

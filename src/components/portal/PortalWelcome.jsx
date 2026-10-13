@@ -17,8 +17,18 @@ export default function PortalWelcome() {
 
   // Get latest sent/viewed quote only
   const latestQuote = quotes
-    .filter(q => ['sent', 'viewed'].includes(q.status))
+    .filter(q => ['sent', 'viewed', 'sent_for_signature', 'contract_sent_for_signature'].includes(q.status))
     .sort((a, b) => (b.version || 0) - (a.version || 0))[0];
+
+  const signDocType = { sent_for_signature: 'quote', contract_sent_for_signature: 'contract' }[latestQuote?.status];
+  const { data: signDocs = [] } = useQuery({
+    queryKey: ['portal-sign-docs', latestQuote?.id, signDocType],
+    queryFn: () => base44.entities.Document.filter({ quote_id: latestQuote.id, type: signDocType, signature_status: 'pending_signature' }),
+    enabled: !!signDocType,
+  });
+  const signDoc = [...signDocs].sort((a, b) =>
+    (b.version_number || 1) - (a.version_number || 1) || new Date(b.created_date || 0) - new Date(a.created_date || 0)
+  )[0];
 
   const updateQuote = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Quote.update(id, data),
@@ -102,6 +112,14 @@ export default function PortalWelcome() {
                   <button onClick={handleReject} disabled={updateQuote.isPending} className="p-btn-outline flex-1">
                     דחיית ההצעה
                   </button>
+                </div>
+              )}
+
+              {signDocType && signDoc?.signature_token && (
+                <div className="pt-2 max-w-md mx-auto">
+                  <a href={`/sign?token=${signDoc.signature_token}`} className="p-btn w-full">
+                    לצפייה וחתימה <span className="p-arrow">←</span>
+                  </a>
                 </div>
               )}
 

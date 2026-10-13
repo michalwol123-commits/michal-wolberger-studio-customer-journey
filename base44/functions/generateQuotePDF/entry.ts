@@ -304,7 +304,12 @@ Deno.serve(async (req) => {
         // total amount — sits on the "סך ____" underline
         put(amountStr, 53, 207, 'center', 12);
         // signing date — full sentence overlaid (line removed from the Canva template), centered below title
-        const signLine = `שנחתם ביום ${WEEKDAYS_HE[contractD.getDay()]} לחודש ${contractD.getMonth() + 1} שנת ${String(contractD.getFullYear()).slice(-2)}`;
+        // "בעיר מזכרת בתיה" is baked into the template — mask it, then print the property city
+        doc.setFillColor(196, 175, 156);
+        doc.rect(72, 194.5, 64, 8.5, 'F');
+        doc.setTextColor(58, 42, 30);
+        put(city ? `בעיר ${city}` : 'בעיר ____________', 105, 200.8, 'center', 12);
+        const signLine = `שנחתם ביום ${contractD.getDate()} לחודש ${contractD.getMonth() + 1} שנת ${String(contractD.getFullYear()).slice(-2)}`;
         put(signLine, 105, 49, 'center', 13);
         // "על בסיס הצעת מחיר מיום ___": template has a baked-in date — mask it, then print the real quote date
         doc.setFillColor(196, 175, 156);

@@ -15,7 +15,10 @@ Deno.serve(async (req) => {
   const user = await base44.auth.me();
   if (user?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-  const { client_id, content, subject } = await req.json();
+  const body0 = await req.json();
+  const { client_id, subject } = body0;
+  // never send builder-preview links to clients — rewrite to the live app
+  const content = String(body0.content || '').replace(/https?:\/\/preview-[^\/\s]*\.base44\.app/g, 'https://michal-design-flow.base44.app');
   if (!client_id || !content) return Response.json({ error: 'client_id and content required' }, { status: 400 });
 
   const client = await base44.asServiceRole.entities.Client.get(client_id);
