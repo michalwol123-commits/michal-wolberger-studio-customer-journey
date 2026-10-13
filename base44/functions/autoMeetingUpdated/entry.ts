@@ -3,6 +3,7 @@
 // If no google_event_id → create calendar event
 // If google_event_id exists → update the existing calendar event
 // Emails sent via Brevo (Communication pending → sendEmail picks it up)
+import { israelDateOf } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const MEETING_TYPE_LABELS = {
@@ -142,7 +143,7 @@ Deno.serve(async (req) => {
 
     // --- 3. Sync meeting date to linked Quote ---
     if (data.type === 'quote_presentation' && data.quote_id) {
-      const meetingDate = scheduledAt.toISOString().split('T')[0];
+      const meetingDate = israelDateOf(scheduledAt);
       await base44.asServiceRole.entities.Quote.update(data.quote_id, {
         meeting_date: meetingDate,
       });

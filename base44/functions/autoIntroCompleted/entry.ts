@@ -1,6 +1,7 @@
 // Called from frontend when intro meeting is completed
 // Action: "continue" → update client to qualified, create quote_presentation meeting, trigger qualifying payment flow
 // Action: "not_interested" → archive client
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -52,7 +53,7 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.Meeting.create(meetingData);
 
       // Create payment for quote presentation meeting (₪250)
-      const today = new Date().toISOString().split('T')[0];
+      const today = israelToday();
       await base44.asServiceRole.entities.Payment.create({
         client_id: client.id,
         milestone: 'היכרות והצגת הצעת מחיר',
@@ -63,7 +64,7 @@ Deno.serve(async (req) => {
       });
 
       // Create task for quote presentation prep
-      const dueDateTask = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const dueDateTask = israelToday(7);
       await base44.asServiceRole.entities.Task.create({
         client_id: client.id,
         title: `הכנת פגישת הצעת מחיר — ${clientName}`,

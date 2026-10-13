@@ -1,3 +1,4 @@
+import { israelToday, israelDateOf } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const MEETING_TYPE_LABELS = {
@@ -98,7 +99,7 @@ Deno.serve(async (req) => {
           client_id: client.id,
           milestone: 'היכרות והצגת הצעת מחיר',
           amount: Number(data.meeting_price),
-          due_date: new Date().toISOString().split('T')[0],
+          due_date: israelToday(),
           status: 'pending',
         });
         console.log('Payment created for meeting price:', data.meeting_price);
@@ -222,7 +223,7 @@ Deno.serve(async (req) => {
 
     // Sync meeting date to linked Quote (if quote_presentation with quote_id)
     if (data.type === 'quote_presentation' && data.quote_id && data.scheduled_at) {
-      const meetingDate = scheduledAt.toISOString().split('T')[0];
+      const meetingDate = israelDateOf(scheduledAt);
       await base44.asServiceRole.entities.Quote.update(data.quote_id, {
         meeting_date: meetingDate,
       });

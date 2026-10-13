@@ -2,6 +2,7 @@
 // Trigger: Scheduled (every 30 min)
 // Condition: Quote status=sent AND sent_at > 48h ago AND not viewed
 // Action: Task + Communication (pending)
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
         priority: 'high',
         status: 'open',
         client_id: quote.client_id,
-        due_date: new Date().toISOString().split('T')[0],
+        due_date: israelToday(),
         auto_generated: true,
       });
 

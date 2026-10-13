@@ -1,5 +1,6 @@
 // Automation: Stage-based task creation + client status updates
 // Triggers on Project update when s*_status fields change
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -24,7 +25,7 @@ Deno.serve(async (req) => {
         client_id: clientId,
         project_id: projectId,
         related_stage: 3,
-        due_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        due_date: israelToday(3),
         auto_generated: true,
       });
       actions.push('created_quote_task');

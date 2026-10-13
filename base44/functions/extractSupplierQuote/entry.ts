@@ -1,3 +1,4 @@
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -23,7 +24,7 @@ Deno.serve(async (req) => {
       if (current?.quote_history) {
         try { history = JSON.parse(current.quote_history); } catch (_) { history = []; }
       }
-      history.push({ file_url, amount: override_amount, date: new Date().toISOString().split('T')[0] });
+      history.push({ file_url, amount: override_amount, date: israelToday() });
 
       const updateData = {
         attachment_url: file_url,
@@ -110,7 +111,7 @@ carpenter, electrician, plumber, painter, ac, kitchen, flooring, stainless, glas
       history.push({
         file_url,
         amount,
-        date: new Date().toISOString().split('T')[0]
+        date: israelToday()
       });
 
       const updateData = {

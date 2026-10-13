@@ -1,6 +1,7 @@
 // generateFieldReport — יצירת PDF דוח ביקור שטח + שליחה ישירה דרך Brevo
 // Trigger: FieldVisit record_updated — כאשר report_requested_at משתנה
 // OR: Called directly with { visitId, mode: 'preview' } for preview without email
+import { formatIsraelDate } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 
@@ -217,7 +218,7 @@ Deno.serve(async (req) => {
       doc.setTextColor(...COLORS.gray);
       put('הוכן ע"י: מיכל וולברגר, מעצבת פנים', W - margin, fy + 5, 'right', 8);
       put('MICHAL WOLBERGER INTERIOR DESIGN', margin, fy + 5, 'left', 8);
-      put('נוצר: ' + new Date().toLocaleDateString('he-IL'), W - margin, fy + 10, 'right', 8);
+      put('נוצר: ' + formatIsraelDate(), W - margin, fy + 10, 'right', 8);
     }
 
     // Upload PDF

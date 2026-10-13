@@ -1,6 +1,7 @@
 // Automation I — State Machine Enforcement
 // Trigger: record_updated on Client, Project, Quote, Task, Payment
 // Uses last_valid_status field to detect and break rollback loops
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const TRANSITIONS = {
@@ -92,7 +93,7 @@ Deno.serve(async (req) => {
 
       // Auto-fill end_date_actual on Project completion
       if (entityName === 'Project' && newStatus === 'completed') {
-        updatePayload.end_date_actual = new Date().toISOString().split('T')[0];
+        updatePayload.end_date_actual = israelToday();
       }
 
       const entityApi = base44.asServiceRole.entities[entityName];

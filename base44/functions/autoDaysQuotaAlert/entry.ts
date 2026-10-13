@@ -1,3 +1,4 @@
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Entity automation: Project update
@@ -61,7 +62,7 @@ Deno.serve(async (req) => {
         type: 'manual',
         status: 'open',
         priority: remaining === 0 ? 'urgent' : 'high',
-        due_date: new Date().toISOString().split('T')[0],
+        due_date: israelToday(),
         auto_generated: true,
       });
 

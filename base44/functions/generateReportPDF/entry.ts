@@ -1,5 +1,6 @@
 // Generate Report PDF via PDFMonkey
 // Receives report_type + data from frontend, builds HTML payload, sends to PDFMonkey
+import { formatIsraelDate } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -24,7 +25,7 @@ function buildProjectsHTML(data) {
 
   return `
     <h2>דוח פרויקטים — סטודיו מיכל וולברגר</h2>
-    <p>תאריך: ${new Date().toLocaleDateString('he-IL')}</p>
+    <p>תאריך: ${formatIsraelDate()}</p>
     <p>סה״כ פרויקטים פעילים: ${active.length}</p>
     <table>
       <thead><tr><th>פרויקט</th><th>לקוח</th><th>סטטוס</th><th>שלב</th><th>התקדמות</th><th>תקציב</th></tr></thead>
@@ -56,7 +57,7 @@ function buildFinancialHTML(data) {
 
   return `
     <h2>דוח כספי — סטודיו מיכל וולברגר</h2>
-    <p>תאריך: ${new Date().toLocaleDateString('he-IL')}</p>
+    <p>תאריך: ${formatIsraelDate()}</p>
     <p>סה״כ צפוי: ₪${totalExpected.toLocaleString()} | שולם: ₪${totalPaid.toLocaleString()}</p>
     <table>
       <thead><tr><th>פרויקט</th><th>אבן דרך</th><th>סכום</th><th>שולם</th><th>תאריך יעד</th><th>סטטוס</th></tr></thead>
@@ -84,7 +85,7 @@ function buildLeadsHTML(data) {
 
   return `
     <h2>דוח לידים — סטודיו מיכל וולברגר</h2>
-    <p>תאריך: ${new Date().toLocaleDateString('he-IL')}</p>
+    <p>תאריך: ${formatIsraelDate()}</p>
     <p>סה״כ: ${clients.length} | לידים פעילים: ${leads.length} | המרה: ${clients.length > 0 ? Math.round((converted.length / clients.length) * 100) : 0}%</p>
     <table>
       <thead><tr><th>שם</th><th>טלפון</th><th>מקור</th><th>סטטוס</th><th>תקציב</th></tr></thead>
@@ -122,7 +123,7 @@ function buildSuppliersHTML(data) {
 
   return `
     <h2>דוח ספקים — סטודיו מיכל וולברגר</h2>
-    <p>תאריך: ${new Date().toLocaleDateString('he-IL')}</p>
+    <p>תאריך: ${formatIsraelDate()}</p>
     <p>ספקים פעילים: ${active.length}</p>
     <table>
       <thead><tr><th>שם</th><th>קטגוריה</th><th>דירוג</th><th>רמת מחיר</th><th>פרויקטים</th><th>סכום מוסכם</th></tr></thead>
@@ -180,7 +181,7 @@ Deno.serve(async (req) => {
           payload: {
             title,
             html_content: htmlContent,
-            date: new Date().toLocaleDateString('he-IL'),
+            date: formatIsraelDate(),
             studio_name: 'סטודיו מיכל וולברגר',
           },
           meta: { source: 'michal_studio_reports', report_type },

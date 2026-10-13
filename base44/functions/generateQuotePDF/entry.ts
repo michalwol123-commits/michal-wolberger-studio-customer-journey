@@ -1,5 +1,6 @@
 // Generate the full quote+contract PDF for Michal Wolberger Interior Design.
 // Supports `part`: 'full' (default, all 27 pages), 'quote' (pages 1-23), 'contract' (pages 24-27).
+import { israelTodayDate } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { jsPDF } from 'npm:jspdf@4.0.0';
 
@@ -136,7 +137,7 @@ Deno.serve(async (req) => {
       doc.setR2L(false);
     };
 
-    const today = new Date();
+    const today = israelTodayDate();
     const coverDate = today.toLocaleDateString('he-IL');
     // short date d.m.yy — matches the contract template style (e.g. 25.5.26)
     const shortDate = (d) => `${d.getDate()}.${d.getMonth() + 1}.${String(d.getFullYear()).slice(-2)}`;

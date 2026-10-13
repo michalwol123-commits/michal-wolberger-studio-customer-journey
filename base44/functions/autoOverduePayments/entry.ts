@@ -2,12 +2,13 @@
 // Trigger: Scheduled (daily at 08:00)
 // Condition: Payment status=pending AND due_date < today
 // Action: Update to overdue + Task + Communication
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = israelToday();
 
     const payments = await base44.asServiceRole.entities.Payment.filter({ status: 'pending' });
     let actioned = 0;

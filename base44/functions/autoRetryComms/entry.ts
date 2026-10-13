@@ -1,5 +1,6 @@
 // Automation K — Communication Retry
 // Trigger: Scheduled every 5 minutes
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -34,7 +35,7 @@ Deno.serve(async (req) => {
           status: 'open',
           client_id: comm.client_id || '',
           project_id: comm.project_id || '',
-          due_date: new Date().toISOString().split('T')[0],
+          due_date: israelToday(),
           auto_generated: true,
         });
         finalFailed++;

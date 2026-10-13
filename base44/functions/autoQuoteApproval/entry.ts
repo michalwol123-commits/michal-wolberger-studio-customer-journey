@@ -1,6 +1,7 @@
 // Automation J — Quote Approved → Create Project + Payments
 // Trigger: Quote record_updated (status changed to approved)
 // Action: Create Project + Payment milestones + Update client status + Portal token
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -47,7 +48,7 @@ Deno.serve(async (req) => {
         stage_current: 4,
         progress: 0,
         total_budget: data.total_amount || 0,
-        start_date: new Date().toISOString().split('T')[0],
+        start_date: israelToday(),
         s1_status: 'completed',
         s2_status: 'completed',
         s3_status: 'completed',
@@ -66,7 +67,7 @@ Deno.serve(async (req) => {
       ];
 
       for (const ms of milestones) {
-        const dueDate = new Date(Date.now() + ms.daysOffset * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const dueDate = israelToday(ms.daysOffset);
         await base44.asServiceRole.entities.Payment.create({
           client_id: clientId,
           project_id: project.id,

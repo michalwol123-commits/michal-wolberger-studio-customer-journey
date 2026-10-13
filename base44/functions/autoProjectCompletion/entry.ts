@@ -1,6 +1,7 @@
 // Automation G — Project Completion
 // Trigger: Project record_updated (status changed to completed)
 // Action: Update client status + generate portal token + Communication (pending NPS) + Task
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -23,7 +24,7 @@ Deno.serve(async (req) => {
 
     // Update project end date
     await base44.asServiceRole.entities.Project.update(projectId, {
-      end_date_actual: new Date().toISOString().split('T')[0],
+      end_date_actual: israelToday(),
     });
 
     // Check if client has other active projects
@@ -64,7 +65,7 @@ Deno.serve(async (req) => {
       status: 'open',
       client_id: clientId,
       project_id: projectId,
-      due_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      due_date: israelToday(3),
       auto_generated: true,
     });
 

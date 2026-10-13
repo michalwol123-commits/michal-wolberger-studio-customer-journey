@@ -1,3 +1,4 @@
+import { formatIsraelDate } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Entity automation: Project update
@@ -34,7 +35,7 @@ Deno.serve(async (req) => {
     const client = clients[0];
     if (!client?.email) return Response.json({ skipped: 'no client email' });
 
-    const today = new Date().toLocaleDateString('he-IL');
+    const today = formatIsraelDate();
     const summaryLines = incremented.map(dt => {
       const actual = data[dt.actualKey] || 0;
       const plannedKey = dt.actualKey.replace('_actual', '_planned');

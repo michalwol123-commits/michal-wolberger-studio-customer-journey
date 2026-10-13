@@ -1,6 +1,7 @@
 // Automation D — Stage Advance Notification
 // Trigger: Project record_updated (stage_current changed)
 // Action: Communication (pending) to client + Task for next stage prep
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const STAGE_NAMES = {
@@ -76,7 +77,7 @@ Deno.serve(async (req) => {
       client_id: clientId,
       project_id: projectId,
       related_stage: newStage,
-      due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      due_date: israelToday(2),
       auto_generated: true,
     });
 

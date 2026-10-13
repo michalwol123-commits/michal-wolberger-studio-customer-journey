@@ -1,3 +1,4 @@
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -13,7 +14,7 @@ Deno.serve(async (req) => {
     const milestones = await base44.asServiceRole.entities.ProjectMilestone.filter({});
 
     const now = new Date();
-    const today = now.toISOString().slice(0, 10);
+    const today = israelToday();
     let alertsCreated = 0;
 
     for (const milestone of milestones) {

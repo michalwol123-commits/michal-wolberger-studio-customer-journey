@@ -1,3 +1,4 @@
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -30,7 +31,7 @@ Deno.serve(async (req) => {
       type: 'manual',
       status: 'open',
       priority: 'high',
-      due_date: new Date().toISOString().split('T')[0],
+      due_date: israelToday(),
     });
 
     // Log communication

@@ -2,6 +2,7 @@
 // Trigger: Scheduled (daily at 09:00)
 // Condition: Payment status=pending AND due_date within 3 days
 // Action: Task + Communication (pending)
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -9,8 +10,8 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const now = new Date();
     const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-    const todayStr = now.toISOString().split('T')[0];
-    const thresholdStr = threeDaysLater.toISOString().split('T')[0];
+    const todayStr = israelToday();
+    const thresholdStr = israelToday(3);
 
     const payments = await base44.asServiceRole.entities.Payment.filter({ status: 'pending' });
     let actioned = 0;

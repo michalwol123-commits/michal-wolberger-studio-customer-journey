@@ -1,3 +1,4 @@
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
       const diff = totalActual - totalPlanned;
 
       // Check if we already created an alert today for this project
-      const today = new Date().toISOString().slice(0, 10);
+      const today = israelToday();
       const existingTasks = await base44.asServiceRole.entities.Task.filter({
         project_id: project.id,
         type: 'automation_failed',
@@ -45,7 +46,7 @@ Deno.serve(async (req) => {
         type: 'automation_failed',
         priority: overrunPct > 25 ? 'urgent' : 'high',
         status: 'open',
-        due_date: new Date().toISOString().slice(0, 10),
+        due_date: israelToday(),
         auto_generated: true,
       });
 

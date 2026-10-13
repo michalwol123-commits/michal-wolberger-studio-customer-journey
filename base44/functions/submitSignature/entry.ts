@@ -1,4 +1,5 @@
 // Public function — embeds signature into the original PDF using pdf-lib, then saves
+import { formatIsraelDate, formatIsraelDateTime } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { PDFDocument, rgb, StandardFonts } from 'npm:pdf-lib@1.17.1';
 
@@ -23,7 +24,7 @@ Deno.serve(async (req) => {
     if (doc.signature_status === 'signed') return Response.json({ error: 'already_signed' }, { status: 410 });
 
     const signedAt = new Date().toISOString();
-    const signedAtDisplay = new Date().toLocaleString('he-IL');
+    const signedAtDisplay = formatIsraelDateTime();
 
     // --- Embed signature into the original PDF ---
     let signedPdfUrl = null;
@@ -78,7 +79,7 @@ Deno.serve(async (req) => {
         x: sigX, y: sigY + sigH + 5,
         size: 7, font, color: rgb(0.65, 0.65, 0.65),
       });
-      const dateStr = new Date().toLocaleDateString('en-GB');
+      const dateStr = formatIsraelDate(new Date(), 'en-GB');
       lastPage.drawText('Signed: ' + dateStr, {
         x: sigX, y: sigY - 18,
         size: 8, font, color: rgb(0.4, 0.4, 0.4),

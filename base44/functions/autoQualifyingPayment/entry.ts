@@ -1,5 +1,6 @@
 // Automation: Create payment + reminder + prep tasks when client moves to qualified (after intro meeting)
 // Trigger: Client entity — update event, status changed to "qualified"
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
     }
 
     // Due date = 3 days from now
-    const dueDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const dueDate = israelToday(3);
 
     // Create payment for quote presentation meeting (stage 3)
     await base44.asServiceRole.entities.Payment.create({

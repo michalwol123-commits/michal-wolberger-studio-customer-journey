@@ -1,6 +1,7 @@
 // PRD 3.3 — Projects Cancel Guard
 // Trigger: Project updated to cancelled
 // Action: Update Client status to on_hold + WhatsApp to michal + Communication log
+import { israelToday } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -37,7 +38,7 @@ Deno.serve(async (req) => {
       status: 'open',
       client_id: clientId,
       project_id: projectId,
-      due_date: new Date().toISOString().split('T')[0],
+      due_date: israelToday(),
       auto_generated: true,
     });
 

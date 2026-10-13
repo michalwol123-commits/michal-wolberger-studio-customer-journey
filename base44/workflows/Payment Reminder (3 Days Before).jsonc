@@ -1,15 +1,13 @@
 {
-  "name": "Payment Reminder (3 Days Before)",
-  "description": "\u05ea\u05d6\u05db\u05d5\u05e8\u05ea 3 \u05d9\u05de\u05d9\u05dd \u05dc\u05e4\u05e0\u05d9 \u05ea\u05e9\u05dc\u05d5\u05dd",
   "trigger": {
     "condition": null,
     "config": {
       "trigger_type": "scheduled",
       "events": [],
       "schedule_mode": "recurring",
-      "cron_expression": "0 6 * * *",
+      "cron_expression": "0 9 * * *",
       "one_time_date": null,
-      "timezone": "UTC",
+      "timezone": "Asia/Jerusalem",
       "interval_value": null,
       "interval_unit": null,
       "interval_anchor": null,
@@ -18,6 +16,7 @@
       "ends_after_count": null
     }
   },
+  "name": "Payment Reminder (3 Days Before)",
   "definition": {
     "document": {
       "dsl": "1.0.0",
@@ -38,6 +37,7 @@
       }
     ]
   },
+  "description": "\u05ea\u05d6\u05db\u05d5\u05e8\u05ea 3 \u05d9\u05de\u05d9\u05dd \u05dc\u05e4\u05e0\u05d9 \u05ea\u05e9\u05dc\u05d5\u05dd",
   "x-base44-migrated-from-automation": {
     "legacy_payload_function": "autoPaymentReminder"
   }

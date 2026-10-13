@@ -1,13 +1,14 @@
 // Birthday & Anniversary Greetings Automation
 // Trigger: Scheduled daily at 09:00 Israel time
 // Sends WhatsApp (Green API) + Email (Brevo) greetings
+import { israelTodayDate } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const today = new Date();
+    const today = israelTodayDate();
     const todayMonth = today.getMonth() + 1;
     const todayDay = today.getDate();
     const todayStr = `${today.getFullYear()}-${String(todayMonth).padStart(2,'0')}-${String(todayDay).padStart(2,'0')}`;
