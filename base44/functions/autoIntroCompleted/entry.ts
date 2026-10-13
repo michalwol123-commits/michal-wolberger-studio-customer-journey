@@ -33,6 +33,11 @@ Deno.serve(async (req) => {
 
     const clientName = client.name || 'לקוח';
 
+    // Already handled — never run the flow twice
+    if (meeting.status === 'completed') {
+      return Response.json({ success: false, skipped: true, reason: 'meeting already completed', clientName });
+    }
+
     // Mark the intro meeting as completed
     await base44.asServiceRole.entities.Meeting.update(meetingId, { status: 'completed' });
 
@@ -57,7 +62,7 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.Payment.create({
         client_id: client.id,
         milestone: 'היכרות והצגת הצעת מחיר',
-        amount: 250,
+        amount: meetingPrice != null && meetingPrice > 0 ? Number(meetingPrice) : 250,
         amount_paid: 0,
         due_date: today,
         status: 'pending',

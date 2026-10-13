@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     // Check if a qualifying payment already exists for this client
     const existingPayments = await base44.asServiceRole.entities.Payment.filter({ client_id: clientId });
     const alreadyHasQualifyingPayment = existingPayments.some(
-      p => p.milestone && p.milestone.includes('פגישת הצעת מחיר')
+      p => p.milestone && (p.milestone.includes('פגישת הצעת מחיר') || p.milestone.includes('הצגת הצעת מחיר'))
     );
 
     if (alreadyHasQualifyingPayment) {

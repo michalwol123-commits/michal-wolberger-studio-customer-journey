@@ -104,8 +104,8 @@ export default function Meetings() {
   });
 
   const introActionMutation = useMutation({
-    mutationFn: async ({ meetingId, action }) => {
-      const res = await base44.functions.invoke('autoIntroCompleted', { meetingId, action });
+    mutationFn: async ({ meetingId, action, meetingPrice }) => {
+      const res = await base44.functions.invoke('autoIntroCompleted', { meetingId, action, meetingPrice });
       return res.data;
     },
     onSuccess: (data) => {

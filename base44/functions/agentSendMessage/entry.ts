@@ -26,15 +26,24 @@ Deno.serve(async (req) => {
   const preview = settings.preview_mode !== false;
 
   if (!preview) {
+    // Duplicate guard: same client + type + content in the last 10 minutes (not failed) → skip
+    const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const recent = await base44.asServiceRole.entities.Communication.filter({
+      client_id, content, created_date: { $gte: since }, status: { $ne: 'failed' },
+    });
+    const has = (type) => recent.some((c) => c.type === type);
+    if ((!client.phone || has('whatsapp')) && (!client.email || has('email'))) {
+      return Response.json({ duplicate: true, queued: [], client: client.name });
+    }
     const results = [];
-    if (client.phone) {
+    if (client.phone && !has('whatsapp')) {
       await base44.asServiceRole.entities.Communication.create({
         client_id, type: 'whatsapp', direction: 'outbound', content, subject,
         sent_by: 'assistant', status: 'pending', channel: 'base44_native',
       });
       results.push('whatsapp');
     }
-    if (client.email) {
+    if (client.email && !has('email')) {
       await base44.asServiceRole.entities.Communication.create({
         client_id, type: 'email', direction: 'outbound', content, subject,
         sent_by: 'assistant', status: 'pending', channel: 'base44_native',

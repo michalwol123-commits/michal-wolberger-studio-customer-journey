@@ -1,0 +1,41 @@
+{
+  "name": "\u05d4\u05ea\u05e8\u05d0\u05d4 \u05dc\u05de\u05d9\u05db\u05dc \u2014 \u05d0\u05d9\u05e9\u05d5\u05e8 \u05de\u05e1\u05de\u05da",
+  "description": "\u05d5\u05d5\u05d0\u05d8\u05e1\u05d0\u05e4 \u05dc\u05de\u05d9\u05db\u05dc \u05db\u05e9\u05dc\u05e7\u05d5\u05d7 \u05de\u05d0\u05e9\u05e8 \u05d0\u05d5 \u05de\u05d1\u05e7\u05e9 \u05ea\u05d9\u05e7\u05d5\u05e0\u05d9\u05dd \u05d1\u05de\u05e1\u05de\u05da \u05d1\u05e4\u05d5\u05e8\u05d8\u05dc",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "Document",
+      "events": [
+        "update"
+      ]
+    },
+    "condition": "${ (.trigger.data.approval_status == \"approved\" or .trigger.data.approval_status == \"rejected\") and (.trigger.old_data.approval_status // \"\") != .trigger.data.approval_status }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "notify_doc_approval",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "notify": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "notifyMichal",
+            "args": {
+              "event": "document_approval",
+              "entity_name": "Document",
+              "entity_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "\u05d4\u05ea\u05e8\u05d0\u05d4 \u05dc\u05de\u05d9\u05db\u05dc"
+          }
+        }
+      }
+    ]
+  }
+}
