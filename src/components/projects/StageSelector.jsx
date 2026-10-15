@@ -21,6 +21,8 @@ export default function StageSelector({ project, selectedStage, onSelect }) {
                 ? 'border-primary/50 bg-primary/5'
                 : status === 'completed'
                 ? 'border-green-200 bg-green-50 hover:border-green-300'
+                : status === 'skipped'
+                ? 'border-dashed border-border bg-muted/40 opacity-70 hover:opacity-100'
                 : 'border-border bg-card hover:border-primary/30'
             }`}
           >
@@ -35,7 +37,7 @@ export default function StageSelector({ project, selectedStage, onSelect }) {
             </div>
             <p className="text-[10px] sm:text-xs font-medium leading-tight">{stage.shortLabel}</p>
             <p className="text-[9px] text-muted-foreground mt-0.5">
-              {status === 'completed' ? 'הושלם' : status === 'in_progress' ? 'בביצוע' : 'ממתין'}
+              {status === 'completed' ? 'הושלם' : status === 'in_progress' ? 'בביצוע' : status === 'skipped' ? 'דולג' : 'ממתין'}
             </p>
           </button>
         );
