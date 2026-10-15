@@ -4,17 +4,8 @@
 // If google_event_id exists → update the existing calendar event
 // Emails sent via Brevo (Communication pending → sendEmail picks it up)
 import { israelDateOf } from '../../shared/israelTime.ts';
+import { meetingLabel as meetingTitle } from '../../shared/meetingTypes.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-
-const MEETING_TYPE_LABELS = {
-  intro: 'שיחת טלפון ראשונית',
-  qualifying: 'פגישת סינון',
-  quote_presentation: 'היכרות והצגת הצעת מחיר',
-  stage_review: 'סקירת שלב',
-  site_visit: 'ביקור באתר',
-  zoom: 'פגישת זום',
-  design_approval: 'אישור עיצוב',
-};
 
 Deno.serve(async (req) => {
   try {
@@ -45,7 +36,7 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'skipped', reason: 'client not found' });
     }
 
-    const meetingLabel = MEETING_TYPE_LABELS[data.type] || data.type || 'פגישה';
+    const meetingLabel = meetingTitle(data);
     const scheduledAt = new Date(data.scheduled_at);
     const duration = data.duration || 45;
     const endTime = new Date(scheduledAt.getTime() + duration * 60 * 1000);
