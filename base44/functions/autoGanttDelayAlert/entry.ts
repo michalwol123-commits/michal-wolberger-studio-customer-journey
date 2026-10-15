@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
 
     for (const milestone of milestones) {
       if (!activeProjectIds.includes(milestone.project_id)) continue;
-      if (milestone.status === 'completed' || milestone.status === 'delayed') continue;
+      if (milestone.status === 'completed' || milestone.status === 'delayed' || milestone.status === 'skipped') continue;
       if (!milestone.end_date || new Date(milestone.end_date) >= now) continue;
 
       // Mark as delayed
