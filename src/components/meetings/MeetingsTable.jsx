@@ -3,12 +3,12 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import DeleteButton from '@/components/shared/DeleteButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, FileText } from 'lucide-react';
+import { CheckCircle, FileText, NotebookPen } from 'lucide-react';
 import { format } from 'date-fns';
 import { meetingTypeLabel } from '@/lib/meetingTypes';
 import { Link } from 'react-router-dom';
 
-export default function MeetingsTable({ meetings, clientMap, quotesMap, onEdit, onDelete, onComplete, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
+export default function MeetingsTable({ meetings, clientMap, quotesMap, onEdit, onDelete, onComplete, onSummary, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
   return (
     <div className="bg-card rounded-xl border overflow-hidden">
       <div className="overflow-x-auto">
@@ -62,6 +62,11 @@ export default function MeetingsTable({ meetings, clientMap, quotesMap, onEdit, 
                   <td className="px-4 py-3"><StatusBadge status={m.status} /></td>
                   <td className="px-2" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
+                      {onSummary && (
+                        <Button variant="ghost" size="sm" className="h-7 px-2 gap-1 text-primary" onClick={() => onSummary(m)} title="סיכום פגישה">
+                          <NotebookPen className="w-4 h-4" />{m.internal_notes ? 'סיכום ✓' : 'סיכום'}
+                        </Button>
+                      )}
                       {m.status === 'scheduled' && onComplete && (
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => onComplete(m)} title="סמן כהושלם">
                           <CheckCircle className="w-4 h-4" />
