@@ -14,6 +14,13 @@ function StageCircle({ status, isCurrent, num, size = 34 }) {
     flexShrink: 0, transition: 'all 0.3s ease',
     fontFamily: "'Frank Ruhl Libre', serif", fontSize: size * 0.4,
   };
+  if (isCurrent) {
+    return (
+      <div style={{ ...base, background: '#2a1f18', border: '1.5px solid #2a1f18', color: '#f5f0eb', boxShadow: '0 0 0 3px #f5f0eb, 0 0 0 4.5px #c8bdb2' }}>
+        {num}
+      </div>
+    );
+  }
   if (status === 'completed') {
     return (
       <div style={{ ...base, background: '#6b7a4f', border: '1.5px solid #6b7a4f', color: '#eef0e4' }}>
@@ -21,7 +28,14 @@ function StageCircle({ status, isCurrent, num, size = 34 }) {
       </div>
     );
   }
-  if (isCurrent || status === 'in_progress') {
+  if (status === 'skipped') {
+    return (
+      <div title="לא נדרש בפרויקט שלכם" style={{ ...base, background: 'transparent', border: '1.5px dashed #d8cfc5', color: '#c8bdb2' }}>
+        {num}
+      </div>
+    );
+  }
+  if (status === 'in_progress') {
     return (
       <div style={{ ...base, background: '#2a1f18', border: '1.5px solid #2a1f18', color: '#f5f0eb', boxShadow: '0 0 0 3px #f5f0eb, 0 0 0 4.5px #c8bdb2' }}>
         {num}
@@ -51,7 +65,7 @@ export default function PortalTimeline({ project, selectedStage, onSelectStage }
                   <StageCircle status={status} isCurrent={isCurrent} num={stage.num} size={32} />
                   <span
                     className="text-[10px] leading-tight text-center"
-                    style={{ color: isSelected ? '#2a1f18' : '#8a7060', fontWeight: isSelected ? 500 : 400 }}
+                    style={{ color: isSelected ? '#2a1f18' : status === 'skipped' ? '#c8bdb2' : '#8a7060', fontWeight: isSelected ? 500 : 400 }}
                   >
                     {stage.shortLabel}
                   </span>
@@ -88,7 +102,7 @@ export default function PortalTimeline({ project, selectedStage, onSelectStage }
                 <p
                   className="text-sm transition-colors group-hover:opacity-80"
                   style={{
-                    color: isSelected || isCurrent ? '#2a1f18' : status === 'completed' ? '#4a3728' : '#8a7060',
+                    color: isSelected || isCurrent ? '#2a1f18' : status === 'completed' ? '#4a3728' : status === 'skipped' ? '#c8bdb2' : '#8a7060',
                     fontWeight: isSelected ? 500 : 400,
                   }}
                 >
