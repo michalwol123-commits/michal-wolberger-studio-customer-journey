@@ -19,3 +19,7 @@ export const STAGE_NAMES: Record<number, string> = {
 export const TOTAL_STAGES = 13;
 
 export const stageName = (n: number) => STAGE_NAMES[n] || `שלב ${n}`;
+
+// The WhatsApp the client gets when the project moves forward (autoStageAdvance; previewed by setProjectStage).
+export const stageUpdateMessage = (clientName: string, n: number) =>
+  `שלום ${clientName}! עדכון מהפרויקט: עברנו לשלב ${n} — ${stageName(n)}. נעדכן אתכם בהמשך 💛`;
