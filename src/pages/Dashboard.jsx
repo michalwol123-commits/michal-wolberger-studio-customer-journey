@@ -8,6 +8,7 @@ import useCurrentUser from '@/lib/useCurrentUser';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { format } from 'date-fns';
+import { israelToday, israelDateOf } from '@/lib/israelTime';
 import { Link } from 'react-router-dom';
 import PipelineChart from '@/components/dashboard/PipelineChart';
 import RevenueForecast from '@/components/dashboard/RevenueForecast';
@@ -55,11 +56,11 @@ export default function Dashboard() {
 
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const today = format(now, 'yyyy-MM-dd');
+  const today = israelToday();
 
   // KPIs
   const newLeads = myClients.filter(c => c.status === 'lead' && new Date(c.created_date) > weekAgo).length;
-  const todayMeetings = meetings.filter(m => m.scheduled_at && m.scheduled_at.startsWith(today) && m.status === 'scheduled').length;
+  const todayMeetings = meetings.filter(m => m.scheduled_at && israelDateOf(m.scheduled_at) === today && m.status === 'scheduled').length;
   const overduePayments = isAdmin ? payments.filter(p => p.status === 'overdue') : [];
   const openTasks = myTasks.filter(t => t.status === 'open' || t.status === 'in_progress').length;
   const activeProjects = myProjects.filter(p => p.status === 'active').length;
