@@ -10,7 +10,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { ArrowRight, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList, CalendarDays, Plus, Trash2, Pencil, Send, ClipboardCheck } from 'lucide-react';
+import { ArrowRight, Images, LayoutGrid, CreditCard, FileText, MessageSquare, CheckSquare, Upload, Truck, BarChart3, Wallet, ShoppingCart, ClipboardList, CalendarDays, Plus, Trash2, Pencil, Send, ClipboardCheck } from 'lucide-react';
 import DeleteButton from '@/components/shared/DeleteButton';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -18,6 +18,7 @@ import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import EditPaymentDialog from '@/components/payments/EditPaymentDialog';
 import AddTaskDialog from '@/components/tasks/AddTaskDialog';
 import { Button } from '@/components/ui/button';
+import MoodBoardBuilder from '@/components/projects/MoodBoardBuilder';
 import { toast } from 'sonner';
 
 import STAGES, { TOTAL_STAGES } from '@/lib/stageConfig';
@@ -44,7 +45,10 @@ export default function ProjectDetail() {
   const projectId = pathParts[pathParts.length - 1];
   const { isAdmin } = useCurrentUser();
   const [showUploadDoc, setShowUploadDoc] = React.useState(false);
-  const [selectedStage, setSelectedStage] = React.useState(null);
+  // ?stage=8 opens a stage panel, ?moodboard=1 opens the mood board builder (links the agent sends to Michal)
+  const urlParams = new URLSearchParams(window.location.search);
+  const [selectedStage, setSelectedStage] = React.useState(Number(urlParams.get('stage')) || null);
+  const [showMoodBoard, setShowMoodBoard] = React.useState(urlParams.get('moodboard') === '1');
   const [activeTab, setActiveTab] = React.useState('overview');
   const [editPayment, setEditPayment] = React.useState(null);
   const [editTask, setEditTask] = React.useState(null);
@@ -123,6 +127,12 @@ export default function ProjectDetail() {
     enabled: !!clientId && !!client,
   });
 
+  const { data: inspirationItems = [], isFetched: inspirationLoaded } = useQuery({
+    queryKey: ['inspiration-items', projectId],
+    queryFn: () => base44.entities.InspirationItem.filter({ project_id: projectId }, '-created_date'),
+    enabled: showMoodBoard,
+  });
+
   const defaultVisitType = project?.stage_current >= 12 ? 'installation' : 'supervision';
   const showFieldVisitsTab = project?.stage_current >= 9;
 
@@ -145,6 +155,13 @@ export default function ProjectDetail() {
             <Link to={`/clients/${client.id}`} className="text-sm text-primary hover:underline">{client.name}</Link>
           )}
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" className="gap-1" onClick={() => setSelectedStage(8)}>
+          <Images className="w-4 h-4" />לוח השראה
+        </Button>
+        <Button variant="outline" size="sm" className="gap-1" onClick={() => setShowMoodBoard(true)}>
+          <LayoutGrid className="w-4 h-4" />מודבורד
+        </Button>
         {isAdmin ? (
         <select
           value={project.status}
@@ -159,7 +176,18 @@ export default function ProjectDetail() {
       ) : (
         <StatusBadge status={project.status} />
       )}
+        </div>
       </div>
+
+      {showMoodBoard && inspirationLoaded && (
+        <MoodBoardBuilder
+          items={inspirationItems}
+          projectName={project.name}
+          projectId={projectId}
+          onClose={() => setShowMoodBoard(false)}
+          onSaved={() => { queryClient.invalidateQueries({ queryKey: ['inspiration-items', projectId] }); setShowMoodBoard(false); }}
+        />
+      )}
 
       {/* 13 Stages — Clickable */}
       <Card className="mb-6">
