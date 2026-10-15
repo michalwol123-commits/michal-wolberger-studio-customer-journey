@@ -6,11 +6,7 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 import { format } from 'date-fns';
-
-const typeLabels = {
-  intro: 'שיחת טלפון ראשונית', qualifying: 'אפיון', quote_presentation: 'היכרות והצגת הצעת מחיר',
-  stage_review: 'סקירת שלב', site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב',
-};
+import { meetingTypeLabel } from '@/lib/meetingTypes';
 
 export default function MeetingsList({ meetings, clientId, projectId }) {
   const [showAdd, setShowAdd] = useState(false);
@@ -41,7 +37,7 @@ export default function MeetingsList({ meetings, clientId, projectId }) {
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{typeLabels[m.type] || m.type}</span>
+                      <span className="font-medium text-sm">{meetingTypeLabel(m)}</span>
                       <StatusBadge status={m.status} />
                     </div>
                     {m.scheduled_at && (
