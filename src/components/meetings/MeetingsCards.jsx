@@ -6,12 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, User, Clock, MapPin, Phone, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { meetingTypeLabel } from '@/lib/meetingTypes';
 import { he } from 'date-fns/locale';
-
-const typeLabels = {
-  intro: 'שיחת טלפון ראשונית', qualifying: 'אפיון', quote_presentation: 'היכרות והצגת הצעת מחיר',
-  stage_review: 'סקירת שלב', site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב'
-};
 
 export default function MeetingsCards({ meetings, clientMap, onEdit, onDelete, onComplete, selectedIds, onToggleSelect, isAdmin }) {
   return (
@@ -30,7 +26,7 @@ export default function MeetingsCards({ meetings, clientMap, onEdit, onDelete, o
                   )}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium">{typeLabels[m.type] || m.type}</span>
+                      <span className="font-medium">{meetingTypeLabel(m)}</span>
                       <StatusBadge status={m.status} />
                     </div>
                     {m.summary && <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{m.summary}</p>}
