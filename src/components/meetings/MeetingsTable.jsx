@@ -5,12 +5,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, FileText } from 'lucide-react';
 import { format } from 'date-fns';
+import { meetingTypeLabel } from '@/lib/meetingTypes';
 import { Link } from 'react-router-dom';
-
-const typeLabels = {
-  intro: 'שיחת טלפון ראשונית', qualifying: 'אפיון', quote_presentation: 'היכרות והצגת הצעת מחיר',
-  stage_review: 'סקירת שלב', site_visit: 'ביקור אתר', zoom: 'Zoom', design_approval: 'אישור עיצוב'
-};
 
 export default function MeetingsTable({ meetings, clientMap, quotesMap, onEdit, onDelete, onComplete, selectedIds, onToggleSelect, onToggleAll, isAdmin }) {
   return (
@@ -50,7 +46,7 @@ export default function MeetingsTable({ meetings, clientMap, quotesMap, onEdit, 
                   )}
                   <td className="px-4 py-3 font-medium">
                     <div className="flex items-center gap-1.5">
-                      {typeLabels[m.type] || m.type}
+                      {meetingTypeLabel(m)}
                       {m.type === 'quote_presentation' && m.quote_id && quotesMap?.[m.quote_id] && (
                         <Link to="/quotes" onClick={e => e.stopPropagation()} title={`הצעה: ${quotesMap[m.quote_id].title}`}>
                           <FileText className="w-3.5 h-3.5 text-primary hover:text-primary/80" />
