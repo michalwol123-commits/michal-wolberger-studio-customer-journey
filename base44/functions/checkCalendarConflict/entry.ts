@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { scheduled_at, duration } = await req.json();
+    const { scheduled_at, duration, exclude_event_id } = await req.json();
     if (!scheduled_at || !duration) {
       return Response.json({ error: 'Missing scheduled_at or duration' }, { status: 400 });
     }
@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     );
 
     const data = await res.json();
-    const events = (data.items || []).filter(e => e.status !== 'cancelled');
+    const events = (data.items || []).filter(e => e.status !== 'cancelled' && e.id !== exclude_event_id);
 
     const conflictingEvents = events.map(e => ({
       summary: e.summary || 'ללא שם',
