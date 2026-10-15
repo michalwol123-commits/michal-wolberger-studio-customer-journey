@@ -1,5 +1,5 @@
 import React from 'react';
-import { format } from 'date-fns';
+import { formatIsraelDateTime } from '@/lib/israelTime';
 import ArtIcon from './ArtIcon';
 
 const typeLabels = {
@@ -10,6 +10,11 @@ const typeLabels = {
   site_visit: 'ביקור אתר',
   zoom: 'Zoom',
   design_approval: 'אישור עיצוב',
+  program: 'פגישת פרוגרמה',
+  floor_plan_approval: 'אישור תכנית העמדה',
+  installation_day: 'יום התקנה',
+  shopping_day: 'יום קניות',
+  other: 'פגישה',
 };
 
 // Map meeting types to stages
@@ -49,7 +54,7 @@ export default function PortalStageMeetings({ meetings, stageNum }) {
         {relevantMeetings.map(m => (
           <div key={m.id} className="p-4 space-y-3" style={{ border: '1px solid #e8e0d8' }}>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium" style={{ color: '#2a1f18' }}>{typeLabels[m.type] || m.type}</span>
+              <span className="text-sm font-medium" style={{ color: '#2a1f18' }}>{m.custom_title || typeLabels[m.type] || 'פגישה'}</span>
               <span
                 className="p-label !text-[10px] px-2.5 py-1"
                 style={m.status === 'completed'
@@ -61,7 +66,7 @@ export default function PortalStageMeetings({ meetings, stageNum }) {
             </div>
             <div className="flex flex-wrap items-center gap-4 text-xs" style={{ color: '#8a7060' }}>
               {m.scheduled_at && (
-                <span>{format(new Date(m.scheduled_at), 'dd/MM/yyyy HH:mm')}</span>
+                <span>{formatIsraelDateTime(m.scheduled_at)}</span>
               )}
               {!m.scheduled_at && m.scheduling_token && (
                 <a href={`/schedule?token=${m.scheduling_token}`} target="_blank" rel="noopener noreferrer"
