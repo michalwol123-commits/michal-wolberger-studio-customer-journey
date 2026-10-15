@@ -10,18 +10,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertTriangle, Loader2, Send, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { MEETING_TYPE_OPTIONS } from '@/lib/meetingTypes';
+import { israelIso, israelLocalInput, formatIsraelTime } from '@/lib/israelTime';
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 
-const typeOptions = [
-  { value: 'intro', label: 'שיחת טלפון ראשונית' },
-  { value: 'qualifying', label: 'אפיון' },
-  { value: 'quote_presentation', label: 'היכרות והצגת הצעת מחיר' },
-  { value: 'stage_review', label: 'סקירת שלב' },
-  { value: 'site_visit', label: 'פגישת פיקוח' },
-  { value: 'installation_day', label: 'יום התקנה' },
-  { value: 'shopping_day', label: 'יום קניות' },
-  { value: 'zoom', label: 'Zoom' },
-  { value: 'design_approval', label: 'אישור עיצוב' },
-];
+const typeOptions = MEETING_TYPE_OPTIONS;
 
 const FIELD_TYPES = ['site_visit', 'installation_day', 'shopping_day'];
 
@@ -33,7 +26,7 @@ const whoAttendsOptions = [
 ];
 
 const defaultForm = {
-  client_id: '', project_id: '', quote_id: '', type: 'intro',
+  client_id: '', project_id: '', quote_id: '', type: 'intro', custom_title: '',
   scheduled_at: '', duration: 45, location: '',
   status: 'scheduled', summary: '', meeting_price: '',
   michal_present: true, who_attends: '',
@@ -61,7 +54,8 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
         project_id: initialData.project_id || '',
         quote_id: initialData.quote_id || '',
         type: initialData.type || 'intro',
-        scheduled_at: initialData.scheduled_at ? (() => { const d = new Date(initialData.scheduled_at); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); })() : '',
+        custom_title: initialData.custom_title || '',
+        scheduled_at: israelLocalInput(initialData.scheduled_at),
         duration: initialData.duration || 45,
         location: initialData.location || '',
         status: initialData.status || 'scheduled',
@@ -101,7 +95,7 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
   });
 
   const schedulingToken = freshMeeting?.scheduling_token || initialData?.scheduling_token;
-  const scheduleUrl = schedulingToken ? `${window.location.origin}/schedule?token=${schedulingToken}` : null;
+  const scheduleUrl = schedulingToken ? `${PUBLIC_APP_URL}/schedule?token=${schedulingToken}` : null;
 
   const handleSendScheduleLink = async () => {
     if (!schedulingToken || !initialData?.client_id) return;
@@ -163,11 +157,16 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
     const payload = {
       ...form,
       duration: Number(form.duration),
-      scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : undefined,
+      scheduled_at: israelIso(form.scheduled_at),
       meeting_price: form.meeting_price ? Number(form.meeting_price) : undefined,
     };
     if (!payload.project_id) delete payload.project_id;
     if (!payload.quote_id) delete payload.quote_id;
+    if (!payload.custom_title && !initialData?.custom_title) delete payload.custom_title;
+    if (initialData?.scheduled_at && payload.scheduled_at
+      && new Date(payload.scheduled_at).getTime() === new Date(initialData.scheduled_at).getTime()) {
+      delete payload.scheduled_at; // same time: don't re-run calendar sync or the "date updated" email
+    }
     if (!payload.meeting_price) delete payload.meeting_price;
     if (!FIELD_TYPES.includes(payload.type)) {
       delete payload.michal_present;
@@ -180,15 +179,24 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.scheduled_at) {
+    if (form.type === 'other' && !form.custom_title.trim()) {
+      toast.error('לפגישה מסוג "אחר" צריך לתת שם');
+      return;
+    }
+    // No date, or an edit that keeps the same time (e.g. only the summary changed): nothing to check.
+    const sameTime = initialData?.scheduled_at && form.scheduled_at
+      && new Date(israelIso(form.scheduled_at)).getTime() === new Date(initialData.scheduled_at).getTime()
+      && Number(form.duration) === Number(initialData.duration || 45);
+    if (!form.scheduled_at || sameTime) {
       doCreate();
       return;
     }
     setChecking(true);
     setConflictWarning(null);
     const res = await base44.functions.invoke('checkCalendarConflict', {
-      scheduled_at: new Date(form.scheduled_at).toISOString(),
+      scheduled_at: israelIso(form.scheduled_at),
       duration: Number(form.duration),
+      exclude_event_id: freshMeeting?.google_event_id || initialData?.google_event_id || undefined,
     });
 
     setChecking(false);
@@ -248,7 +256,12 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
           </div>
 
           <div>
-            <Label>תאריך ושעה *</Label>
+            <Label>{form.type === 'other' ? 'שם הפגישה *' : 'שם לפגישה (אופציונלי)'}</Label>
+            <Input value={form.custom_title} onChange={e => setForm(p => ({ ...p, custom_title: e.target.value }))} placeholder={form.type === 'other' ? 'למשל: פגישת סקיצות וחלופות' : 'אם ריק, יוצג סוג הפגישה'} />
+          </div>
+
+          <div>
+            <Label>תאריך ושעה (שעון ישראל) *</Label>
             <Input type="datetime-local" value={form.scheduled_at} onChange={e => setForm(p => ({ ...p, scheduled_at: e.target.value }))} />
           </div>
 
@@ -300,8 +313,8 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
               <ul className="text-xs text-amber-800 space-y-1 pr-4">
                 {conflictWarning.map((ev, i) => (
                   <li key={i}>
-                    {ev.summary} — {ev.start ? new Date(ev.start).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : ''}
-                    {ev.end ? ` עד ${new Date(ev.end).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                    {ev.summary} — {ev.start ? formatIsraelTime(ev.start) : ''}
+                    {ev.end ? ` עד ${formatIsraelTime(ev.end)}` : ''}
                   </li>
                 ))}
               </ul>
