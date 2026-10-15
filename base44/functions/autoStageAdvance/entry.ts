@@ -1,26 +1,11 @@
 // Automation D — Stage Advance Notification
 // Trigger: Project record_updated (stage_current changed)
-// Action: Communication (pending) to client + Task for next stage prep
+// setProjectStage writes all stage statuses itself, together with last_stage_change; then this only sends the
+// client update (unless notify_client is false) and creates the prep task. Any other writer of stage_current
+// still gets the statuses filled here.
 import { israelToday } from '../../shared/israelTime.ts';
+import { stageName, stageUpdateMessage, TOTAL_STAGES } from '../../shared/stages.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-
-const STAGE_NAMES = {
-  1: 'יצירת קשר ראשוני',
-  2: 'שיחת היכרות',
-  3: 'פגישת הצעת מחיר',
-  4: 'סגירת פרויקט',
-  5: 'שאלון מפורט',
-  6: 'פגישת תכנית + גאנט/תקציב',
-  7: 'תכניות עבודה',
-  8: 'קונספט עיצובי + רנדרים',
-  9: 'ימי קניות',
-  10: 'תמחור קבלנים ובחירת ספקים',
-  11: 'ביצוע בשטח + ימי פיקוח',
-  12: 'ימי התקנה ותיאום ספקים',
-  13: 'סיום פרויקט ומסירה',
-};
-
-const TOTAL_STAGES = 13;
 
 Deno.serve(async (req) => {
   try {
@@ -35,20 +20,23 @@ Deno.serve(async (req) => {
     const projectId = event.entity_id;
     const oldStage = old_data.stage_current;
     const newStage = data.stage_current;
-    const stageName = STAGE_NAMES[newStage] || `שלב ${newStage}`;
+    const forward = newStage > oldStage;
+    const name = stageName(newStage);
 
-    // Update stage statuses: mark previous stage as completed, new stage as in_progress
-    const stageUpdates = {};
-    if (oldStage >= 1 && oldStage <= TOTAL_STAGES) {
-      stageUpdates[`s${oldStage}_status`] = 'completed';
+    let change = null;
+    try { change = JSON.parse(data.last_stage_change || 'null'); } catch { /* not set */ }
+    const fromSetProjectStage = !!change && change.from === oldStage && change.to === newStage;
+
+    if (!fromSetProjectStage) {
+      const stageUpdates = {};
+      if (forward && oldStage >= 1 && oldStage <= TOTAL_STAGES) stageUpdates[`s${oldStage}_status`] = 'completed';
+      if (newStage >= 1 && newStage <= TOTAL_STAGES) stageUpdates[`s${newStage}_status`] = 'in_progress';
+      stageUpdates.progress = newStage >= TOTAL_STAGES ? 100 : Math.round((newStage / TOTAL_STAGES) * 100);
+      await base44.asServiceRole.entities.Project.update(projectId, stageUpdates);
     }
-    if (newStage >= 1 && newStage <= TOTAL_STAGES) {
-      stageUpdates[`s${newStage}_status`] = 'in_progress';
-    }
-    // Calculate progress based on completed stages
-    stageUpdates.progress = newStage >= TOTAL_STAGES ? 100 : Math.round((newStage / TOTAL_STAGES) * 100);
-    
-    await base44.asServiceRole.entities.Project.update(projectId, stageUpdates);
+
+    const notify = fromSetProjectStage ? change.notify_client !== false : forward;
+    if (!notify && !forward) return Response.json({ success: true, automation: 'D', stage: newStage, notified: false });
 
     // Get client
     const clients = await base44.asServiceRole.entities.Client.filter({ id: data.client_id });
@@ -56,20 +44,20 @@ Deno.serve(async (req) => {
     const clientId = data.client_id;
 
     // Notify client
-    await base44.asServiceRole.entities.Communication.create({
+    if (notify) await base44.asServiceRole.entities.Communication.create({
       client_id: clientId,
       project_id: projectId,
       type: 'whatsapp',
       direction: 'outbound',
-      content: `שלום ${clientName}! עדכון מהפרויקט: עברנו לשלב ${newStage} — ${stageName}. נעדכן אותך על ההתקדמות 🎉`,
+      content: stageUpdateMessage(clientName, newStage),
       sent_by: 'system',
       status: 'pending',
       channel: 'base44_native',
     });
 
-    // Create prep task for new stage
-    await base44.asServiceRole.entities.Task.create({
-      title: `הכנה לשלב ${newStage} — ${stageName}`,
+    // Create prep task for new stage (moving forward only)
+    if (forward) await base44.asServiceRole.entities.Task.create({
+      title: `הכנה לשלב ${newStage} — ${name}`,
       description: `הפרויקט "${data.name}" התקדם לשלב ${newStage}. יש להכין את החומרים הנדרשים.`,
       type: 'manual',
       priority: 'normal',
@@ -81,7 +69,7 @@ Deno.serve(async (req) => {
       auto_generated: true,
     });
 
-    return Response.json({ success: true, automation: 'D', stage: newStage });
+    return Response.json({ success: true, automation: 'D', stage: newStage, notified: notify });
   } catch (error) {
     try {
       const base44 = createClientFromRequest(req);
