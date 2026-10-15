@@ -1,3 +1,4 @@
+import { meetingLabel } from '../../shared/meetingTypes.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -29,20 +30,10 @@ Deno.serve(async (req) => {
     const clients = await base44.asServiceRole.entities.Client.filter({ id: meeting.client_id });
     const client = clients[0];
 
-    const MEETING_TYPE_LABELS = {
-      intro: 'שיחת טלפון ראשונית',
-      qualifying: 'פגישת סינון',
-      quote_presentation: 'הצגת הצעת מחיר',
-      stage_review: 'סקירת שלב',
-      site_visit: 'ביקור באתר',
-      zoom: 'פגישת זום',
-      design_approval: 'אישור עיצוב',
-    };
-
     return Response.json({
       meeting_id: meeting.id,
       type: meeting.type,
-      type_label: MEETING_TYPE_LABELS[meeting.type] || meeting.type,
+      type_label: meetingLabel(meeting),
       duration: meeting.duration || 30,
       location: meeting.location || '',
       scheduled_at: meeting.scheduled_at || null,
