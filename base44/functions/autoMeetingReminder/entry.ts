@@ -2,6 +2,7 @@
 // Trigger: Scheduled (every 30 min)
 // Condition: Meeting scheduled within 24h (D-1) or 1h (H-1) and reminder not sent
 // Action: Communication (pending)
+import { israelToday, israelDateOf } from '../../shared/israelTime.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
@@ -29,7 +30,7 @@ Deno.serve(async (req) => {
           project_id: meeting.project_id || '',
           type: 'whatsapp',
           direction: 'outbound',
-          content: `שלום ${clientName}, תזכורת: יש לנו פגישה מחר (${meetingTime.toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' })}) בשעה ${meetingTime.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' })}${meeting.location ? ` ב${meeting.location}` : ''}. נתראה!`,
+          content: `שלום ${clientName}, תזכורת: יש לנו פגישה ${israelDateOf(meetingTime) === israelToday() ? 'היום' : 'מחר'} (${meetingTime.toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' })}) בשעה ${meetingTime.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' })}${meeting.location ? ` ב${meeting.location}` : ''}. נתראה!`,
           sent_by: 'system',
           status: 'pending',
           channel: 'base44_native',
