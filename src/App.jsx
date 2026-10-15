@@ -21,6 +21,7 @@ import Communications from '@/pages/Communications';
 import Tasks from '@/pages/Tasks';
 import SettingsPage from '@/pages/SettingsPage';
 import UserGuide from '@/pages/UserGuide';
+import WhatsNew from '@/pages/WhatsNew';
 import Portal from '@/pages/Portal';
 import ShortQuestionnaire from '@/pages/ShortQuestionnaire';
 import Suppliers from '@/pages/Suppliers';
@@ -88,6 +89,7 @@ function App() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/user-guide" element={<UserGuide />} />
+              <Route path="/whats-new" element={<WhatsNew />} />
               <Route path="/portal-demo" element={<PortalDemo />} />
             </Route>
             <Route path="*" element={<PageNotFound />} />
