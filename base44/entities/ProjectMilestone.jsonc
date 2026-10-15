@@ -31,7 +31,8 @@
         "pending",
         "in_progress",
         "completed",
-        "delayed"
+        "delayed",
+        "skipped"
       ],
       "default": "pending",
       "description": "\u05e1\u05d8\u05d8\u05d5\u05e1"
