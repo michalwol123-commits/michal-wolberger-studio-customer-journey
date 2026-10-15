@@ -300,8 +300,9 @@ export default function AddMeetingDialog({ open, onOpenChange, initialData, onCr
           )}
 
           <div>
-            <Label>סיכום / הערות</Label>
+            <Label>נושא / הערות לפגישה</Label>
             <Textarea value={form.summary} onChange={e => setForm(p => ({ ...p, summary: e.target.value }))} rows={2} />
+            <p className="text-xs text-muted-foreground mt-1">את סיכום הפגישה כותבים בכפתור "סיכום" שבכרטיס הפגישה.</p>
           </div>
 
           {conflictWarning && (
