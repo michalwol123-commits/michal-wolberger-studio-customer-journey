@@ -262,8 +262,9 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
       })
     : [];
 
-  const statusLabel = status === 'completed' ? 'הושלם' : status === 'in_progress' ? 'בביצוע' : 'ממתין';
-  const statusColor = status === 'completed' ? '#6b7a4f' : status === 'in_progress' ? '#2a1f18' : '#8a7060';
+  const skipped = status === 'skipped' && !isCurrentStage;
+  const statusLabel = skipped ? 'לא נדרש בפרויקט שלכם' : status === 'completed' ? 'הושלם' : status === 'in_progress' ? 'בביצוע' : 'ממתין';
+  const statusColor = skipped ? '#b5a99c' : status === 'completed' ? '#6b7a4f' : status === 'in_progress' ? '#2a1f18' : '#8a7060';
   const shortQ = questionnaires?.find(q => q.type === 'short');
   const detailedQ = questionnaires?.find(q => q.type === 'detailed');
 
@@ -283,6 +284,12 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
         </div>
       </div>
 
+      {skipped && (
+        <div className="p-card p-6 text-sm leading-relaxed" style={{ color: '#8a7060', borderStyle: 'dashed' }}>
+          השלב הזה לא נדרש בפרויקט שלכם, ולכן דילגנו עליו. כאן אפשר לראות מה הוא כולל בדרך כלל.
+        </div>
+      )}
+      {!skipped && <>
       {content.questionnaire === 'short' && <PortalQuestionnaireView questionnaire={shortQ} />}
       {content.questionnaire === 'detailed' && (
         detailedQ?.status === 'submitted'
@@ -339,6 +346,7 @@ export default function PortalStageView({ project, stageNum, meetings, payments,
       {content.completion && <PortalProjectCompletion project={project} clientName={project?.client_name} />}
       {content.payments && <PortalStagePayments payments={payments} stageNum={stageNum} />}
       {content.supplier_docs && <PortalSupplierDocs project={project} />}
+      </>}
     </motion.div>
   );
 }
