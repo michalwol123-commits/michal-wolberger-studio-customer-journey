@@ -1,15 +1,6 @@
 import { israelToday, israelDateOf } from '../../shared/israelTime.ts';
+import { meetingLabel as meetingTitle } from '../../shared/meetingTypes.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-
-const MEETING_TYPE_LABELS = {
-  intro: 'שיחת טלפון ראשונית',
-  qualifying: 'פגישת סינון',
-  quote_presentation: 'היכרות והצגת הצעת מחיר',
-  stage_review: 'סקירת שלב',
-  site_visit: 'ביקור באתר',
-  zoom: 'פגישת זום',
-  design_approval: 'אישור עיצוב',
-};
 
 function generateToken() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -30,6 +21,11 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'skipped', reason: 'not a create event' });
     }
 
+    // A meeting logged after the fact (or created already cancelled): no token, calendar event or client messages.
+    if (data.status === 'completed' || data.status === 'cancelled') {
+      return Response.json({ status: 'skipped', reason: `created as ${data.status}` });
+    }
+
     const base44 = createClientFromRequest(clonedReq);
 
     // Always generate a scheduling_token for new meetings
@@ -44,7 +40,7 @@ Deno.serve(async (req) => {
       // Send WhatsApp with scheduling link if client has phone
       const clients = await base44.asServiceRole.entities.Client.filter({ id: data.client_id });
       const client = clients[0];
-      const meetingLabel = MEETING_TYPE_LABELS[data.type] || data.type || 'פגישה';
+      const meetingLabel = meetingTitle(data);
       const scheduleUrl = `${Deno.env.get('BASE44_APP_URL') || 'https://michal-design-flow.base44.app'}/schedule?token=${schedulingToken}`;
 
       // Build questionnaire link for intro meetings
@@ -124,7 +120,7 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'skipped', reason: 'client not found' });
     }
 
-    const meetingLabel = MEETING_TYPE_LABELS[data.type] || data.type || 'פגישה';
+    const meetingLabel = meetingTitle(data);
     const scheduledAt = new Date(data.scheduled_at);
     const duration = data.duration || 45;
     const endTime = new Date(scheduledAt.getTime() + duration * 60 * 1000);
