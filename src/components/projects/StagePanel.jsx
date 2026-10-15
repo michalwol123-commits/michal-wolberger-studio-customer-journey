@@ -9,6 +9,7 @@ import { getStageByNum } from '@/lib/stageConfig';
 import UploadDocumentDialog from '@/components/documents/UploadDocumentDialog';
 import StageGallery from './StageGallery';
 import StageAdvanceButton from './StageAdvanceButton';
+import StageChangeDialog from './StageChangeDialog';
 import StageChecklist from './StageChecklist';
 import ProjectDesignMap from '@/components/design/ProjectDesignMap';
 import InspirationBoardEditor from '@/components/projects/InspirationBoardEditor';
@@ -21,6 +22,7 @@ const VISUAL_STAGES = [8, 13]; // stages that get gallery view
 export default function StagePanel({ project, stageNum, onNavigateTab }) {
   const [showUpload, setShowUpload] = useState(false);
   const [showDriveImport, setShowDriveImport] = useState(false);
+  const [showMove, setShowMove] = useState(false);
   const queryClient = useQueryClient();
   const stage = getStageByNum(stageNum);
   const stageStatus = project[stage?.key] || 'pending';
@@ -41,11 +43,12 @@ export default function StagePanel({ project, stageNum, onNavigateTab }) {
   const imageDocs = stageDocs.filter(d => ['render', 'concept', 'photo'].includes(d.type));
   const otherDocs = stageDocs.filter(d => !['render', 'concept', 'photo'].includes(d.type));
 
-  const statusLabels = { pending: 'ממתין', in_progress: 'בביצוע', completed: 'הושלם' };
+  const statusLabels = { pending: 'ממתין', in_progress: 'בביצוע', completed: 'הושלם', skipped: 'דולג' };
   const statusColors = {
     pending: 'text-muted-foreground bg-muted',
     in_progress: 'text-primary bg-primary/10',
     completed: 'text-green-700 bg-green-50',
+    skipped: 'text-muted-foreground bg-muted border border-dashed',
   };
 
   return (
@@ -68,6 +71,15 @@ export default function StagePanel({ project, stageNum, onNavigateTab }) {
           {stageNum === project.stage_current && stageNum < 13 && (
             <div className="mt-4 flex justify-end">
               <StageAdvanceButton project={project} />
+            </div>
+          )}
+          {/* Any other stage: jump to it (forward or back) */}
+          {stageNum !== project.stage_current && (
+            <div className="mt-4 flex justify-end">
+              <Button variant="outline" className="gap-2" onClick={() => setShowMove(true)}>
+                {stageNum > (project.stage_current || 1) ? 'דילוג לשלב הזה' : 'חזרה לשלב הזה'}
+              </Button>
+              <StageChangeDialog project={project} targetStage={stageNum} open={showMove} onOpenChange={setShowMove} />
             </div>
           )}
         </CardContent>
