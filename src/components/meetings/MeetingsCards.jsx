@@ -4,12 +4,12 @@ import DeleteButton from '@/components/shared/DeleteButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, User, Clock, MapPin, Phone, Calendar } from 'lucide-react';
+import { CheckCircle, User, Clock, MapPin, Phone, Calendar, NotebookPen } from 'lucide-react';
 import { format } from 'date-fns';
 import { meetingTypeLabel } from '@/lib/meetingTypes';
 import { he } from 'date-fns/locale';
 
-export default function MeetingsCards({ meetings, clientMap, onEdit, onDelete, onComplete, selectedIds, onToggleSelect, isAdmin }) {
+export default function MeetingsCards({ meetings, clientMap, onEdit, onDelete, onComplete, onSummary, selectedIds, onToggleSelect, isAdmin }) {
   return (
     <div className="space-y-3">
       {meetings.map(m => {
@@ -64,6 +64,11 @@ export default function MeetingsCards({ meetings, clientMap, onEdit, onDelete, o
                   </div>
                 </div>
                 <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                  {onSummary && (
+                    <Button variant="ghost" size="sm" className="h-7 px-2 gap-1 text-primary" onClick={() => onSummary(m)} title="סיכום פגישה">
+                      <NotebookPen className="w-4 h-4" />{m.internal_notes ? 'סיכום ✓' : 'סיכום'}
+                    </Button>
+                  )}
                   {m.status === 'scheduled' && onComplete && (
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => onComplete(m)} title="סמן כהושלם">
                       <CheckCircle className="w-4 h-4" />
