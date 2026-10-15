@@ -5,10 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarCheck, Clock, MapPin, Loader2, AlertTriangle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { israelIso, israelLocalInput, formatIsraelTime } from '@/lib/israelTime';
 
 export default function ScheduleTimePicker({ meetingData, token, onScheduled }) {
   const [selectedDateTime, setSelectedDateTime] = useState(
-    meetingData.scheduled_at ? meetingData.scheduled_at.slice(0, 16) : ''
+    israelLocalInput(meetingData.scheduled_at)
   );
   const [submitting, setSubmitting] = useState(false);
   const [conflict, setConflict] = useState(null);
@@ -23,7 +24,7 @@ export default function ScheduleTimePicker({ meetingData, token, onScheduled }) 
     try {
       const res = await base44.functions.invoke('submitSchedule', {
         token,
-        scheduled_at: new Date(selectedDateTime).toISOString(),
+        scheduled_at: israelIso(selectedDateTime),
       });
 
       // base44.functions.invoke returns data directly OR nested under .data
@@ -32,12 +33,12 @@ export default function ScheduleTimePicker({ meetingData, token, onScheduled }) 
       if (data?.error === 'conflict') {
         setConflict(data.conflicting_events);
       } else if (data?.status === 'ok') {
-        onScheduled(selectedDateTime);
+        onScheduled(israelIso(selectedDateTime));
       } else if (data?.error) {
         setErrorMsg('שגיאה: ' + data.error);
       } else {
         // Unexpected response — still call onScheduled if we have a datetime
-        onScheduled(selectedDateTime);
+        onScheduled(israelIso(selectedDateTime));
       }
     } catch (err) {
       console.error('submitSchedule failed:', err);
@@ -47,8 +48,7 @@ export default function ScheduleTimePicker({ meetingData, token, onScheduled }) 
     }
   };
 
-  const now = new Date();
-  const minDateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const minDateTime = israelLocalInput(new Date());
 
   return (
     <Card className="w-full max-w-md mx-auto shadow-lg">
@@ -77,8 +77,8 @@ export default function ScheduleTimePicker({ meetingData, token, onScheduled }) 
 
         {meetingData.scheduled_at && (
           <div className="text-sm text-muted-foreground text-center">
-            מועד נוכחי: {new Date(meetingData.scheduled_at).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}
-            {' '}בשעה {new Date(meetingData.scheduled_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+            מועד נוכחי: {new Date(meetingData.scheduled_at).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Jerusalem' })}
+            {' '}בשעה {formatIsraelTime(meetingData.scheduled_at)}
           </div>
         )}
 
@@ -102,8 +102,8 @@ export default function ScheduleTimePicker({ meetingData, token, onScheduled }) 
             <ul className="text-xs text-amber-800 space-y-1 pr-4">
               {conflict.map((ev, i) => (
                 <li key={i}>
-                  {ev.summary} — {ev.start ? new Date(ev.start).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : ''}
-                  {ev.end ? ` עד ${new Date(ev.end).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                  {ev.summary} — {ev.start ? formatIsraelTime(ev.start) : ''}
+                  {ev.end ? ` עד ${formatIsraelTime(ev.end)}` : ''}
                 </li>
               ))}
             </ul>
