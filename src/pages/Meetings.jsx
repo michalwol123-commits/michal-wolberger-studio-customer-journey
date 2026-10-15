@@ -16,6 +16,7 @@ import MeetingsTable from '@/components/meetings/MeetingsTable';
 import MeetingsCards from '@/components/meetings/MeetingsCards';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 import IntroCompletedDialog from '@/components/meetings/IntroCompletedDialog';
+import MeetingSummaryDialog from '@/components/meetings/MeetingSummaryDialog';
 import { MEETING_TYPE_LABELS } from '@/lib/meetingTypes';
 import { format, startOfWeek, endOfWeek, addWeeks, isWithinInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -29,6 +30,7 @@ export default function Meetings() {
   const [editMeeting, setEditMeeting] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [introDialogMeeting, setIntroDialogMeeting] = useState(null);
+  const [summaryMeeting, setSummaryMeeting] = useState(null);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -236,6 +238,7 @@ export default function Meetings() {
                   onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
                   onDelete={(id) => deleteMutation.mutate(id)}
                   onComplete={handleComplete}
+                  onSummary={setSummaryMeeting}
                   selectedIds={selectedIds}
                   onToggleSelect={toggleSelect}
                   isAdmin={isAdmin}
@@ -255,6 +258,7 @@ export default function Meetings() {
             onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
             onDelete={(id) => deleteMutation.mutate(id)}
             onComplete={handleComplete}
+            onSummary={setSummaryMeeting}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
             onToggleAll={toggleAll}
@@ -271,6 +275,7 @@ export default function Meetings() {
             onEdit={(m) => { setEditMeeting(m); setShowAdd(true); }}
             onDelete={(id) => deleteMutation.mutate(id)}
             onComplete={handleComplete}
+            onSummary={setSummaryMeeting}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
             isAdmin={isAdmin}
@@ -282,6 +287,13 @@ export default function Meetings() {
         open={showAdd}
         onOpenChange={(open) => { setShowAdd(open); if (!open) setEditMeeting(null); }}
         initialData={editMeeting}
+      />
+
+      <MeetingSummaryDialog
+        meeting={summaryMeeting}
+        clientName={summaryMeeting ? clientMap[summaryMeeting.client_id]?.name : ''}
+        open={!!summaryMeeting}
+        onOpenChange={(open) => { if (!open) setSummaryMeeting(null); }}
       />
 
       <IntroCompletedDialog
