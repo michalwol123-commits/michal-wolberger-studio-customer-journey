@@ -19,12 +19,14 @@ import {
   ClipboardList,
   ChevronRight,
   X,
-  Eye
+  Eye,
+  Sparkles
 } from 'lucide-react';
 import useCurrentUser from '@/lib/useCurrentUser';
 
 const navItems = [
   { path: '/', label: 'דשבורד', icon: LayoutDashboard, adminOnly: false },
+  { path: '/whats-new', label: 'מה חדש', icon: Sparkles, adminOnly: true },
   { path: '/pipeline', label: 'Pipeline', icon: FolderKanban, adminOnly: false },
   { path: '/leads', label: 'לידים', icon: UserPlus, adminOnly: false },
   { path: '/clients', label: 'לקוחות', icon: Users, adminOnly: false },
