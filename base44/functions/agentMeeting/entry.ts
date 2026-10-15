@@ -77,7 +77,8 @@ Deno.serve(async (req) => {
 
     const clientOf = async (id) => (id ? await db.Client.get(id).catch(() => null) : null);
     const out = (extra) => Response.json({ ok: true, action, dry_run: dryRun, now_israel: now.text, ...extra });
-    const fail = (error, status = 400) => Response.json({ ok: false, action, error, now_israel: now.text }, { status });
+    // Errors come back as 200 + ok:false so the agent can read the explanation and tell Michal.
+    const fail = (error) => Response.json({ ok: false, action, error, now_israel: now.text });
 
     if (action === 'now') return out({ now });
 
@@ -156,7 +157,7 @@ Deno.serve(async (req) => {
     const { meeting_id } = body;
     if (!meeting_id) return fail('meeting_id חובה');
     const meeting = await db.Meeting.get(meeting_id).catch(() => null);
-    if (!meeting) return fail('הפגישה לא נמצאה', 404);
+    if (!meeting) return fail('הפגישה לא נמצאה');
     const client = await clientOf(meeting.client_id);
     const current = describe(meeting, client?.name);
 
@@ -235,6 +236,6 @@ Deno.serve(async (req) => {
     return fail(`פעולה לא מוכרת: ${action}. אפשרויות: now, list, create, reschedule, cancel, complete, no_show, log_past, update`);
   } catch (error) {
     console.error('agentMeeting error:', error.message);
-    return Response.json({ ok: false, error: error.message }, { status: 500 });
+    return Response.json({ ok: false, error: error.message });
   }
 });
