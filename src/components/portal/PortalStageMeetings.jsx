@@ -76,10 +76,10 @@ export default function PortalStageMeetings({ meetings, stageNum }) {
               )}
               {m.location && <span>{m.location}</span>}
             </div>
-            {m.summary && (
+            {m.client_summary && m.client_summary_shared_at && (
               <div className="pt-3" style={{ borderTop: '1px solid #e8e0d8' }}>
                 <p className="p-label !text-[10px] mb-1">סיכום</p>
-                <p className="text-sm leading-relaxed" style={{ color: '#4a3728' }}>{m.summary}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: '#4a3728' }}>{m.client_summary}</p>
               </div>
             )}
           </div>
