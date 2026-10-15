@@ -16,21 +16,10 @@ import MeetingsTable from '@/components/meetings/MeetingsTable';
 import MeetingsCards from '@/components/meetings/MeetingsCards';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
 import IntroCompletedDialog from '@/components/meetings/IntroCompletedDialog';
+import { MEETING_TYPE_LABELS } from '@/lib/meetingTypes';
 import { format, startOfWeek, endOfWeek, addWeeks, isWithinInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { toast } from 'sonner';
-
-const typeLabels = {
-  intro: 'שיחת טלפון ראשונית',
-  qualifying: 'אפיון',
-  quote_presentation: 'היכרות והצגת הצעת מחיר',
-  stage_review: 'סקירת שלב',
-  site_visit: 'ביקור אתר',
-  zoom: 'Zoom',
-  design_approval: 'אישור עיצוב',
-  floor_plan_approval: 'אישור תכנית עמדה',
-  installation_day: 'יום התקנה',
-};
 
 export default function Meetings() {
   const { user, isAdmin } = useCurrentUser();
@@ -207,7 +196,7 @@ export default function Meetings() {
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">כל הסוגים</SelectItem>
-            {Object.entries(typeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            {Object.entries(MEETING_TYPE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
