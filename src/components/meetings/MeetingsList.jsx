@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Plus, MapPin, Clock } from 'lucide-react';
+import { Calendar, Plus, MapPin, Clock, NotebookPen } from 'lucide-react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import AddMeetingDialog from '@/components/meetings/AddMeetingDialog';
+import MeetingSummaryDialog from '@/components/meetings/MeetingSummaryDialog';
 import { format } from 'date-fns';
 import { meetingTypeLabel } from '@/lib/meetingTypes';
 
 export default function MeetingsList({ meetings, clientId, projectId }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editMeeting, setEditMeeting] = useState(null);
+  const [summaryMeeting, setSummaryMeeting] = useState(null);
 
   const sorted = [...meetings].sort((a, b) => {
     if (!a.scheduled_at) return 1;
@@ -62,12 +64,22 @@ export default function MeetingsList({ meetings, clientId, projectId }) {
                       <p className="text-xs text-muted-foreground mt-1">{m.summary}</p>
                     )}
                   </div>
+                  <Button variant="ghost" size="sm" className="h-7 px-2 gap-1 text-primary shrink-0" title="סיכום פגישה"
+                    onClick={e => { e.stopPropagation(); setSummaryMeeting(m); }}>
+                    <NotebookPen className="w-4 h-4" />{m.internal_notes ? 'סיכום ✓' : 'סיכום'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <MeetingSummaryDialog
+        meeting={summaryMeeting}
+        open={!!summaryMeeting}
+        onOpenChange={(open) => { if (!open) setSummaryMeeting(null); }}
+      />
 
       <AddMeetingDialog
         open={showAdd}
