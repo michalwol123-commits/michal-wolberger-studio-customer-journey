@@ -83,8 +83,8 @@ export default function ScheduleMeeting() {
           <div className="flex justify-center"><ArtIcon name="check" size={88} /></div>
           <h2 className="p-display text-3xl">הפגישה נקבעה!</h2>
           <p style={{ color: '#4a3728' }}>
-            {meetingData.type_label} — {dt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            {' '}בשעה {dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+            {meetingData.type_label} — {dt.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jerusalem' })}
+            {' '}בשעה {dt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' })}
           </p>
           {(() => {
             const fmt = (d) => d.toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
